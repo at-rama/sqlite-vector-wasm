@@ -25,11 +25,13 @@ export async function acceptedPayload({ bundle, identity, commit, repository = r
   const inspection = await mkdtemp(join(bundle, 'release-inspect-'));
   const extracted = join(inspection, 'extracted');
   await inspectArchive(archivePath, packaged.files, extracted);
+  assert.equal(hash(await regularBytes(join(extracted, 'README.md'))),
+    hash(await regularBytes(join(repository, 'README.md'))), 'Published README differs from source revision');
   // The retained archive is the downstream input; original build directories may be gone.
   const runtime = await validateBuild({ ...build, runtimeDirectory: extracted }, repository);
   const contents = await noticeInputs(build, repository);
   for (const item of runtime) contents.set(...item);
-  contents.set('README.md', await regularBytes(join(repository, 'tools/package/README.md')));
+  contents.set('README.md', await regularBytes(join(repository, 'README.md')));
   contents.set('runtime.json', jsonBytes(manifest(build)));
   const names = [...contents.keys(), 'package.json'].sort();
   contents.set('package.json', jsonBytes(packageMetadata(identity.name, identity.version, names)));

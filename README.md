@@ -1,67 +1,71 @@
 # sqlite-vector-wasm
 
-[![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](https://github.com/at-rama/sqlite-vector-wasm/blob/main/LICENSE)
 [![SQLite](https://img.shields.io/badge/SQLite-WASM-003B57?logo=sqlite&logoColor=white)](https://sqlite.org/wasm)
 [![sqlite-vec](https://img.shields.io/badge/sqlite--vec-integrated-00897B)](https://github.com/asg017/sqlite-vec)
 [![CI](https://github.com/at-rama/sqlite-vector-wasm/actions/workflows/repository.yml/badge.svg)](https://github.com/at-rama/sqlite-vector-wasm/actions/workflows/repository.yml)
 
 **SQLite for the browser, with vector search built in.**
 
-sqlite-vector-wasm aims to provide a ready-to-use SQLite WebAssembly distribution with statically integrated [sqlite-vec](https://github.com/asg017/sqlite-vec).
+sqlite-vector-wasm distributes SQLite's browser WebAssembly runtime with [sqlite-vec](https://github.com/asg017/sqlite-vec) statically integrated. Vector search is available in every new connection, without compilation or extension registration by consumers. It retains SQLite's upstream browser APIs rather than introducing a new database wrapper.
 
-It combines SQLite's official browser capabilities with vector search, without requiring users to compile WebAssembly or integrate an extension themselves.
+## Quick start
+
+Install the browser assets:
+
+```sh
+npm install @at-rama/sqlite-vector-wasm
+```
+
+Serve **all eleven runtime files** from the package at a common URL prefix, for example `/sqlite/`. npm installs the assets but does not configure a browser server or expose a root initialization API. Serve `.js` and `.mjs` as JavaScript, and `.wasm` as `application/wasm`.
+
+With those files available under `/sqlite/`, load the upstream ES module:
+
+```js
+import sqlite3InitModule from '/sqlite/sqlite3.mjs';
+
+const sqlite3 = await sqlite3InitModule();
+const db = new sqlite3.oo1.DB(':memory:');
+try {
+  console.log(db.selectValue('SELECT vec_version()'));
+} finally {
+  db.close();
+}
+```
+
+The package also includes conventional script and Worker loaders, Worker1/promiser entries and supplied bundler-friendly variants. See the [short usage guide](https://github.com/at-rama/sqlite-vector-wasm/blob/main/docs/usage.md) for practical SQL, vector, Worker and persistence examples.
 
 ## Features
 
 - SQLite's JavaScript, ES module, C-style and OO1 browser APIs.
-- Vector similarity search with Float32 vectors.
+- Float32 vector similarity search with sqlite-vec (`vec0`).
 - Binary vectors and Hamming-distance search.
-- Full-text search with FTS5.
+- Full-text search through SQLite FTS5.
 - Web Worker support, including Worker1 and its promise interface.
-- Persistent browser storage through OPFS where supported.
-- Static integration without runtime extension loading.
+- Browser persistence through OPFS when supported and correctly hosted.
+- Static sqlite-vec integration: no runtime extension loading.
 
-The distribution preserves upstream SQLite and sqlite-vec behavior rather than introducing a new database API or vector-search abstraction.
+## Browser requirements and boundaries
 
-## Browser compatibility
+Target modern browsers with the required WebAssembly and JavaScript support. Keep all WASM, Worker, promiser and OPFS companion assets together when deploying the runtime. OPFS requires a secure context and Workers; some persistent VFS modes additionally require cross-origin isolation. An unavailable requested persistent VFS does not silently fall back to in-memory storage.
 
-sqlite-vector-wasm targets modern browsers supporting the required WebAssembly and JavaScript capabilities.
+The package preserves upstream SQLite/sqlite-vec behavior. It does **not** provide a Node.js, native or WASI runtime, a root JavaScript wrapper, or guaranteed compatibility with every bundler. Consult the [usage guide](https://github.com/at-rama/sqlite-vector-wasm/blob/main/docs/usage.md) and [SQLite browser documentation](https://sqlite.org/wasm/doc/trunk/api-index.md) for details.
 
-Some features, particularly OPFS, depend on browser support, execution context and hosting configuration. See the [browser build documentation](docs/build.md) for details.
+## Distribution and source
 
-Node.js runtimes, native binaries and WASI are outside the project's scope.
-
-## Distribution
-
-The project targets distribution through:
-
-- [npm](https://www.npmjs.com/package/@at-rama/sqlite-vector-wasm)
+- [npm package](https://www.npmjs.com/package/@at-rama/sqlite-vector-wasm)
 - [GitHub Releases](https://github.com/at-rama/sqlite-vector-wasm/releases)
 
-Releases are intended to include reproducible browser artifacts, identified upstream versions, checksums and build provenance.
+Each distributed archive contains `runtime.json`, recording the selected SQLite and sqlite-vec versions, source digests, runtime files and build options. The package README is an exact copy of this repository README at the source commit used to assemble it; previously published releases retain their own copies.
 
-Check the release channels for currently available versions.
-
-## Building from source
-
-Builds use versioned, verified upstream sources and reproducible tooling.
-
-See the project documentation for:
-
-- [Source acquisition](docs/source-acquisition.md)
-- [Browser builds](docs/build.md)
-- [Packaging](docs/packaging.md)
+To build or inspect the distribution, see [source acquisition](https://github.com/at-rama/sqlite-vector-wasm/blob/main/docs/source-acquisition.md), [browser builds](https://github.com/at-rama/sqlite-vector-wasm/blob/main/docs/build.md) and [packaging](https://github.com/at-rama/sqlite-vector-wasm/blob/main/docs/packaging.md).
 
 ## Contributing
 
-This repository uses agent-assisted development, automated verification and human review.
-
-See [AGENTS.md](AGENTS.md) for repository instructions and [development standards](.42p/standards/) for engineering conventions.
+This repository uses agent-assisted development, automated verification and human review. See [AGENTS.md](https://github.com/at-rama/sqlite-vector-wasm/blob/main/AGENTS.md) and the [development standards](https://github.com/at-rama/sqlite-vector-wasm/tree/main/.42p/standards).
 
 ## License
 
-Repository-authored material is licensed under [Apache-2.0](LICENSE).
-
-Upstream components retain their respective licenses and notices.
+Project-authored code and documentation are licensed under [Apache-2.0](https://github.com/at-rama/sqlite-vector-wasm/blob/main/LICENSE). The distribution also includes upstream code under its own terms. **See [NOTICE](https://github.com/at-rama/sqlite-vector-wasm/blob/main/tools/package/NOTICE.txt) for bundled-component licensing**, with the full third-party texts in the package's `licenses/` directory. The npm `license` field identifies the project's Apache-2.0 license; it does not replace those upstream licenses.
 
 Built on [SQLite](https://sqlite.org/) and [sqlite-vec](https://github.com/asg017/sqlite-vec).

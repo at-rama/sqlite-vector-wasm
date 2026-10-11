@@ -11,7 +11,7 @@ async function fixture(t) {
   const repository = await mkdtemp(join(tmpdir(), 'package-fixture-'));
   t.after(() => rm(repository, { recursive: true, force: true }));
   for (const file of ['inputs/sources.lock.json', 'tools/harness.sh', 'tools/build/config.mjs',
-    'tools/build/extra-init.c.in', 'tools/harness/package-lock.json', 'LICENSE', 'tools/package']) {
+    'tools/build/extra-init.c.in', 'tools/harness/package-lock.json', 'LICENSE', 'README.md', 'tools/package']) {
     await mkdir(join(repository, file, '..'), { recursive: true });
     await cp(join(root, file), join(repository, file), { recursive: true });
   }
@@ -41,6 +41,9 @@ test('complete handoff assembles one exact autonomous tarball and consumer subpa
   assert.deepEqual(result.runtimeFiles, options.handoff.runtimeFiles);
   const metadata = JSON.parse(await readFile(join(result.runtimeDirectory, 'package.json')));
   assert.equal(metadata.name, options.name); assert.equal(metadata.version, options.version);
+  assert.equal(metadata.license, 'Apache-2.0');
+  assert.equal(await readFile(join(result.runtimeDirectory, 'README.md'), 'utf8'),
+    await readFile(join(options.repository, 'README.md'), 'utf8'));
   assert.equal(metadata.scripts, undefined); assert.equal(metadata.dependencies, undefined);
   assert.equal(metadata.exports['.'], undefined); assert.equal(metadata.sideEffects, undefined);
   for (const name of runtimeNames) assert.equal(metadata.exports[`./${name}`], `./${name}`);

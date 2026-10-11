@@ -30,6 +30,13 @@ test('exact accepted archive remains independently inspectable after original bu
   await assert.rejects(acceptedPayload({bundle:f.bundle,commit:f.context.commit,repository:f.repository,identity:f.packaged.package}),/archive/);
 });
 
+test('release refuses a packaged README that differs from the source revision', async t => {
+  const f = await releaseFixture(t);
+  await writeFile(join(f.repository, 'README.md'), '# changed after packaging\n');
+  await assert.rejects(acceptedPayload({bundle:f.bundle,commit:f.context.commit,
+    repository:f.repository,identity:f.packaged.package}), /Published README differs from source revision/);
+});
+
 test('missing browser cases and altered notices/metadata/runtime fail before publication',async t=>{
   const f=await releaseFixture(t);
   const verify=()=>acceptedPayload({bundle:f.bundle,commit:f.context.commit,repository:f.repository,identity:f.packaged.package});
