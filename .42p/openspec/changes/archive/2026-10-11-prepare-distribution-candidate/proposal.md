@@ -11,7 +11,7 @@ The release tooling can qualify and publish an integrated candidate, but no work
 - Retain candidate artifacts, provenance and diagnostics separately from tracked inputs. Present the forecast and evidence without claiming publication, merging or enabling automatic merge.
 - Use the repository-provided ephemeral `GITHUB_TOKEN` for candidate writes; document required repository permissions and any human approval of resulting PR workflow runs.
 
-This Change realizes exactly `A-updates` in the [global Allocation](../../../engineering/2026-10-04_sqlite-vec-wasm_allocation_edit-0.1.md), examined at `main` commit `60f7decb1184b440b3421477f6aa954c05058c14`, Allocation SHA-256 `0f92c88a4aac0d2a2ed317c0fc23b7b6a98be44485005d3678c1b4cc230c9c73`. The [coverage mapping](coverage.md) records its full qualified contributions and both directions of derivation. User approval in the 2026-10-11 project conversation confirms the preparation sequence; existing upstream authority supplies the product obligations. One PR per preparation is a proposed realization default, not a new product responsibility.
+This Change realizes exactly `A-updates` in the [global Allocation](../../../../engineering/2026-10-04_sqlite-vec-wasm_allocation_edit-0.1.md), examined at `main` commit `60f7decb1184b440b3421477f6aa954c05058c14`, Allocation SHA-256 `0f92c88a4aac0d2a2ed317c0fc23b7b6a98be44485005d3678c1b4cc230c9c73`. The [coverage mapping](coverage.md) records its full qualified contributions and both directions of derivation. User approval in the 2026-10-11 project conversation confirms the preparation sequence; existing upstream authority supplies the product obligations. One PR per preparation is a proposed realization default, not a new product responsibility.
 
 ## Capabilities
 

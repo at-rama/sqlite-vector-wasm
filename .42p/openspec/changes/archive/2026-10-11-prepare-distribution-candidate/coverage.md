@@ -2,9 +2,9 @@
 
 ## Examined identity and limits
 
-This pre-Apply derivation maps exactly `A-updates` from the [global Allocation](../../../engineering/2026-10-04_sqlite-vec-wasm_allocation_edit-0.1.md), read at `main` commit `60f7decb1184b440b3421477f6aa954c05058c14`, SHA-256 `0f92c88a4aac0d2a2ed317c0fc23b7b6a98be44485005d3678c1b4cc230c9c73`.
+This pre-Apply derivation maps exactly `A-updates` from the [global Allocation](../../../../engineering/2026-10-04_sqlite-vec-wasm_allocation_edit-0.1.md), read at `main` commit `60f7decb1184b440b3421477f6aa954c05058c14`, SHA-256 `0f92c88a4aac0d2a2ed317c0fc23b7b6a98be44485005d3678c1b4cc230c9c73`.
 
-Qualified passages were read in full from the current [Distribution Capture](../../../engineering/2026-10-04_sqlite-vec-wasm_capture_edit-0.1.md), SHA-256 `337273bf5a887939a8f25b9c0a2739c6ab85d705e9fbaeef57953215e8309e00`, and [Release/Watch Capture](../../../engineering/2026-10-09_sqlite-vec-wasm_release-watch_capture_edit-0.1.md), SHA-256 `91337974c24eefbf9031aa0a9bf866763cad5cbdba2a99d3739362010e15a944`. `D/` and `W/` below identify their local handles. Captures/Allocation remain derived projections; their source provenance and scoped supersessions govern interpretation and do not independently corroborate themselves.
+Qualified passages were read in full from the current [Distribution Capture](../../../../engineering/2026-10-04_sqlite-vec-wasm_capture_edit-0.1.md), SHA-256 `337273bf5a887939a8f25b9c0a2739c6ab85d705e9fbaeef57953215e8309e00`, and [Release/Watch Capture](../../../../engineering/2026-10-09_sqlite-vec-wasm_release-watch_capture_edit-0.1.md), SHA-256 `91337974c24eefbf9031aa0a9bf866763cad5cbdba2a99d3739362010e15a944`. `D/` and `W/` below identify their local handles. Captures/Allocation remain derived projections; their source provenance and scoped supersessions govern interpretation and do not independently corroborate themselves.
 
 The user approved the preparation sequence in the 2026-10-11 project conversation. Native-token authentication and create-only per-execution branches are proposed realization choices. No source obligation is transferred from A-release, A-bootstrap or A-watch. Shared numerical/channel policy is consumed, not restated as independently owned candidate policy. This is semantic planning coverage, not implementation acceptance or permission to integrate/publish.
 

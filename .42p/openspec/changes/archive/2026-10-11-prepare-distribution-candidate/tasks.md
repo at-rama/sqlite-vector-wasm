@@ -31,6 +31,7 @@
 
 - [x] 5.1 Run `sh tools/check-repository.sh`, registered repository tests and strict OpenSpec validation on the implemented Change; verify all results pass and the complete bidirectional allocation mapping still matches the final specs, tasks and scope.
 - [x] 5.2 Obtain a clean hosted qualification rehearsal of the real preparation production path using the recorded stable pair, with PR/publishing side effects disabled for rehearsal; verify exact evaluated commit, archive, real-browser matrix and diagnostics, and explicitly distinguish injected PR controls from any observed live permission behavior. Do not merge a real candidate or publish to collect evidence.
+
 ## Post-Apply lifecycle (5.3)
 
 Perform `42p-verify-change`, commit its truthful report, then follow Archive/sync only after satisfactory Verification; verify the archived report and applicable PR gates while retaining human integration/publication authority. These later workflows require their current repository skills.
