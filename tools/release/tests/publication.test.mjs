@@ -34,7 +34,14 @@ test('release refuses a packaged README that differs from the source revision', 
   const f = await releaseFixture(t);
   await writeFile(join(f.repository, 'README.md'), '# changed after packaging\n');
   await assert.rejects(acceptedPayload({bundle:f.bundle,commit:f.context.commit,
-    repository:f.repository,identity:f.packaged.package}), /Published README differs from source revision/);
+    repository:f.repository,identity:f.packaged.package}), /Published README.md differs from source revision/);
+});
+
+test('release refuses a packaged usage guide that differs from the source revision', async t => {
+  const f = await releaseFixture(t);
+  await writeFile(join(f.repository, 'docs/usage.md'), '# changed after packaging\n');
+  await assert.rejects(acceptedPayload({bundle:f.bundle,commit:f.context.commit,
+    repository:f.repository,identity:f.packaged.package}), /Published docs\/usage.md differs from source revision/);
 });
 
 test('missing browser cases and altered notices/metadata/runtime fail before publication',async t=>{

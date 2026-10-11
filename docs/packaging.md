@@ -19,8 +19,8 @@ bash tools/package.sh --build-handoff /tmp/sqlite-vector-wasm-build.json \
 
 The entry point verifies the source lock, build configuration identities,
 complete eleven-file inventory and each size/SHA-256. It copies those exact
-bytes into a fresh `.work/package/run-*/assembly/`, adds recorded notices,
-usage/metadata inputs and the runtime manifest, and runs pinned
+bytes into a fresh `.work/package/run-*/assembly/`, adds recorded notices, the root README and `docs/usage.md`,
+metadata inputs and the runtime manifest, and runs pinned
 `npm pack --ignore-scripts --json`. It then checks the actual archive contents
 and hashes and extracts an independent copy. Progress/diagnostics go to stderr;
 stdout is success JSON matching the invocation's atomic `handoff.json`.

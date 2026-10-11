@@ -56,7 +56,7 @@ The package preserves upstream SQLite/sqlite-vec behavior. It does **not** provi
 - [npm package](https://www.npmjs.com/package/@at-rama/sqlite-vector-wasm)
 - [GitHub Releases](https://github.com/at-rama/sqlite-vector-wasm/releases)
 
-Each distributed archive contains `runtime.json`, recording the selected SQLite and sqlite-vec versions, source digests, runtime files and build options. The package README is an exact copy of this repository README at the source commit used to assemble it; previously published releases retain their own copies.
+Each distributed archive contains `runtime.json`, recording the selected SQLite and sqlite-vec versions, source digests, runtime files and build options. The package includes byte-identical copies of this README and `docs/usage.md` from the source commit used to assemble it; previously published releases retain their own copies.
 
 To build or inspect the distribution, see [source acquisition](https://github.com/at-rama/sqlite-vector-wasm/blob/main/docs/source-acquisition.md), [browser builds](https://github.com/at-rama/sqlite-vector-wasm/blob/main/docs/build.md) and [packaging](https://github.com/at-rama/sqlite-vector-wasm/blob/main/docs/packaging.md).
 

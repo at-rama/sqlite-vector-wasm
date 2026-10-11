@@ -146,6 +146,7 @@ export async function assemble({ handoff, name, version, repository = root, run 
     const contents = await noticeInputs(handoff, repository);
     for (const entry of runtime) contents.set(...entry);
     contents.set('README.md', await regularBytes(join(repository, 'README.md')));
+    contents.set('docs/usage.md', await regularBytes(join(repository, 'docs/usage.md')));
     contents.set('runtime.json', jsonBytes(manifest(handoff)));
     const names = [...contents.keys(), 'package.json'].sort();
     contents.set('package.json', jsonBytes(packageMetadata(name, version, names)));
