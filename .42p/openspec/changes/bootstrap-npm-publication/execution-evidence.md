@@ -110,6 +110,8 @@ The npm trusted publisher's saved binding/action/configuration time has not been
 
 ## Scenario dispositions — task 5.1
 
+Trusted-settings observation at `2026-10-11T18:14:38+02:00`: after following the form-filling guidance, the maintainer supplied npm's saved-configuration message, `Trusted publishing config not yet validated. Publish once before Oct 13, 2026, 4:14 PM UTC to validate this configuration.` This establishes a created, not-yet-validated connection with npm-announced deadline `2026-10-13T16:14:00Z` (`18:14` Europe/Paris). It is not a successful hosted OIDC publication. The exact creation timestamp is not inferred from that deadline. Saved binding/action fields and `RELEASE_SETUP=trusted` read-back remain to be confirmed; tasks 4.1–4.2 stay open until those required observations are available. No release is forced for validation.
+
 Initial success scenarios are supported by the operational record above. Negative-path dispositions distinguish actually observed failures from controls examined in code/offline tests; no account failure or bad-payload publication was forced against live services. Trusted-transition scenarios remain pending.
 
 | Requirement / scenario | Current evidence disposition |
