@@ -2,7 +2,7 @@
 
 ## Identity and examination scope
 
-Start: `A-release` in the [global Allocation](../../../engineering/2026-10-04_sqlite-vec-wasm_allocation_edit-0.1.md) in the reconciled working snapshot, based on PR #31 commit `cba83e761f2e4d2d203076bab0598a059a474a8a`, SHA-256 `0f92c88a4aac0d2a2ed317c0fc23b7b6a98be44485005d3678c1b4cc230c9c73`. End: active Change `publish-distribution`, consisting of proposal, the complete added `distribution-release` specification, design and uncompleted tasks on branch `docs/propose-distribution-release`.
+Start: `A-release` in the [global Allocation](../../../../engineering/2026-10-04_sqlite-vec-wasm_allocation_edit-0.1.md) in the reconciled working snapshot, based on PR #31 commit `cba83e761f2e4d2d203076bab0598a059a474a8a`, SHA-256 `0f92c88a4aac0d2a2ed317c0fc23b7b6a98be44485005d3678c1b4cc230c9c73`. End: active Change `publish-distribution`, consisting of proposal, the complete added `distribution-release` specification, design and uncompleted tasks on branch `docs/propose-distribution-release`.
 
 The [proposal](proposal.md#allocation-and-capture-snapshot) records exact Capture snapshots. Examination follows the selected unit's complete qualified portions and its shared runtime, human-authority, failure and dependency boundaries. Relevant synchronized `browser-package` and `browser-acceptance` requirements remain unchanged and supply actual handoff/evidence constraints. Archives supply historical context only; their earlier passing verdicts are not carried forward.
 
