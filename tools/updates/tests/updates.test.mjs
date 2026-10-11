@@ -10,13 +10,14 @@ import { prepareCandidate, resolveSources } from '../run.mjs';
 import { candidateServices } from '../services.mjs';
 const pair = { sqlite:'3.53.4',sqliteVec:'0.1.9' };
 const empty = () => ({schemaVersion:1,tags:[],releaseTags:[],npmVersions:[],heads:{latest:null,next:null}});
-const event = () => ({repository:{full_name:'a/b'},inputs:{sqlite_version:pair.sqlite,sqlite_vec_version:pair.sqliteVec,release_comment:'$(touch BAD); `echo data`\n"quoted"'}});
+const event = () => ({repository:{full_name:'a/b'},sender:{type:'User'},inputs:{sqlite_version:pair.sqlite,sqlite_vec_version:pair.sqliteVec,release_comment:'$(touch BAD); `echo data`\n"quoted"'}});
 const environment = () => ({GITHUB_REPOSITORY:'a/b',GITHUB_ACTIONS:'true',GITHUB_EVENT_NAME:'workflow_dispatch',GITHUB_REF:'refs/heads/main',GITHUB_RUN_ID:'17',GITHUB_RUN_ATTEMPT:'2'});
 const context = () => invocation({event:event(),environment:environment()});
 const lock = selection => ({sqlite:{version:selection.sqlite},sqliteVec:{version:selection.sqliteVec}});
 const published = version => {const s=empty();s.heads.latest={version,commit:'a'.repeat(40),upstreams:pair};s.tags=[`dist/v${version}`];s.releaseTags=[`dist/v${version}`];s.npmVersions=[version];return s;};
 
 test('dispatch is exact, hosted, main and comments remain data', () => {
+  assert.throws(()=>invocation({event:{...event(),sender:{type:'Bot'}},environment:environment()}));
   const c=context();assert.equal(c.branch,'candidate/run-17-2');assert.equal(candidateDescriptor(c,lock(pair)).releaseComment,event().inputs.release_comment);
   for(const override of [{GITHUB_REF:'refs/heads/other'},{GITHUB_EVENT_NAME:'push'},{GITHUB_ACTIONS:'false'},{GITHUB_RUN_ID:'0'},{GITHUB_RUN_ID:'17x'},{GITHUB_RUN_ATTEMPT:'0'}]) assert.throws(()=>invocation({event:event(),environment:{...environment(),...override}}));
   for(const inputs of [{...event().inputs,channel:'latest'},{...event().inputs,sqlite_version:'latest'},{...event().inputs,release_comment:null}]) assert.throws(()=>invocation({event:{...event(),inputs},environment:environment()}));
@@ -88,4 +89,11 @@ test('initial prerelease, collision and inconsistent snapshot create no candidat
   for(const options of [{context:{selection:{...pair,sqliteVec:'0.1.10-alpha.1'}}},{states:[{...empty(),tags:['dist/v0.1.0']}]},{states:[{...published('0.1.0'),releaseTags:[]}]}]){
     const f=await fixture(t,options);await assert.rejects(f.execute());assert.ok(!f.calls.includes('qualify'));assert.ok(!f.calls.includes('push'));
   }
+});
+test('registered entry point fails if candidate implementation lacks its required suite',async t=>{
+  const repository=await mkdtemp(join(tmpdir(),'updates-registration-'));t.after(()=>rm(repository,{recursive:true,force:true}));
+  await mkdir(join(repository,'tools/gates/tests'),{recursive:true});await mkdir(join(repository,'tools/updates'),{recursive:true});
+  for(const name of ['test_change_gates.py','test_repository.py'])await writeFile(join(repository,'tools/gates/tests',name),'');
+  await writeFile(join(repository,'tools/updates/run.mjs'),'');await writeFile(join(repository,'tools/test-repository.sh'),await readFile(new URL('../../test-repository.sh',import.meta.url)));
+  await command('git',['init'],{cwd:repository});await assert.rejects(command('sh',['tools/test-repository.sh'],{cwd:repository}));
 });

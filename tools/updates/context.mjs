@@ -14,6 +14,7 @@ export function invocation({ event, environment, rehearsal = false }) {
     assert.equal(event.pull_request?.base?.ref, 'main');
   } else {
     assert.equal(environment.GITHUB_EVENT_NAME, 'workflow_dispatch', 'Human dispatch required');
+    assert.equal(event.sender?.type, 'User', 'Human dispatch actor required');
     assert.equal(environment.GITHUB_REF, 'refs/heads/main', 'Dispatch must select main');
   }
   const input = event.inputs;
