@@ -98,7 +98,7 @@ export function manifest(handoff) {
 
 export function packageMetadata(name, version, files) {
   return { ...identity(name, version), description: 'SQLite browser/WASM with sqlite-vec statically integrated',
-    license: 'SEE LICENSE IN NOTICE',
+    license: 'Apache-2.0',
     exports: Object.fromEntries([...runtimeNames, 'package.json', 'runtime.json'].map(name => [`./${name}`, `./${name}`])),
     files, repository: { type: 'git', url: 'https://github.com/at-rama/sqlite-vector-wasm.git' } };
 }
@@ -145,7 +145,8 @@ export async function assemble({ handoff, name, version, repository = root, run 
     const runtime = await validateBuild(handoff, repository);
     const contents = await noticeInputs(handoff, repository);
     for (const entry of runtime) contents.set(...entry);
-    contents.set('README.md', await regularBytes(join(repository, 'tools/package/README.md')));
+    contents.set('README.md', await regularBytes(join(repository, 'README.md')));
+    contents.set('docs/usage.md', await regularBytes(join(repository, 'docs/usage.md')));
     contents.set('runtime.json', jsonBytes(manifest(handoff)));
     const names = [...contents.keys(), 'package.json'].sort();
     contents.set('package.json', jsonBytes(packageMetadata(name, version, names)));

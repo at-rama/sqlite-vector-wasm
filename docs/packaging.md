@@ -19,8 +19,8 @@ bash tools/package.sh --build-handoff /tmp/sqlite-vector-wasm-build.json \
 
 The entry point verifies the source lock, build configuration identities,
 complete eleven-file inventory and each size/SHA-256. It copies those exact
-bytes into a fresh `.work/package/run-*/assembly/`, adds recorded notices,
-usage/metadata inputs and the runtime manifest, and runs pinned
+bytes into a fresh `.work/package/run-*/assembly/`, adds recorded notices, the root README and `docs/usage.md`,
+metadata inputs and the runtime manifest, and runs pinned
 `npm pack --ignore-scripts --json`. It then checks the actual archive contents
 and hashes and extracts an independent copy. Progress/diagnostics go to stderr;
 stdout is success JSON matching the invocation's atomic `handoff.json`.
@@ -30,7 +30,7 @@ Packaging does not select a release name/version policy, tag or publish it.
 The explicit name/version supplied by the caller are carried into metadata;
 the fixture identity above is never published by these commands. For the product,
 use `--name @at-rama/sqlite-vector-wasm` and an independently selected SemVer according to
-the [release-version policy](../README.md#releases). `0.1.0` is an initial example,
+the [release-version policy](publication.md). `0.1.0` is an initial example,
 not a repository release pin. `package.json` holds that product identity;
 `runtime.json` preserves exact `inputs.sqlite` and `inputs.sqliteVec` versions
 and digests. The latter key identifies the selected sqlite-vec upstream, not the
@@ -68,7 +68,7 @@ and scoped results. It does not establish the full Hamming, restart-persistence
 or hosted production CI acceptance gates.
 
 The package checker uses browser test infrastructure, not a consumer server.
-See the [included usage source](../tools/package/README.md) for browser examples
+See the [consumer usage guide](usage.md) for browser examples
 and the [build storage conditions](build.md#browser-storage-conditions) for
 VFS-specific prerequisites. All generated material stays ignored. After assembly,
 the caller can remove the exact original build/input invocation directories;
