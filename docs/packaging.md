@@ -29,7 +29,7 @@ One npm-compatible `.tgz` is suitable for both npm and GitHub Release channels.
 Packaging does not select a release name/version policy, tag or publish it.
 The explicit name/version supplied by the caller are carried into metadata;
 the fixture identity above is never published by these commands. For the product,
-use `--name sqlite-vector-wasm` and an independently selected SemVer according to
+use `--name @at-rama/sqlite-vector-wasm` and an independently selected SemVer according to
 the [release-version policy](../README.md#releases). `0.1.0` is an initial example,
 not a repository release pin. `package.json` holds that product identity;
 `runtime.json` preserves exact `inputs.sqlite` and `inputs.sqliteVec` versions

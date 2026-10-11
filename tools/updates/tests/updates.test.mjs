@@ -40,7 +40,9 @@ async function fixture(t, options={}) {
 }
 
 test('qualified committed pair precedes push/PR; diagnostics stay ignored',async t=>{
+  // Candidate preparation consumes the release-owned npm identity.
   const f=await fixture(t);const result=await f.execute();assert.equal(result.status,'candidate-ready');assert.equal(result.identity.version,'0.1.0');assert.deepEqual(f.calls,['resolve','state','tools/check-repository.sh','tools/test-repository.sh','qualify','state','push','pr']);
+  assert.equal(result.preflight.name,'@at-rama/sqlite-vector-wasm');assert.equal(result.identity.name,'@at-rama/sqlite-vector-wasm');
   assert.equal(await f.git(['status','--porcelain','--untracked-files=all']),'');assert.deepEqual((await f.git(['diff-tree','--no-commit-id','--name-only','-r',result.commit])).split('\n'),['inputs/release.json']);
   const descriptor=JSON.parse(await readFile(join(f.repository,'inputs/release.json')));assert.equal(descriptor.releaseComment,event().inputs.release_comment);
   assert.match(candidateBody(result),/attempt 2/);

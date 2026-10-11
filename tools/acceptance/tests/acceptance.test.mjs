@@ -11,6 +11,12 @@ import { checkRows, checkFixtures, expectedOrdinary, expectedFloats, expectedBit
 import { checkFinalPackage } from '../check.mjs';
 
 const revision = 'a'.repeat(40);
+
+test('acceptance accepts the supplied scoped distribution identity without changing its fixture default', () => {
+  assert.deepEqual(options(['--name','@at-rama/sqlite-vector-wasm','--version','0.1.0']),
+    {name:'@at-rama/sqlite-vector-wasm',version:'0.1.0'});
+  assert.equal(options([]).name,'sqlite-vector-wasm-acceptance-fixture');
+});
 const browserResult = () => ({ schemaVersion: 1, verdict: 'passed', browser: 'real-browser-version',
   hosting: { secureContext: true, crossOriginIsolated: true }, runtimeFiles: runtimeNames.map(name => ({ name })),
   cases: Object.fromEntries(browserCases.map(n => [n, { status: 'passed' }])) });

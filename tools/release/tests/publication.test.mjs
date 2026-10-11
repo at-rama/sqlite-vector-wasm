@@ -10,7 +10,7 @@ const empty = () => ({schemaVersion:1,tags:[],npmVersions:[],releaseTags:[],head
 const ok = data => ({status:200,headers:{},data});
 async function qualified(t) {
   const fixture = await releaseFixture(t);
-  const handoff = await qualify({...fixture,readSnapshot:async()=>empty(),produce:async ({metadata})=>{assert.deepEqual(metadata,{name:'sqlite-vector-wasm',version:'0.1.0'});return {bundle:fixture.bundle};},run:async (cmd,args)=>cmd==='git' && args[0]==='rev-parse' ? fixture.context.commit : ''});
+  const handoff = await qualify({...fixture,readSnapshot:async()=>empty(),produce:async ({metadata})=>{assert.deepEqual(metadata,{name:'@at-rama/sqlite-vector-wasm',version:'0.1.0'});return {bundle:fixture.bundle};},run:async (cmd,args)=>cmd==='git' && args[0]==='rev-parse' ? fixture.context.commit : ''});
   const evidence = JSON.parse(await readFile(handoff.evidencePath));
   return {...fixture,handoff,evidence,attestation:{bundle:syntheticAttestation(evidence)}};
 }
@@ -98,7 +98,7 @@ test('every side-effect failure preserves operation outcomes without compensatio
 
 test('read-only initial completion distinguishes pending, matching, inaccessible and inconsistent npm',async t=>{
   const f=await qualified(t),bytes=await readFile(join(f.bundle,'payload.tgz'));
-  const npm={name:'sqlite-vector-wasm',versions:{'0.1.0':{name:'sqlite-vector-wasm',version:'0.1.0',dist:{tarball:'https://registry.npmjs.org/archive'}}},'dist-tags':{latest:'0.1.0'}};
+  const npm={name:'@at-rama/sqlite-vector-wasm',versions:{'0.1.0':{name:'@at-rama/sqlite-vector-wasm',version:'0.1.0',dist:{tarball:'https://registry.npmjs.org/archive'}}},'dist-tags':{latest:'0.1.0'}};
   let calls=0;const verifyGitHub=async()=>{calls++;};
   const get=async url=>url.endsWith('/archive')?ok(bytes):ok(npm);
   assert.equal((await checkInitialCompletion({evidence:f.evidence,get,verifyGitHub})).status,'complete');
@@ -111,7 +111,7 @@ test('read-only initial completion distinguishes pending, matching, inaccessible
 test('state validates published HEAD composition, revision and both destination bytes',async t=>{
   const f=await qualified(t),bytes=await readFile(join(f.bundle,'payload.tgz'));
   const api='https://api.github.com/repos/a/b/';
-  const get=async url=>url===api+'evidence'?ok(Buffer.from(JSON.stringify(f.evidence))):url.endsWith('/archive')?ok(bytes):url.includes('/tags?')?ok([{name:'dist/v0.1.0',commit:{sha:f.context.commit}}]):url.includes('/releases?')?ok([{tag_name:'dist/v0.1.0',draft:false,prerelease:false,assets:[{name:'publication.json',url:api+'evidence'},{name:'payload.tgz',url:api+'archive'}]}]):ok({name:'sqlite-vector-wasm',versions:{'0.1.0':{name:'sqlite-vector-wasm',version:'0.1.0',dist:{tarball:'https://registry.npmjs.org/archive'}}},'dist-tags':{latest:'0.1.0'}});
+  const get=async url=>url===api+'evidence'?ok(Buffer.from(JSON.stringify(f.evidence))):url.endsWith('/archive')?ok(bytes):url.includes('/tags?')?ok([{name:'dist/v0.1.0',commit:{sha:f.context.commit}}]):url.includes('/releases?')?ok([{tag_name:'dist/v0.1.0',draft:false,prerelease:false,assets:[{name:'publication.json',url:api+'evidence'},{name:'payload.tgz',url:api+'archive'}]}]):ok({name:'@at-rama/sqlite-vector-wasm',versions:{'0.1.0':{name:'@at-rama/sqlite-vector-wasm',version:'0.1.0',dist:{tarball:'https://registry.npmjs.org/archive'}}},'dist-tags':{latest:'0.1.0'}});
   assert.equal((await readState({repository:'a/b',get})).heads.latest.commit,f.context.commit);
   await assert.rejects(readState({repository:'a/b',get:async(url,options)=>url.endsWith('/archive')?ok(Buffer.from('bad')):get(url,options)}));
   assert.equal(sha256(bytes),f.evidence.archive.sha256);

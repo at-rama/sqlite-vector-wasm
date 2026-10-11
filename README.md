@@ -35,7 +35,7 @@ Node.js runtimes, native binaries and WASI are outside the project's scope.
 
 The project targets distribution through:
 
-- [npm](https://www.npmjs.com/package/sqlite-vector-wasm)
+- [npm](https://www.npmjs.com/package/@at-rama/sqlite-vector-wasm)
 - [GitHub Releases](https://github.com/at-rama/sqlite-vector-wasm/releases)
 
 Releases are intended to include reproducible browser artifacts, identified upstream versions, checksums and build provenance.
