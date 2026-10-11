@@ -40,7 +40,7 @@ export async function pages(repository, path, get) {
 }
 
 export async function npmState(get, { allowAbsent = true } = {}) {
-  const response = await get(`https://registry.npmjs.org/${npmPackageName.replace('/', '%2f')}`);
+  const response = await get(`https://registry.npmjs.org/${npmPackageName.replaceAll('/', '%2f')}`);
   if (response.status === 404 && allowAbsent) {
     assert.ok(response.data?.error === 'Not found', 'Unrecognized npm absence');
     return { name: npmPackageName, versions: {}, 'dist-tags': {} };

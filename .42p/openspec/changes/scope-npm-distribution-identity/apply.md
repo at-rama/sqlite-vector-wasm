@@ -29,4 +29,6 @@ The byte inspection used Python's ZIP, tar, JSON and SHA-256 facilities separate
 
 ## Remaining lifecycle and external limits
 
+Follow-up to [CodeQL's incomplete-encoding alert](https://github.com/at-rama/sqlite-vector-wasm/pull/34#discussion_r4240776715): the scoped endpoint now uses `replaceAll('/', '%2f')`. The fixed canonical name contains exactly one separator, so its requested URL is identical to the previously qualified implementation. The existing exact-endpoint assertion and all 26 release tests passed again, as did the repository check and strict OpenSpec validation. The browser evidence above remains evidence for its recorded commit; this follow-up does not claim a new real qualification or a confirmed CodeQL result before CI completes.
+
 This is Apply evidence, not the distinct post-Apply 42P Verification report. Verification must assess the current committed candidate under its three controls before Archive. No spec synchronization, archive, human integration, candidate dispatch, account configuration, Git tag, GitHub Release or npm publication occurred. Scoped registry access and organization/publisher permissions remain external bootstrap concerns. Qualification of this PR does not authorize publication or substitute for evidence applicable to a later integrated release revision.
