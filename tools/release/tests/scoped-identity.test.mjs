@@ -10,7 +10,9 @@ import { releaseFixture } from './fixture.mjs';
 const endpoint = 'https://registry.npmjs.org/@at-rama%2fsqlite-vector-wasm';
 const ok = data => ({status:200,headers:{},data});
 const empty = () => ({schemaVersion:1,tags:[],npmVersions:[],releaseTags:[],heads:{latest:null,next:null}});
-const metadata = () => ({name:'@at-rama/sqlite-vector-wasm',versions:{'0.1.0':{
+const metadata = () => ({name:'@at-rama/sqlite-vector-wasm',versions:{'0.0.0-stage':{
+  name:'@at-rama/sqlite-vector-wasm',version:'0.0.0-stage',stub:true,dist:{tarball:'https://registry.npmjs.org/placeholder'}
+},'0.1.0':{
   name:'@at-rama/sqlite-vector-wasm',version:'0.1.0',dist:{tarball:'https://registry.npmjs.org/scoped-archive',attestations:{provenance:'fixture'}}
 }},'dist-tags':{latest:'0.1.0'}});
 async function qualified(t) {

@@ -39,6 +39,8 @@ export async function pages(repository, path, get) {
   return result;
 }
 
+const isPlaceholder = (version, metadata) => version === '0.0.0-stage' && metadata.stub === true;
+
 export async function npmState(get, { allowAbsent = true } = {}) {
   const response = await get(`https://registry.npmjs.org/${npmPackageName.replaceAll('/', '%2f')}`);
   if (response.status === 404 && allowAbsent) {
@@ -48,11 +50,14 @@ export async function npmState(get, { allowAbsent = true } = {}) {
   assert.equal(response.status, 200, `npm state unavailable (${response.status})`);
   assert.equal(response.data?.name, npmPackageName, 'Unexpected npm package');
   assert.ok(response.data.versions && typeof response.data.versions === 'object' && !Array.isArray(response.data.versions));
-  assert.ok(response.data['dist-tags'] && typeof response.data['dist-tags'] === 'object');
+  assert.ok(response.data['dist-tags'] && typeof response.data['dist-tags'] === 'object' && !Array.isArray(response.data['dist-tags']));
   for (const [version, metadata] of Object.entries(response.data.versions)) {
-    distribution(version);
+    assert.ok(metadata && typeof metadata === 'object' && !Array.isArray(metadata), 'Malformed npm version metadata');
     assert.equal(metadata.name, npmPackageName); assert.equal(metadata.version, version);
     assert.ok(typeof metadata.dist?.tarball === 'string', 'Missing npm archive');
+    if (isPlaceholder(version, metadata)) continue;
+    distribution(version);
+    assert.notEqual(metadata.stub, true, 'Distribution cannot be a registry stub');
   }
   return response.data;
 }
@@ -91,12 +96,15 @@ export async function readState({ repository, get = httpReader() }) {
   ]);
   const tags = gitTags.filter(tag => tag.name?.startsWith('dist/v'));
   const relevant = releases.filter(release => release.tag_name?.startsWith('dist/v'));
-  const snapshot = { schemaVersion: 1, tags: tags.map(tag => tag.name), npmVersions: Object.keys(npm.versions),
+  const npmVersions = Object.entries(npm.versions).filter(([version, metadata]) => !isPlaceholder(version, metadata)).map(([version]) => version);
+  assert.ok(!Object.keys(npm.versions).length || npmVersions.length, 'Existing npm package has only an unready registry placeholder');
+  const snapshot = { schemaVersion: 1, tags: tags.map(tag => tag.name), npmVersions,
     releaseTags: relevant.map(release => release.tag_name), heads: { latest: null, next: null } };
   for (const channel of ['latest', 'next']) {
     const version = npm['dist-tags'][channel];
     if (version === undefined) continue;
     assert.equal(typeof version, 'string');
+    assert.ok(!isPlaceholder(version, npm.versions[version] || {}), 'npm channel points to an unready registry placeholder');
     const tag = tags.find(value => value.name === `dist/v${version}`);
     const release = relevant.find(value => value.tag_name === `dist/v${version}` && !value.draft);
     assert.ok(tag && release && npm.versions[version], 'npm HEAD lacks corresponding tag/published Release');
