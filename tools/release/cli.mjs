@@ -3,7 +3,7 @@ import { readFile, appendFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { root, regularBytes } from '../package/package.mjs';
 import { command } from '../acceptance/run.mjs';
-import { integratedContext } from './context.mjs';
+import { candidateDescriptorChanged, integratedContext } from './context.mjs';
 import { calculate } from './policy.mjs';
 import { readState, httpReader, repositoryName } from './state.mjs';
 import { qualify, acceptedPayload, provenance, publish, checkInitialCompletion } from './run.mjs';
@@ -21,6 +21,21 @@ try {
   let result;
   if (mode === 'calculate') {
     assert.equal(args.length,1,'Usage: release.sh calculate INPUT.json'); result = calculate(await json(args[0]));
+  } else if (mode === 'candidate') {
+    assert.equal(args.length,0,'Usage: release.sh candidate');
+    const repository = repositoryName(env.GITHUB_REPOSITORY);
+    const event = await json(env.GITHUB_EVENT_PATH);
+    assert.equal(event.action,'closed');
+    assert.equal(event.repository?.full_name,repository);
+    const pr = event.pull_request;
+    assert.ok(pr?.merged && pr.base?.ref === 'main' && pr.base.repo?.full_name === repository, 'Not an integrated main PR');
+    assert.ok(Number.isSafeInteger(pr.number) && pr.number > 0, 'Missing candidate PR number');
+    const response = await get(`https://api.github.com/repos/${repository}/pulls/${pr.number}`);
+    assert.equal(response.status,200,'Cannot establish candidate context');
+    assert.ok(response.data?.merged && response.data.state === 'closed' && response.data.base?.ref === 'main' && response.data.base.repo.full_name === repository, 'Unmerged or unrelated PR');
+    assert.equal(response.data.merge_commit_sha,pr.merge_commit_sha,'Integration revision changed');
+    result = { candidate: await candidateDescriptorChanged({ repository, pullRequest: response.data, get }) };
+    if (env.GITHUB_OUTPUT) await appendFile(env.GITHUB_OUTPUT,`candidate=${result.candidate}\n`);
   } else if (mode === 'prepare') {
     assert.equal(args.length,0);
     result = await qualify({context:await context(),readSnapshot:()=>readState({repository:env.GITHUB_REPOSITORY,get})});
@@ -53,7 +68,7 @@ try {
       const response = await get(`https://api.github.com/repos/${repositoryName(value.repository)}/releases/tags/${value.tag}`);
       assert.equal(response.status,200); await services.verifyGitHub(response.data,value);
     }});
-  } else throw Error('Usage: release.sh calculate|prepare|publish|exercise|check-initial');
+  } else throw Error('Usage: release.sh calculate|candidate|prepare|publish|exercise|check-initial');
   console.log(JSON.stringify(result));
   if (result.status === 'npm-pending') process.exitCode = 2;
 } catch (error) { console.error(`Release failed: ${error.message}`); process.exitCode = 1; }
