@@ -2,7 +2,7 @@
 
 ## State and evidence boundary
 
-Examined on 2026-10-11. The procedure and pending execution record are delivered; documentation checks are recorded below. Live bootstrap is **pending**, not complete: no account-rights verification, settings write, candidate dispatch/integration, release retrieval, npm publication or completion check was performed in this Apply session. The account, npm organization/Developers membership and package absence previously reported by the maintainer are not authenticated evidence.
+Examined on 2026-10-11. The procedure and execution record are delivered; documentation checks are recorded below. Live bootstrap is **pending**, not complete. The maintainer reports authenticated account/settings observations below; the agent independently observed scoped registry absence. No candidate dispatch/integration, release retrieval, npm publication or completion check was performed in this Apply session.
 
 Follow [the bootstrap procedure](../../../../docs/bootstrap.md). Record dated observations, public identifiers and sanitized outputs here; retain raw non-secret reports/assets outside Git or in ignored `.work/`. Never include tokens, OTPs, npm configuration files, browser sessions or credentials.
 
@@ -36,7 +36,17 @@ The identity dependency is satisfied for procedure preparation. External access 
 
 ## Operational observations — tasks 2–4
 
-Every field below is **pending / not observed**. Replace it with a dated actual result only after the applicable authorized operation; preserve unsuccessful and unexecuted states.
+Setup observations below are attributed to their actual observer. Remaining execution fields are **pending / not observed**; preserve unsuccessful and unexecuted states.
+
+### Initial setup observations, 2026-10-11
+
+- At 13:50 Europe/Paris, the maintainer reported npm username `jpbourgeon`, Owner of organization `at-rama`, Owner of its default Developers team, package absence and enabled 2FA using a passkey. These are maintainer browser observations, not an agent-authenticated npm session. Interactive CLI authentication and the actual publication authorization remain unobserved.
+- At 14:17 Europe/Paris, following correction of the earlier settings transcription and the organization/repository setup steps, the maintainer confirmed Actions PR creation enabled and repository variable `RELEASE_SETUP=initial-manual-npm`. The corrected default token setting was read-only contents/packages; workflow jobs declare their required elevated scopes explicitly. The connector does not support the Actions permissions endpoint, so no independent API settings read-back is claimed.
+- At `2026-10-11T12:18:30.254Z`, an independent public GET of `https://registry.npmjs.org/@at-rama%2fsqlite-vector-wasm` returned HTTP `404`, body `{"error":"Not found"}`. This establishes public package absence at that instant, not authenticated publication rights.
+- Repository API reads identified public repository visibility and protected `main` at `d6d4fbccf7fa28e089b1d10d7b6c14887a8ac4c4`. No branch protection or ruleset was modified. This read does not independently establish every required-check setting.
+- Inspected `updates.yml` declares native-token `contents: write` and `pull-requests: write` for preparation on hosted `ubuntu-24.04`; `release.yml` declares publishing `contents: write`, `id-token: write` and `attestations: write`. Live PR creation and hosted release/attestation authorization remain to be demonstrated by the applicable runs. No permanent npm publishing token was added by this Apply work.
+
+Tasks 2.1–2.2 retain pending status until their full access verification is supported. The next maintainer action is the existing Updates preparation on `main`, with the repository's pinned stable pair SQLite `3.53.4` / sqlite-vec `0.1.9`; preparation stops at a qualified candidate PR. Integration and publication retain their distinct human authority boundaries.
 
 | Stage | Required non-secret observations |
 | --- | --- |
@@ -49,15 +59,15 @@ Every field below is **pending / not observed**. Replace it with a dated actual 
 | Trusted access, 4.1 | Configuration time/read-back; package, `at-rama` / `sqlite-vector-wasm` / `release.yml`, empty environment and direct-publish action; current npm expiry rule and validation deadline; usable/expired disposition; recreation requirement if applicable. |
 | Normal disposition, 4.2 | First-publication completion reference; usable trusted-setup reference; `RELEASE_SETUP=trusted` read-back/date; absence of steady-state npm publishing token/manual path; any later actual hosted-publication run and outcome, or explicit demonstration pending. |
 
-First npm publication: **pending**. Trusted access: **not configured or observed in this session**. Hosted trusted publication: **not demonstrated**. No run, digest, account check, setting read-back or successful publication is inferred from these fields.
+First npm publication: **pending**. Trusted access: **not configured or observed in this session**. Hosted trusted publication: **not demonstrated**. No run, digest, independently authenticated account/settings check or successful publication is inferred from the pending fields.
 
 ## Scenario dispositions — task 5.1
 
-All operational scenarios are explicitly pending; their documented response is not an executed result. A failure scenario was not forced against live services.
+Operational scenarios remain pending overall, with partial setup observations recorded above; their documented response is not a completed execution result. A failure scenario was not forced against live services.
 
 | Requirement / scenario | Current evidence disposition |
 | --- | --- |
-| Explicit minimum publication setup / Package does not yet exist | Pending authenticated access and scoped registry observation, 2.1–2.2. |
+| Explicit minimum publication setup / Package does not yet exist | Scoped registry absence independently observed; npm roles/2FA and initial GitHub settings reported by the maintainer. Full access and supported publication/attestation verification remain pending, 2.1–2.2. |
 | Explicit minimum publication setup / Setup is unavailable | Pending live prerequisite assessment; procedure stops on unavailable access/attestation, without credential fallback. |
 | Preserve human integration and complete qualification / Authorized initial stable candidate | Pending human-authorized integrated candidate and complete applicable qualification, 3.1. |
 | Preserve human integration and complete qualification / Candidate is unmerged or qualification failed | Pending actual lifecycle evidence; procedure forbids treating candidate checks or human approval as missing qualification. |
@@ -75,4 +85,4 @@ Official npm publish, scoped public package, login, configuration and trusted-pu
 
 All local links resolve; seven shell blocks pass Bash syntax checking, and the embedded JavaScript and Python pass syntax checks. `sh tools/check-repository.sh` passed on the staged procedure/evidence snapshot, including operational-canon byte identities and Capture/Allocation input fingerprints. OpenSpec CLI `1.14.0`, installed outside the checkout, returned **7 passed, 0 failed**, exit 0, for `OPENSPEC_TELEMETRY=0 openspec validate --all --strict` from this checkout's `.42p`. A prior validation displayed the same results but its process wait was rejected by automatic approval review because of telemetry to `edge.openspec.dev`; the completed rerun used the CLI's verified environment opt-out, which also suppresses its version-check network request. Its project-root check, status and Apply instructions resolved the same local project and `spec-driven` Change; no Store or generated skill refresh was used. Informational notices about existing long requirement text do not change that structural result.
 
-Task 5.1 is complete for checking the delivered procedure and explicitly pending scenario evidence; it does not close tasks 2–4. Apply progress is **4/12**, with tasks 1.1–1.3 and 5.1 complete. The next task, 2.1, explicitly requires a separately authorized operational stage and authenticated npm account/organization evidence. Repository access used here supplies neither that evidence nor npm setup/publication access. No procedure-mirroring test or new gateway was introduced. These checks do not establish operational success, a satisfactory post-Apply Verification or Archive eligibility.
+Task 5.1 is complete for checking the delivered procedure and explicitly pending scenario evidence; it does not close tasks 2–4. Apply progress is **4/12**, with tasks 1.1–1.3 and 5.1 complete. Tasks 2.1–2.2 now include the attributed setup observations above; repository access does not supply an authenticated npm session or publication authorization. Canonical repository checking and strict OpenSpec validation were renewed for this evidence-only update. No procedure-mirroring test or new gateway was introduced. These checks do not establish operational success, a satisfactory post-Apply Verification or Archive eligibility.
