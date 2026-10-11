@@ -63,4 +63,4 @@ This reads GitHub tag/Release/assets and npm version/channel/archive, compares t
 
 Mechanism references: [npm trusted publishing](https://docs.npmjs.com/trusted-publishers/), [npm provenance](https://docs.npmjs.com/generating-provenance-statements/) and [GitHub attestations](https://github.com/actions/attest/tree/1e69f48acb82d1966a394da916b4c1698aa569d6). Moving documentation cannot revise product obligations.
 
-Candidate selection and preparation are documented in [Prepare a distribution candidate](candidates.md).
+Candidate selection and preparation are documented in [Prepare a distribution candidate](candidates.md). Follow [First npm publication](bootstrap.md) for initial access, the accepted-archive handoff, completion checking and trusted-publisher setup.
