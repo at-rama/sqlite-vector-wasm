@@ -4,7 +4,7 @@
 
 Apply consumes PR [#36](https://github.com/at-rama/sqlite-vector-wasm/pull/36), planning head `61a3cc993a7c1838d5cccf57d454afd5bd760e06`, rooted in main `ef202b77e120332703ebeba67501ea91bfab667e`. The local test checkout reconstructs the tracked GitHub tree, not its original commit history: baseline tree `2c2d9a924bd52b82415187146fcf780a37362c11`; planning tree `53daea6f1e33482e92bdd72083f2dffad98a4fc8`. Tests execute the staged implementation snapshot. The ensuing PR commit is the tool revision; it is not the revision of the existing published distribution.
 
-Changed implementation files: [shared reader](../../../../tools/release/state.mjs), [registered placeholder tests](../../../../tools/release/tests/registry-placeholder.test.mjs), [renewed scoped identity/publisher tests](../../../../tools/release/tests/scoped-identity.test.mjs), and [publication explanation](../../../../docs/publication.md). Change-local task tracking, this record and coverage are updated. Proposal, design, delta, synchronized specs, Captures, Allocation, operational canon, workflow, package and release inputs remain unchanged.
+Changed implementation files: [shared reader](../../../../../tools/release/state.mjs), [registered placeholder tests](../../../../../tools/release/tests/registry-placeholder.test.mjs), [renewed scoped identity/publisher tests](../../../../../tools/release/tests/scoped-identity.test.mjs), and [publication explanation](../../../../../docs/publication.md). Change-local task tracking, this record and coverage are updated. Proposal, design, delta, synchronized specs, Captures, Allocation, operational canon, workflow, package and release inputs remain unchanged.
 
 | Executed implementation input | SHA-256 |
 | --- | --- |

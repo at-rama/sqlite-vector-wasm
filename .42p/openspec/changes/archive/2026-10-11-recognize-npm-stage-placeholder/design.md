@@ -4,7 +4,7 @@
 
 See [proposal](proposal.md) for the observed incident, source snapshot and A-release ownership. At examined main `ef202b77e120332703ebeba67501ea91bfab667e`, `npmState` in `tools/release/state.mjs` validates every registry version through `distribution`. `readState` places every entry key into `snapshot.npmVersions`; A-updates imports it for preparation. `checkInitialCompletion` and `githubServices.verifyNpm` also use `npmState`, so repairing only the CLI completion command would leave normal consumers blocked.
 
-The [current distribution-release spec](../../specs/distribution-release/spec.md) retains the entire A-release contract. The [delta](specs/distribution-release/spec.md) refines state interpretation only. A design document is warranted because skipping registry entries can otherwise conceal identity or publication-state contradictions.
+The [current distribution-release spec](../../../specs/distribution-release/spec.md) retains the entire A-release contract. The [delta](specs/distribution-release/spec.md) refines state interpretation only. A design document is warranted because skipping registry entries can otherwise conceal identity or publication-state contradictions.
 
 Official [npm staged-publishing documentation](https://docs.npmjs.com/staged-publishing/), inspected 2026-10-11, describes the publicly available `0.0.0-stage` placeholder when staging a new package. Live registry inspection also observed `stub: true` on that entry. Documentation explains an external mechanism; it does not authorize a new staged-publication lifecycle. The maintainer invoked ordinary `npm publish`, not an explicitly recorded `npm stage publish`; this Change does not infer the exact internal registry transition from the resulting placeholder.
 
