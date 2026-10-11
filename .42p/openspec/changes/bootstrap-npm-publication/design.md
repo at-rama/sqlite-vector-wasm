@@ -6,7 +6,7 @@ See [proposal](proposal.md) for scope and authoritative inputs. Design is requir
 
 At examined main revision `32f62b8547801f8f3a21eeaed0fd41ac4c3a5abe`, `docs/candidates.md` explains native-token candidate preparation; `docs/publication.md`, `release.yml` and `tools/release/{cli,run,services,state}.mjs` already implement qualification, explicit `RELEASE_SETUP`, signed archive attestation, automatic initial GitHub publication with `npm-pending` (exit 2), and read-only `check-initial`. No active bootstrap Change or GitHub Release exists. `inputs/release.json` is absent until a real preparation creates it. Registry package absence and npm organization membership are user-reported.
 
-The scoped package decision is authoritative user input but still conflicts with D/C-release, the synchronized Single distribution identity requirement, and hard-coded package/registry identities. This planning Change records a dependency, not a successful reconciliation. A-package/A-release own the affected product mechanisms.
+The scoped package decision is authoritative user input and distinguishes npm identity from product identity. D/C-release does not prescribe an unscoped npm identifier; the product remains sqlite-vector-wasm. A-release's policy and registry readers/checkers currently fix the unscoped identity, so their correction is a concrete operational dependency. The synchronized Single distribution identity requirement likewise names the product and must not be interpreted as an explicit prohibition of npm scopes. A-package's Consumer-ready distribution envelope accepts supplied identity; its generic identity validator supports scopes, with a dedicated packing test. This is inspected capability context, not new acceptance evidence for the selected distribution.
 
 ## Goals / Non-Goals
 
@@ -22,9 +22,11 @@ Add `docs/bootstrap.md` and short links from publication/candidate contributor d
 
 Retain a Change-local `execution-evidence.md` containing dates, public identifiers/run links, exact source commit/version/channel, archive SHA-256, setup outcomes and completion output. Do not invent successful outcomes in advance or store credentials, OTPs, local npm configuration or browser session data. Reuse Release assets for durable payload/provenance retrieval; CI evidence has a 30-day retention period.
 
-### Treat scoped identity as a prerequisite
+### Treat the supplied scoped npm identity as an operational prerequisite
 
-The package will be public `@at-rama/sqlite-vector-wasm`; repository/project spelling remains sqlite-vector-wasm and the tag family remains `dist/v...`. Before operational Apply, reconcile the scope decision into current Capture/Allocation and affected realization contracts, then realize and verify package and registry identity changes under their owning units. Re-read those results and refresh this Change's snapshots/coverage. Do not change historical archives or publish an unscoped intermediate package. Planning file existence and strict validation cannot remove this blocker.
+The package will be public `@at-rama/sqlite-vector-wasm`; repository/project spelling remains sqlite-vector-wasm and the tag family remains `dist/v...`. Record these separate identities and the user decision already identified in the proposal. Before operational execution, require A-release to supply the scoped identity consistently through calculation, publication provenance, registry reads and completion checks; inspect actual downstream consumers and realize only established impacts under their owning units. A-package's existing scope support requires applicability reassessment, not an assumed migration.
+
+Current A-bootstrap references retain their meaning and do not establish a contradiction with the npm scope. Do not impose a blanket Capture/Allocation rewrite or a new Change for an unaffected unit. If the identity work materially revises an upstream projection or realization contract, follow its authorized reconciliation process, re-read the result, update changed input fingerprints and repeat affected coverage. Preserve historical archives and publish no unscoped intermediate package. Successful derivation or structural validation does not establish operational identity readiness.
 
 ### Establish the initial disposition before integrating a real candidate
 
@@ -58,7 +60,7 @@ Reference: [npm trusted publishing](https://docs.npmjs.com/trusted-publishers/),
 
 ## Risks / Trade-offs
 
-- Scoped identity divergence → block operational Apply until upstream projection and owning-unit realization are reconciled; repeat coverage on fresh inputs.
+- Scoped npm identity not yet supplied consistently by A-release → block operational execution until the owning mechanisms and affected consumers are corrected and verified; repeat coverage for material input revisions.
 - Incorrect permissions or trusted-publisher fields → inspect live account/repository settings and record explicit failure; do not introduce credential fallbacks.
 - npm receives different archive bytes → compare the exact retained SHA-256 before the operation and consume existing read-only destination checks afterward.
 - A publication succeeds before a later failure → retain the partial state; no deletion, overwrite or general resume is available.
@@ -67,4 +69,4 @@ Reference: [npm trusted publishing](https://docs.npmjs.com/trusted-publishers/),
 
 ## Migration Plan
 
-Complete scoped identity reconciliation first. Then establish repository access/disposition, run the normal candidate lifecycle, consume the automatic initial GitHub handoff, perform the one npm operation, check completion, and establish the trusted disposition with its validity evidence. Repository documentation changes use a PR; external operations require a separately authorized execution stage. Failed setup can be corrected before publication; successful public package versions/tags are never rolled back by deletion or overwrite. No runtime migration or permanent bootstrap service is introduced.
+Confirm A-release's supplied scoped npm identity and the applicability of its actual consumers first. Then establish repository access/disposition, run the normal candidate lifecycle, consume the automatic initial GitHub handoff, perform the one npm operation, check completion, and establish the trusted disposition with its validity evidence. Repository documentation changes use a PR; external operations require a separately authorized execution stage. Failed setup can be corrected before publication; successful public package versions/tags are never rolled back by deletion or overwrite. No runtime migration or permanent bootstrap service is introduced.

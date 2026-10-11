@@ -20,7 +20,7 @@ The qualified candidate and release paths exist, but account setup and the unavo
 
 ### Modified Capabilities
 
-None in this Change. Existing `distribution-release` and `distribution-candidates` behavior is consumed unchanged. The scoped npm identity requires separate reconciliation of their affected identity contracts and implementations before this procedure can execute.
+None in this Change. Existing `distribution-release` and `distribution-candidates` behavior is consumed unchanged. A-release must supply and inspect the selected scoped npm identity before this procedure can execute; affected identity consumers require assessment under their owning responsibilities, not a presumed migration of every capability.
 
 ## Impact
 
@@ -30,4 +30,4 @@ Allocation input: [current global Allocation](../../../engineering/2026-10-04_sq
 
 The user selected the scoped package in the 2026-10-11 exploration: “Non non je veux qu'il y ait le préfixe”. Account, organization `@at-rama`, Developers membership and package absence are user-reported, not authenticated access evidence. This request authorizes planning only, not external setup, candidate dispatch, merge or publication.
 
-**Apply prerequisite:** current Capture D/C-release, synchronized release identity and package/registry code still name the unscoped package. Reconcile the authorized scope decision upstream and realize affected A-package/A-release contributions separately, retaining unit boundaries and historical evidence. Refresh this Change's input snapshot and coverage before Apply. The proposal does not claim that this conflict has been resolved.
+**Operational prerequisite:** the product remains sqlite-vector-wasm; its selected public npm identifier is `@at-rama/sqlite-vector-wasm`. D/C-release does not prescribe an unscoped npm name, and this decision does not rename the product. A-release currently supplies `sqlite-vector-wasm` and reads/checks that registry identity; correct those mechanisms and assess their actual consumers under the owning allocation units before executing bootstrap. A-package already accepts a supplied valid scoped name; reassess applicability without presuming a code or contract change there. Record the distinct identities and the explicit user decision, preserving historical evidence. Re-read current inputs and repeat coverage for any material revision; update fingerprints only when their source bytes change. This Change neither implements the A-release correction nor claims the operational prerequisite has been satisfied.
