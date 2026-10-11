@@ -2,7 +2,7 @@
 
 ## State and evidence boundary
 
-Examined on 2026-10-11. Initial publication is **complete**, supported by the maintainer's successful read-only destination check after the A-release correction in #36. Bootstrap as a whole remains **in progress**: trusted-publisher configuration and the normal repository disposition are not yet observed. The earlier preparation assessment and its pending observations below are historical; the subsequent operational record updates their dispositions without claiming an agent-authenticated npm session.
+Examined on 2026-10-11. Initial publication is **complete**, supported by the maintainer's successful read-only destination check after the A-release correction in #36. Bootstrap Apply is **complete**: the maintainer confirmed saved trusted-publisher fields and `RELEASE_SETUP=trusted`. The connection remains unvalidated, with its first successful hosted publication due before `2026-10-13T16:14:00Z`; hosted OIDC access is not yet demonstrated. The earlier preparation assessment and its pending observations below are historical; the subsequent operational record updates their dispositions without claiming an agent-authenticated npm session.
 
 Follow [the bootstrap procedure](../../../../docs/bootstrap.md). Record dated observations, public identifiers and sanitized outputs here; retain raw non-secret reports/assets outside Git or in ignored `.work/`. Never include tokens, OTPs, npm configuration files, browser sessions or credentials.
 
@@ -59,7 +59,7 @@ At that initial assessment, tasks 2.1–2.2 remained pending and the next stage 
 | Trusted access, 4.1 | Configuration time/read-back; package, `at-rama` / `sqlite-vector-wasm` / `release.yml`, empty environment and direct-publish action; current npm expiry rule and validation deadline; usable/expired disposition; recreation requirement if applicable. |
 | Normal disposition, 4.2 | First-publication completion reference; usable trusted-setup reference; `RELEASE_SETUP=trusted` read-back/date; absence of steady-state npm publishing token/manual path; any later actual hosted-publication run and outcome, or explicit demonstration pending. |
 
-First npm publication: **complete**; see the dated operational record below. Trusted access: **configuration not observed**. Hosted trusted publication: **not demonstrated**. Pending trusted fields supply no settings or OIDC authorization proof.
+First npm publication: **complete**; see the dated operational record below. Trusted access: **configured, not yet validated**, as confirmed by the maintainer. Hosted trusted publication: **not demonstrated**. Saved settings are not successful OIDC execution proof.
 
 ### Completed initial operation, 2026-10-11 — tasks 2.1–3.4
 
@@ -102,17 +102,25 @@ The [archived correction execution account](../archive/2026-10-11-recognize-npm-
 
 The actual successful canonical check establishes matching authoritative tag/Release/provenance, real npm version/channel and exact archive size/SHA-256 across GitHub/npm. It invokes no publication, tag creation, repacking or repair. The agent's earlier independent registry-byte observation at `2026-10-11T15:36:36.306Z` also found `latest=0.1.0` and the accepted archive size/digest; it is corroborating partial evidence, not a substitute for the canonical check.
 
-### Resume after #36 integration — tasks 4.1–4.2 pending
+### Resume after #36 integration — initial tasks 4.1–4.2 assessment
 
 The maintainer integrated #36 into main `5dfe31075d0089fec59250b1212dae8c75f6dbe5` and updated #33 to `6adc1c4053dd59442ad1d081f71bdb9999a9f036`. The reconstructed local tracked snapshot matches that remote tree exactly, `fc215a72bd8cf1fcc571bbb7e674509be924261c`; its synthetic Git history is only for checks. The correction and its archived evidence are present; Allocation/Capture inputs and A-bootstrap requirements remain unchanged.
 
 The npm trusted publisher's saved binding/action/configuration time has not been supplied, and `RELEASE_SETUP=trusted` read-back is not observed. Both tasks remain open. Official [npm trusted publishing documentation](https://docs.npmjs.com/trusted-publishers/) was rechecked at this resumed stage: bind `at-rama` / `sqlite-vector-wasm` / `release.yml`, leave environment empty for the current job and explicitly permit direct `npm publish`. A newly created connection must first publish successfully within **2 days**, or expires; record its actual configuration time/deadline and recreate an expired connection before a normal release. No release is forced to demonstrate access. Configured/usable access and demonstrated hosted OIDC publication remain distinct dispositions.
 
-## Scenario dispositions — task 5.1
-
 Trusted-settings observation at `2026-10-11T18:14:38+02:00`: after following the form-filling guidance, the maintainer supplied npm's saved-configuration message, `Trusted publishing config not yet validated. Publish once before Oct 13, 2026, 4:14 PM UTC to validate this configuration.` This establishes a created, not-yet-validated connection with npm-announced deadline `2026-10-13T16:14:00Z` (`18:14` Europe/Paris). It is not a successful hosted OIDC publication. The exact creation timestamp is not inferred from that deadline. Saved binding/action fields and `RELEASE_SETUP=trusted` read-back remain to be confirmed; tasks 4.1–4.2 stay open until those required observations are available. No release is forced for validation.
 
-Initial success scenarios are supported by the operational record above. Negative-path dispositions distinguish actually observed failures from controls examined in code/offline tests; no account failure or bad-payload publication was forced against live services. Trusted-transition scenarios remain pending.
+### Saved trusted disposition confirmed — tasks 4.1–4.2 complete
+
+At `2026-10-11T18:17:37+02:00`, responding to the request to reread the saved fields (particularly direct-publish permission) and set/reread `RELEASE_SETUP=trusted`, the maintainer confirmed “Done”. This confirmation is attributed to that requested scope: GitHub Actions publisher for `@at-rama/sqlite-vector-wasm`, organization `at-rama`, repository `sqlite-vector-wasm`, workflow filename `release.yml`, empty environment, direct `npm publish` allowed and separate `npm dist-tag` permission left disabled; saved repository variable `RELEASE_SETUP=trusted`. Label is optional and its saved text is not asserted. No independent authenticated npm-settings or repository-variable API read-back is claimed, and no full field-by-field transcript was supplied.
+
+Configuration was reported created at the preceding observation; the authoritative npm-announced validation deadline is `2026-10-13T16:14:00Z`. At confirmation time it is within that window and not reported expired. The maintainer expects a forthcoming normal candidate from sqlite-vec alpha releases; this is a planning expectation, not an independently checked upstream-availability claim or a guaranteed successful publication. The ordinary candidate qualification, human integration and hosted publish retain their authority and controls. No forced release, keepalive, repeated initial publication, recurring manual publishing path or steady-state npm token was introduced.
+
+Tasks 4.1–4.2 are complete for saved setup and normal-disposition handoff. Access is **configured and within its announced validation window**, not **demonstrated**. The next actual successful normal hosted publication will validate the connection; if the window expires first, the expired connection must be recreated before that publication. First-publication completion remains the earlier read-only result, not a new publication.
+
+## Scenario dispositions — task 5.1
+
+Initial success scenarios and configured trusted disposition are supported by the operational record above. Negative-path dispositions distinguish actually observed failures from controls examined in code/offline tests; no account failure or bad-payload publication was forced against live services. Hosted OIDC demonstration remains pending as a distinct later release outcome.
 
 | Requirement / scenario | Current evidence disposition |
 | --- | --- |
@@ -125,8 +133,8 @@ Initial success scenarios are supported by the operational record above. Negativ
 | Consume read-only completion evidence / Destinations match | Actual corrected `complete` output, exit 0, original `0.1.0`/`latest` authoritative identity and exact bytes; 3.4 supported. |
 | Consume read-only completion evidence / npm is absent or inconsistent | Actual `npm-pending` exit 2 and reader/input failures were retained; no publisher repair was invoked. #36 resolved the placeholder defect before canonical completion. |
 | Supported publication evidence remains explicit / Local first npm publication | Maintainer signature verification and retained complete qualification support the explicit local fallback; npm hosted OIDC provenance is not claimed. |
-| Transition to normal trusted publication / First publication completed and trusted access configured | Initial completion established; saved usable binding, deadline and normal-disposition read-back pending, 4.1–4.2. |
-| Transition to normal trusted publication / Trusted access expires or lacks the required action | Pending actual settings/deadline assessment; procedure reports unready setup and correction without a forced release. |
+| Transition to normal trusted publication / First publication completed and trusted access configured | Initial completion established; maintainer-confirmed saved binding/direct-publish action and `RELEASE_SETUP=trusted`, within npm's announced deadline; 4.1–4.2 supported. Hosted publication is not yet demonstrated. |
+| Transition to normal trusted publication / Trusted access expires or lacks the required action | Required direct-publish action confirmed and deadline retained. Expiration was not forced live; the procedure requires recreation of an expired connection before ordinary publication and provides no recurring manual fallback. |
 
 ## Documentation checks
 
@@ -134,6 +142,6 @@ Official npm publish, scoped public package, login, configuration and trusted-pu
 
 All local links resolve; seven shell blocks pass Bash syntax checking, and the embedded JavaScript and Python pass syntax checks. `sh tools/check-repository.sh` passed on the staged procedure/evidence snapshot, including operational-canon byte identities and Capture/Allocation input fingerprints. OpenSpec CLI `1.14.0`, installed outside the checkout, returned **7 passed, 0 failed**, exit 0, for `OPENSPEC_TELEMETRY=0 openspec validate --all --strict` from this checkout's `.42p`. A prior validation displayed the same results but its process wait was rejected by automatic approval review because of telemetry to `edge.openspec.dev`; the completed rerun used the CLI's verified environment opt-out, which also suppresses its version-check network request. Its project-root check, status and Apply instructions resolved the same local project and `spec-driven` Change; no Store or generated skill refresh was used. Informational notices about existing long requirement text do not change that structural result.
 
-Task 5.1 remains complete for documentation checks and explicit scenario dispositions. Resumed Apply progress is **10/12**: tasks 1.1–1.3, 2.1–2.2, 3.1–3.4 and 5.1 complete; 4.1–4.2 pending. Canonical repository checking and strict OpenSpec validation are renewed for this evidence-only update below. No procedure-mirroring test or new gateway is introduced. Initial completion does not supply trusted settings, a satisfactory post-Apply Verification or Archive eligibility.
+Task 5.1 remains complete for documentation checks and explicit scenario dispositions. Apply progress is **12/12**, including the maintainer-confirmed setup and normal-disposition handoff. Canonical repository checking and strict OpenSpec validation are renewed for this evidence-only update below. No procedure-mirroring test or new gateway is introduced. Completed Apply does not supply a satisfactory post-Apply Verification or Archive eligibility.
 
-Resumed evidence-only checks: `sh tools/check-repository.sh` passed, exit 0; `OPENSPEC_TELEMETRY=0 openspec validate --all --strict` from `.42p` passed all 7 items, exit 0; edited-file local links resolve and `git diff --check` is clean. No implementation, workflow, procedure command, requirement or input bytes changed. The supplying mechanism tests were already renewed for #36 (173 passed); they were not rerun merely to edit the operational account. Tasks 4.1–4.2 require external saved settings and are not completed by documentary checks. Separate 42P Verification and Archive for A-bootstrap have not been invoked.
+Resumed evidence-only checks: `sh tools/check-repository.sh` passed, exit 0; `OPENSPEC_TELEMETRY=0 openspec validate --all --strict` from `.42p` passed all 7 items, exit 0; edited-file local links resolve and `git diff --check` is clean. No implementation, workflow, procedure command, requirement or input bytes changed. The supplying mechanism tests were already renewed for #36 (173 passed); they were not rerun merely to edit the operational account. Tasks 4.1–4.2 are supported by the attributed external confirmation, not completed by documentary checks alone. Separate 42P Verification and Archive for A-bootstrap have not been invoked.

@@ -22,8 +22,8 @@ The scoped-identity dependency was confirmed after #34 integration; see [executi
 
 ## 4. Establish the normal trusted disposition
 
-- [ ] 4.1 Configure the scoped package's trusted publisher for `at-rama` / `sqlite-vector-wasm` / `release.yml`, no environment with the current workflow, and explicit direct `npm publish` permission. Verify settings read-back and current expiry requirements; coordinate with a forthcoming normal release or record the need to recreate an expired configuration. Record configured versus demonstrated status without forcing a release or granting recurring manual publishing responsibility.
-- [ ] 4.2 After matching first-publication completion and usable trusted setup, set `RELEASE_SETUP=trusted` and verify read-back. Update execution evidence with the configuration/validation deadline and any actual normal hosted-publication demonstration; verify no steady-state publishing token or manual publishing workflow was introduced. An expired configuration is unready and settings alone are not OIDC proof.
+- [x] 4.1 Configure the scoped package's trusted publisher for `at-rama` / `sqlite-vector-wasm` / `release.yml`, no environment with the current workflow, and explicit direct `npm publish` permission. Verify settings read-back and current expiry requirements; coordinate with a forthcoming normal release or record the need to recreate an expired configuration. Record configured versus demonstrated status without forcing a release or granting recurring manual publishing responsibility.
+- [x] 4.2 After matching first-publication completion and usable trusted setup, set `RELEASE_SETUP=trusted` and verify read-back. Update execution evidence with the configuration/validation deadline and any actual normal hosted-publication demonstration; verify no steady-state publishing token or manual publishing workflow was introduced. An expired configuration is unready and settings alone are not OIDC proof.
 
 ## 5. Check the complete bootstrap handoff
 
