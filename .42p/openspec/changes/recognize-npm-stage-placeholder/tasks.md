@@ -1,0 +1,20 @@
+# Tasks
+
+This Change realizes `A-release` only. Complete the separate bidirectional derivation review of [coverage](coverage.md) before Apply. Preserve the supplying design and synchronized baseline; no npm/GitHub publication, deletion, dist-tag mutation or A-bootstrap settings operation is an implementation task.
+
+## 1. Recognize and retain the bounded registry placeholder
+
+- [ ] 1.1 Implement shared placeholder classification at the npm-state boundary, after package/entry identity and required shape validation. Recognize only the exact key/version `0.0.0-stage` with boolean `stub: true`; preserve raw-state observability and reject unsupported versions or inconsistent markers. Add and run registered release-reader fixtures for valid placeholder plus real releases, wrong top-level/entry names, mismatched embedded versions, false/nonboolean/missing markers, arbitrary unsupported entries and real versions marked as stubs; retain HTTP 404 versus transport/authentication failure behavior.
+- [ ] 1.2 Project only real distribution versions into `readState` while retaining package existence and explicit failure of placeholder-only state or `latest`/`next` references to the placeholder. Add and run state fixtures for placeholder plus stable/experimental histories, empty-tag placeholder-only response, wrong/missing channel references, collisions, authoritative revision/provenance and differing destination bytes. Keep the strict distribution grammar and published HEAD checks unchanged.
+
+## 2. Preserve completion and normal consumer controls
+
+- [ ] 2.1 Renew initial-completion tests with a recognized placeholder present: matching real `0.1.0`/`latest` completes, missing real version stays pending, wrong identity/channel/revision/evidence/size/digest fails. Verify that the command makes no tag, publish, repack or repair call. Renew normal `verifyNpm` tests with the placeholder and successful supported provenance, then missing provenance or changed bytes, retaining ordinary publisher arguments and failure behavior.
+- [ ] 2.2 Verify A-updates' existing shared-state consumption and shared calculation using deterministic fixtures with stable and experimental published references plus placeholder; demonstrate identical forecasts/calculations for equivalent distribution state and retained collision/channel/progression rules. Inspect existing consumer imports and event guards, adjusting only established shared-interface impacts under A-release; introduce no alternative numbering/preparation path or publication trigger. Add a concise clarification to `docs/publication.md` of recognized placeholder versus publication evidence and pending/failure behavior, with no second procedure or claimed live completion.
+
+## 3. Check integration and the existing publication in read-only mode
+
+- [ ] 3.1 Run `sh tools/check-repository.sh`, registered `sh tools/test-repository.sh` suites and strict OpenSpec validation on the implementation snapshot. Record changed files, input identities, actual outcomes and applicability of the unchanged publication mechanisms; retain failure rather than relaxing controls. Update the Change-local evidence and coverage only for actual authorized revisions, not unchanged-source fingerprints.
+- [ ] 3.2 With authorized read access, retrieve/retain the existing `dist/v0.1.0` publication record and verify its authoritative commit and exact accepted archive against the existing GitHub/npm destinations using corrected `check-initial`. Record command, tool/source identities, invocation time, sanitized output and exit status; report complete only on a matching result. The original published commit remains `ef202b77e120332703ebeba67501ea91bfab667e`, not the correction commit. Stop on inaccessible/inconsistent results without invoking any publisher or mutating a destination; give the result to the distinct A-bootstrap handoff. This task requires actual read-only execution, not a fixture or future promise.
+
+Post-Apply 42P Verification and Archive remain distinct subsequent operations. Planning completion, tests and read-only destination checks do not authorize integration or a new release.
