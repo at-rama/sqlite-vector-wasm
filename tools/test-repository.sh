@@ -37,3 +37,9 @@ if [ -f tools/release/policy.mjs ]; then
     test -f tools/release/tests/release.test.mjs
     node --test tools/release/tests/*.test.mjs
 fi
+
+# Candidate preparation controls exercise qualified commits and create-only presentation.
+if [ -f tools/updates/run.mjs ]; then
+    test -f tools/updates/tests/updates.test.mjs
+    node --test tools/updates/tests/*.test.mjs
+fi

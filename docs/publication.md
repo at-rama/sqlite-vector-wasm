@@ -60,3 +60,5 @@ sh tools/release.sh check-initial PUBLICATION.json
 This reads GitHub tag/Release/assets and npm version/channel/archive, compares the accepted identities and bytes, and reports complete success only for matching destinations. Absent npm stays pending; inaccessible/inconsistent evidence is non-success. It performs no publication, overwrite or other mutation and cannot repair an arbitrary partial attempt. Its input must be the selected initial `0.1.0` record. New publication attempts always retain uniqueness checks. Live OIDC/registry publication remains unexercised until an authorized integrated candidate and A-bootstrap setup exist.
 
 Mechanism references: [npm trusted publishing](https://docs.npmjs.com/trusted-publishers/), [npm provenance](https://docs.npmjs.com/generating-provenance-statements/) and [GitHub attestations](https://github.com/actions/attest/tree/1e69f48acb82d1966a394da916b4c1698aa569d6). Moving documentation cannot revise product obligations.
+
+Candidate selection and preparation are documented in [Prepare a distribution candidate](candidates.md).
