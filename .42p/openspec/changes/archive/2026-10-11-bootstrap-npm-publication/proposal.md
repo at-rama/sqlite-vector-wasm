@@ -26,7 +26,7 @@ None in this Change. Existing `distribution-release` and `distribution-candidate
 
 Planned repository outputs are `docs/bootstrap.md`, links from the existing contributor publication/candidate documentation and a Change-local execution record. External operations affect GitHub Actions settings/repository variables and npm package access/trusted-publisher settings. No new runtime dependency, publisher, numbering policy, repair mechanism or recurring manual release workflow is proposed.
 
-Allocation input: [current global Allocation](../../../engineering/2026-10-04_sqlite-vec-wasm_allocation_edit-0.1.md), SHA-256 `0f92c88a4aac0d2a2ed317c0fc23b7b6a98be44485005d3678c1b4cc230c9c73`, resolved at `main` commit `32f62b8547801f8f3a21eeaed0fd41ac4c3a5abe`; stable handle `A-bootstrap`.
+Allocation input: [current global Allocation](../../../../engineering/2026-10-04_sqlite-vec-wasm_allocation_edit-0.1.md), SHA-256 `0f92c88a4aac0d2a2ed317c0fc23b7b6a98be44485005d3678c1b4cc230c9c73`, resolved at `main` commit `32f62b8547801f8f3a21eeaed0fd41ac4c3a5abe`; stable handle `A-bootstrap`.
 
 The user selected the scoped package in the 2026-10-11 exploration: “Non non je veux qu'il y ait le préfixe”. Account, organization `@at-rama`, Developers membership and package absence are user-reported, not authenticated access evidence. This request authorizes planning only, not external setup, candidate dispatch, merge or publication.
 

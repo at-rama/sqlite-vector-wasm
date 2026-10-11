@@ -2,7 +2,7 @@
 
 ## Input identities and examined scope
 
-This Change realizes exactly `A-bootstrap` from the [global Allocation](../../../engineering/2026-10-04_sqlite-vec-wasm_allocation_edit-0.1.md) at examined main revision `32f62b8547801f8f3a21eeaed0fd41ac4c3a5abe`, SHA-256 `0f92c88a4aac0d2a2ed317c0fc23b7b6a98be44485005d3678c1b4cc230c9c73`.
+This Change realizes exactly `A-bootstrap` from the [global Allocation](../../../../engineering/2026-10-04_sqlite-vec-wasm_allocation_edit-0.1.md) at examined main revision `32f62b8547801f8f3a21eeaed0fd41ac4c3a5abe`, SHA-256 `0f92c88a4aac0d2a2ed317c0fc23b7b6a98be44485005d3678c1b4cc230c9c73`.
 
 Current direct Capture identities:
 

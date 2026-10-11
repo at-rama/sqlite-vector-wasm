@@ -4,13 +4,13 @@
 
 Examined on 2026-10-11. Initial publication is **complete**, supported by the maintainer's successful read-only destination check after the A-release correction in #36. Bootstrap Apply is **complete**: the maintainer confirmed saved trusted-publisher fields and `RELEASE_SETUP=trusted`. The connection remains unvalidated, with its first successful hosted publication due before `2026-10-13T16:14:00Z`; hosted OIDC access is not yet demonstrated. The earlier preparation assessment and its pending observations below are historical; the subsequent operational record updates their dispositions without claiming an agent-authenticated npm session.
 
-Follow [the bootstrap procedure](../../../../docs/bootstrap.md). Record dated observations, public identifiers and sanitized outputs here; retain raw non-secret reports/assets outside Git or in ignored `.work/`. Never include tokens, OTPs, npm configuration files, browser sessions or credentials.
+Follow [the bootstrap procedure](../../../../../docs/bootstrap.md). Record dated observations, public identifiers and sanitized outputs here; retain raw non-secret reports/assets outside Git or in ignored `.work/`. Never include tokens, OTPs, npm configuration files, browser sessions or credentials.
 
 ## Dependency assessment — task 1.1
 
 The source is PR #33 at `a402561dc0d644d87592ebcf6f0f2c0e9074d596`, incorporating main merge `d6d4fbccf7fa28e089b1d10d7b6c14887a8ac4c4` of [#34](https://github.com/at-rama/sqlite-vector-wasm/pull/34). All 189 tracked files were acquired through GitHub repository access and independently matched against their Git blob SHAs before local checks. Local Git history was reconstructed for checking; it is not the remote commit history. No real production qualification was run in this session.
 
-The current [Allocation](../../../engineering/2026-10-04_sqlite-vec-wasm_allocation_edit-0.1.md) remains SHA-256 `0f92c88a4aac0d2a2ed317c0fc23b7b6a98be44485005d3678c1b4cc230c9c73`, unit `A-bootstrap`. Recomputed Capture fingerprints match its inputs:
+The current [Allocation](../../../../engineering/2026-10-04_sqlite-vec-wasm_allocation_edit-0.1.md) remains SHA-256 `0f92c88a4aac0d2a2ed317c0fc23b7b6a98be44485005d3678c1b4cc230c9c73`, unit `A-bootstrap`. Recomputed Capture fingerprints match its inputs:
 
 | Input | SHA-256 |
 | --- | --- |
@@ -98,7 +98,7 @@ The maintainer then retrieved the original published `publication.json` into a f
 Code de sortie : 0
 ```
 
-The [archived correction execution account](../archive/2026-10-11-recognize-npm-stage-placeholder/execution-evidence.md), section “Maintainer Codespace execution: task 3.2 completed”, retains the exact retrieval/check command, earlier failure, output and evidence limits. The checkout/up-to-date messages and independently observed branch head correlate execution with corrected tool commit `f19514f999189b653b5a38fd14e1c88ae7902c3d`; no separate maintainer `git rev-parse` output or process-start timestamp was supplied. That tool revision is distinct from the original published commit. Shared reader SHA-256 is `4c0f865f9a2b8b3f105bf9315fb1f4e57f9943e3c05bd181c8aaed7b815dd5aa`.
+The [archived correction execution account](../2026-10-11-recognize-npm-stage-placeholder/execution-evidence.md), section “Maintainer Codespace execution: task 3.2 completed”, retains the exact retrieval/check command, earlier failure, output and evidence limits. The checkout/up-to-date messages and independently observed branch head correlate execution with corrected tool commit `f19514f999189b653b5a38fd14e1c88ae7902c3d`; no separate maintainer `git rev-parse` output or process-start timestamp was supplied. That tool revision is distinct from the original published commit. Shared reader SHA-256 is `4c0f865f9a2b8b3f105bf9315fb1f4e57f9943e3c05bd181c8aaed7b815dd5aa`.
 
 The actual successful canonical check establishes matching authoritative tag/Release/provenance, real npm version/channel and exact archive size/SHA-256 across GitHub/npm. It invokes no publication, tag creation, repacking or repair. The agent's earlier independent registry-byte observation at `2026-10-11T15:36:36.306Z` also found `latest=0.1.0` and the accepted archive size/digest; it is corroborating partial evidence, not a substitute for the canonical check.
 
@@ -138,7 +138,7 @@ Initial success scenarios and configured trusted disposition are supported by th
 
 ## Documentation checks
 
-Official npm publish, scoped public package, login, configuration and trusted-publisher documentation, and GitHub CLI attestation verification documentation were read on 2026-10-11; exact links are in [the procedure](../../../../docs/bootstrap.md). Tarball publication/access/channel/script flags, signer/source verification, binding fields, direct-publish permission and the two-day initial validation deadline agree with those references and inspected repository commands. Recheck moving requirements at operational execution.
+Official npm publish, scoped public package, login, configuration and trusted-publisher documentation, and GitHub CLI attestation verification documentation were read on 2026-10-11; exact links are in [the procedure](../../../../../docs/bootstrap.md). Tarball publication/access/channel/script flags, signer/source verification, binding fields, direct-publish permission and the two-day initial validation deadline agree with those references and inspected repository commands. Recheck moving requirements at operational execution.
 
 All local links resolve; seven shell blocks pass Bash syntax checking, and the embedded JavaScript and Python pass syntax checks. `sh tools/check-repository.sh` passed on the staged procedure/evidence snapshot, including operational-canon byte identities and Capture/Allocation input fingerprints. OpenSpec CLI `1.14.0`, installed outside the checkout, returned **7 passed, 0 failed**, exit 0, for `OPENSPEC_TELEMETRY=0 openspec validate --all --strict` from this checkout's `.42p`. A prior validation displayed the same results but its process wait was rejected by automatic approval review because of telemetry to `edge.openspec.dev`; the completed rerun used the CLI's verified environment opt-out, which also suppresses its version-check network request. Its project-root check, status and Apply instructions resolved the same local project and `spec-driven` Change; no Store or generated skill refresh was used. Informational notices about existing long requirement text do not change that structural result.
 

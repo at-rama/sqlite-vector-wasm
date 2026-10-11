@@ -154,6 +154,6 @@ After matching first-publication completion and usable trusted setup, change `RE
 
 ## References and execution record
 
-The active Change's [execution record](../.42p/openspec/changes/bootstrap-npm-publication/execution-evidence.md) carries dated non-secret observations and pending/failure states. Keep procedure and evidence distinct. After archival, use the record moved with that Change.
+The archived Change's [execution record](../.42p/openspec/changes/archive/2026-10-11-bootstrap-npm-publication/execution-evidence.md) carries dated non-secret observations and pending/failure states. Keep procedure and evidence distinct.
 
 Command/settings references checked on 2026-10-11: [npm tarball publication](https://docs.npmjs.com/cli/v11/commands/npm-publish/), [scoped public packages](https://docs.npmjs.com/creating-and-publishing-scoped-public-packages/), [interactive login](https://docs.npmjs.com/cli/v11/commands/npm-login/), [npm configuration](https://docs.npmjs.com/cli/v11/using-npm/config/) and [GitHub attestation verification](https://cli.github.com/manual/gh_attestation_verify). [npm trusted publishing](https://docs.npmjs.com/trusted-publishers/) specifies binding, direct-publish permissions and initial configuration expiry. Recheck moving requirements at execution; they do not authorize publication or revise product obligations.
