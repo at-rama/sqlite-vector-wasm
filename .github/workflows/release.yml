@@ -1,0 +1,134 @@
+name: Distribution release
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, closed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  exercise:
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Select active Change qualification exercise
+        id: active
+        run: |
+          if test -f .42p/openspec/changes/publish-distribution/tasks.md; then
+            echo 'exercise=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'exercise=false' >> "$GITHUB_OUTPUT"
+          fi
+      - name: Install documented system prerequisites
+        if: steps.active.outputs.exercise == 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential python3 curl ca-certificates unzip xz-utils nodejs \
+            libglib2.0-0t64 libnss3 libnspr4 libatk1.0-0t64 libatk-bridge2.0-0t64 \
+            libdbus-1-3 libx11-6 libxcomposite1 libxdamage1 libxext6 libxfixes3 \
+            libxrandr2 libgbm1 libdrm2 libasound2t64
+      - name: Qualify selected initial package without publishers
+        if: steps.active.outputs.exercise == 'true'
+        run: sh tools/release.sh exercise
+      - name: Preserve available qualification evidence
+        if: always() && steps.active.outputs.exercise == 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: release-exercise-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            .work/acceptance/
+            .work/release/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 30
+
+  qualify:
+    if: github.event.action == 'closed' && github.event.pull_request.merged == true
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      handoff: ${{ steps.prepare.outputs.handoff }}
+      archive: ${{ steps.prepare.outputs.archive }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+      - name: Install documented system prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential python3 curl ca-certificates unzip xz-utils nodejs \
+            libglib2.0-0t64 libnss3 libnspr4 libatk1.0-0t64 libatk-bridge2.0-0t64 \
+            libdbus-1-3 libx11-6 libxcomposite1 libxdamage1 libxext6 libxfixes3 \
+            libxrandr2 libgbm1 libdrm2 libasound2t64
+      - name: Establish integration and qualify definitive archive
+        id: prepare
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: sh tools/release.sh prepare
+      - name: Preserve qualification handoff
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: release-qualified-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            .work/acceptance/
+            .work/release/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 30
+
+  publish:
+    needs: qualify
+    if: github.event.action == 'closed' && github.event.pull_request.merged == true
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      pull-requests: read
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: release-qualified-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .work/
+      - name: Install qualified publishing tools
+        run: bash tools/harness.sh install
+      - name: Attest the exact qualified archive
+        id: attest
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: ${{ needs.qualify.outputs.archive }}
+      - name: Publish authorized archive or report bounded npm handoff
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_SETUP: ${{ vars.RELEASE_SETUP }}
+          RELEASE_HANDOFF: ${{ needs.qualify.outputs.handoff }}
+          ATTESTATION_BUNDLE: ${{ steps.attest.outputs.bundle-path }}
+        run: sh tools/release.sh publish "$RELEASE_HANDOFF" "$ATTESTATION_BUNDLE"
+      - name: Preserve exact publication outcomes
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: release-outcome-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .work/release/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 30

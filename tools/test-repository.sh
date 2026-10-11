@@ -31,3 +31,9 @@ if [ -f tools/acceptance/run.mjs ]; then
     test -f tools/acceptance/tests/acceptance.test.mjs
     node --test tools/acceptance/tests/*.test.mjs
 fi
+
+# Release policy and injected publication controls never perform real publication.
+if [ -f tools/release/policy.mjs ]; then
+    test -f tools/release/tests/release.test.mjs
+    node --test tools/release/tests/*.test.mjs
+fi

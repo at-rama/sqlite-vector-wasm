@@ -2,11 +2,11 @@
 
 ## Identity, source, and examined scope
 
-Direct inputs, examined in full on 2026-10-10:
+Current direct inputs. The full reconciliation of 2026-10-10 is retained; the subsequent bounded review below re-examines the authorized release refinements and their affected contributions:
 
-- [Distribution Capture](2026-10-04_sqlite-vec-wasm_capture_edit-0.1.md), snapshot SHA-256 `6a1cf2ef1e475cc615ea760c8b823fc791d06cc968c807a09e78e412a2aa635a`.
+- [Distribution Capture](2026-10-04_sqlite-vec-wasm_capture_edit-0.1.md), snapshot SHA-256 `337273bf5a887939a8f25b9c0a2739c6ab85d705e9fbaeef57953215e8309e00`.
 - [Site Capture](2026-10-08_sqlite-vec-wasm_site_capture_edit-0.1.md), snapshot SHA-256 `4312d2c6f83bbfaae09cc9d23322d07f3d60f1e9203bc9588c4be5b24ba7b085`.
-- [Release/Watch Capture](2026-10-09_sqlite-vec-wasm_release-watch_capture_edit-0.1.md), snapshot SHA-256 `790317a6b6a151648f559b0e3df0e9430a422d67af48b039ce520d71b9ff4eda`.
+- [Release/Watch Capture](2026-10-09_sqlite-vec-wasm_release-watch_capture_edit-0.1.md), snapshot SHA-256 `91337974c24eefbf9031aa0a9bf866763cad5cbdba2a99d3739362010e15a944`.
 
 Reference prefixes `D`, `S` and `W` identify these scopes; a handle is local to its Capture. The links above retrieve the current input files; their fingerprints identify the exact bytes examined. The immutable comparison revision below preserves the preceding state, not these refreshed editorial snapshots. Instituted sources and decisions retain authority. Captures project them; this Allocation attributes responsibility without instituting requirements or certifying realization. Explicit scoped supersessions recorded in the Captures govern the revised release/watch matter. Related sources and projections are not independent corroboration.
 
@@ -17,6 +17,8 @@ A unit is a responsibility boundary, not a prescribed component. Its references 
 Distribution-facing responsibilities share [D/C-purpose]'s runtime/selected-engine boundary and [D/C-nonmodification]'s permitted-glue boundary. Candidate and publication responsibilities retain [D/C-autonomy], [D/C-failure] and [W/C-determinism]'s human-authority and mandatory-gate boundaries. These apply through the compositions below; passing checks or a merge alone do not establish acceptance of the released payload. [D/C-obsolescence] and [D/R-engine] remain lifecycle/reconsideration context, without an automatic replacement or retirement implementation unit.
 
 The [technical architecture](2026-10-04_sqlite-vec-wasm_technical_architecture_edit-0.1.md) supplies downstream realization context, not design authority or completion evidence. Historical Changes retain their own contracts, snapshots and evidence. The current contract impacts recorded below are distinct from Allocation coverage and do not constitute post-Apply Verification.
+
+The user's subsequent `S-release-refinement` decisions, projected in Distribution `C-release`/`C-bootstrap` and Release/Watch `C-semver`/`C-publication`, refine the alpha required-base reference and bounded initial npm path. The incremental review covers `A-release` policy/publication/completion, `A-watch` and `A-updates` consumption of that common policy, and `A-bootstrap` setup/manual first-npm handoff. Their existing qualified references cover these contributions without new units or transferred duties. `A-release` owns read-only completion checking; `A-bootstrap` performs the unavoidable manual operation. Other inputs, boundaries, historical contracts and evidence are unchanged; this incremental review does not renew a global verification verdict. The active `publish-distribution` Change is reconciled against these refreshed snapshots; future watch/update/bootstrap Changes must consume the current references.
 
 ## Allocation units
 
@@ -74,7 +76,7 @@ Own the shared distribution calculation and publish the authorized, qualified pa
 
 **Qualified references:** [D/C-purpose], distribution publication boundary; [D/C-release], full identity/envelope/publication obligations; [D/C-autonomy], post-integration trigger; [D/C-failure], mandatory publication stop; [D/C-bootstrap], normal publication/authentication/attestation provisions and bounded exception relationship; [W/C-determinism], shared policy; [W/C-version-identity], [W/C-semver] and [W/C-channels], distribution/code identity, numerical/maturity/initial/alpha rules, channel classification and progression; [W/C-publication], definitive recalculation, uniqueness/collision and revision/payload/evidence binding; [W/C-provenance], full publication composition; [D/R-updates] and [W/R-frugality], applicable constraints/rationale.
 
-**Boundary and dependencies:** supply policy/publication state to `A-watch` and `A-updates`; consume authorized integration context from `A-updates`, exact payload from `A-package` and applicable evidence from `A-acceptance`. Coordinate payload changes and renewed checks before publication. `A-bootstrap` supports initial setup; published stable archives feed `A-site`. Policy ownership assigns responsibility without requiring a separate engine/service or relaxing checks.
+**Boundary and dependencies:** supply policy/publication state to `A-watch` and `A-updates`; consume authorized integration context from `A-updates`, exact payload from `A-package` and applicable evidence from `A-acceptance`. Coordinate payload changes and renewed checks before publication. `A-bootstrap` establishes setup or the bounded first-npm exception and receives the accepted archive; `A-release` verifies the initial npm completion without new publication side effects. Published stable archives feed `A-site`. Policy ownership assigns responsibility without requiring a separate engine/service or relaxing checks.
 
 ### A-bootstrap — Initial publication setup
 
