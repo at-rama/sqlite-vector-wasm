@@ -2,9 +2,9 @@
   "schemaVersion": 1,
   "sqlite": "3.53.4",
   "sqliteVec": "0.1.9",
-  "releaseComment": "Initial stable distribution",
+  "releaseComment": "Documentation and npm metadata update",
   "preparation": {
-    "runId": 38139256624,
-    "url": "https://github.com/at-rama/sqlite-vector-wasm/actions/runs/38139256624"
+    "runId": 38185964502,
+    "url": "https://github.com/at-rama/sqlite-vector-wasm/actions/runs/38185964502"
   }
 }
