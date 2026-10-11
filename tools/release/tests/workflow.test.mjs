@@ -22,7 +22,13 @@ test('hosted workflow pins actions, separates read qualification/write publicati
   for(const [,action,ref] of actions){assert.match(ref,/^[0-9a-f]{40}$/);assert.ok(action.startsWith('actions/'));}
   assert.ok(!workflow.includes('workflow_dispatch:') && !workflow.includes('NODE_AUTH_TOKEN') && !workflow.includes('NPM_TOKEN'));
   assert.ok(workflow.includes('github.event.pull_request.merge_commit_sha'));
-  const qualification=workflow.split('  qualify:')[1].split('  publish:')[0];assert.ok(!qualification.includes('write'));
+  const detection=workflow.split('  candidate:')[1].split('  qualify:')[0];
+  assert.ok(detection.includes("github.event.action == 'closed' && github.event.pull_request.merged == true"));
+  assert.ok(detection.includes('sh tools/release.sh candidate') && detection.includes('pull-requests: read'));
+  assert.ok(detection.includes('present: ${{ steps.detect.outputs.candidate }}'));
+  const qualification=workflow.split('  qualify:')[1].split('  publish:')[0];
+  assert.ok(!qualification.includes('write'));
+  assert.ok(qualification.includes('needs: candidate') && qualification.includes("if: needs.candidate.outputs.present == 'true'"));
   const publication=workflow.split('  publish:')[1];assert.ok(publication.includes('needs: qualify') && publication.includes('id-token: write') && publication.includes('attestations: write'));
   assert.ok(publication.includes('github.event.action == \'closed\' && github.event.pull_request.merged == true'));
   assert.ok(workflow.includes('sh tools/release.sh exercise') && workflow.includes('ref: ${{ github.event.pull_request.head.sha }}'));

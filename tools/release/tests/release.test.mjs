@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { calculate, channelFor, upstream, signalFor, distribution, compareUpstream } from '../policy.mjs';
 import { readState, pages, npmState, sha256 } from '../state.mjs';
-import { descriptor, integratedContext } from '../context.mjs';
+import { candidateDescriptorChanged, descriptor, integratedContext } from '../context.mjs';
 
 const commit = 'a'.repeat(40);
 const pair = (sqliteVec = '0.1.9', sqlite = '3.53.4') => ({ sqlite, sqliteVec });
@@ -101,6 +101,19 @@ test('descriptor validates exact handoff and treats comments as data', () => {
   assert.throws(() => descriptor({...candidate(),preparation:{runId:18,url:'https://github.com/a/b/actions/runs/17'}},lock()));
 });
 
+test('release candidate routing checks the exact changed descriptor and fails closed on incomplete diffs', async () => {
+  const check = (files, changed_files = files.length, status = 200) => candidateDescriptorChanged({
+    repository:'a/b',pullRequest:{number:37,changed_files},get:async()=>({status,data:files,headers:{}}),
+  });
+  assert.equal(await check([{filename:'README.md',status:'modified'}]),false);
+  for (const status of ['added','modified'])
+    assert.equal(await check([{filename:'inputs/release.json',status}]),true);
+  for (const status of ['removed','renamed'])
+    assert.equal(await check([{filename:'inputs/release.json',status}]),false);
+  await assert.rejects(check([{filename:'README.md',status:'modified'}],2),/Truncated candidate file list/);
+  await assert.rejects(check([],3001),/Truncated candidate file list/);
+  await assert.rejects(check([],0,403),/GitHub state unavailable/);
+});
 test('integrated context requires human merge, exact revision and changed descriptor', async () => {
   const pr = {number:1,merged:true,state:'closed',merged_by:{type:'User'},base:{ref:'main',repo:{full_name:'a/b'}},merge_commit_sha:commit,changed_files:1};
   const event = {action:'closed',repository:{full_name:'a/b'},pull_request:pr};

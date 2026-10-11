@@ -14,6 +14,13 @@ export function descriptor(value, lock) {
   return { selection: { sqlite: value.sqlite, sqliteVec: value.sqliteVec }, comment: value.releaseComment, preparation: value.preparation };
 }
 
+export async function candidateDescriptorChanged({ repository, pullRequest, get }) {
+  assert.ok(Number.isSafeInteger(pullRequest?.number) && pullRequest.number > 0, 'Missing candidate PR identity');
+  assert.ok(Number.isSafeInteger(pullRequest.changed_files) && pullRequest.changed_files >= 0 && pullRequest.changed_files <= 3000, 'Truncated candidate file list');
+  const files = await pages(repository, `pulls/${pullRequest.number}/files`, get);
+  assert.equal(files.length, pullRequest.changed_files, 'Truncated candidate file list');
+  return files.some(file => file.filename === 'inputs/release.json' && ['added','modified'].includes(file.status));
+}
 export async function integratedContext({ repository, event, get, readAt }) {
   repositoryName(repository);
   assert.equal(event.action, 'closed');
@@ -29,9 +36,7 @@ export async function integratedContext({ repository, event, get, readAt }) {
   assert.ok(pr.merged && pr.state === 'closed' && pr.base?.ref === 'main' && pr.base.repo.full_name === repository, 'Unmerged or unrelated PR');
   assert.equal(pr.merge_commit_sha, event.pull_request.merge_commit_sha, 'Integration revision changed');
   assert.match(pr.merge_commit_sha || '', commitPattern);
-  const files = await pages(repository, `pulls/${number}/files`, get);
-  assert.ok(pr.changed_files <= 3000 && files.length === pr.changed_files, 'Truncated candidate file list');
-  assert.ok(files.some(file => file.filename === 'inputs/release.json' && ['added','modified'].includes(file.status)), 'Candidate descriptor was not introduced/updated');
+  assert.ok(await candidateDescriptorChanged({ repository, pullRequest: pr, get }), 'Candidate descriptor was not introduced/updated');
   const lock = JSON.parse(await readAt(pr.merge_commit_sha, 'inputs/sources.lock.json'));
   const selected = descriptor(JSON.parse(await readAt(pr.merge_commit_sha, 'inputs/release.json')), lock);
   assert.ok(selected.preparation.url.startsWith(`https://github.com/${repository}/actions/runs/`), 'Preparation repository mismatch');
