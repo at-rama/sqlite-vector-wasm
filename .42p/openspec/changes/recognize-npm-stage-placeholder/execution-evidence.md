@@ -28,7 +28,7 @@ The independently constructed registry/tag/Release fixtures exercise raw observa
 
 Inspection confirms A-updates imports `readState` in `tools/updates/cli.mjs` and calls the same `calculate` for preflight and refreshed qualification in `tools/updates/run.mjs`. No interface adjustment is required. The release context and workflow retain the human-merged candidate and changed `inputs/release.json` trigger; this correction supplies no candidate input. Ordinary hosted OIDC publication, signed GitHub attestation generation, production/browser acceptance and trusted-publisher setup are unchanged and are not rerun by this state-reader correction. Passing synthetic controls does not establish a new live trusted release, independent cryptographic verification or product requalification. Test fixtures and implementation share repository authorship; fixed fixture observations are independent of production state construction, but validators/calculation and existing adapters are shared mechanisms.
 
-## Existing publication: partial read-only observations; task 3.2 blocked
+## Existing publication: initial connector observations
 
 At `2026-10-11T15:36:36.306Z`, a Node.js invocation of the corrected `npmState(httpReader())`, followed by `download`/`sha256` on the real `0.1.0` registry archive, exited 0 and returned this sanitized observation:
 
@@ -40,8 +40,32 @@ GitHub connector GETs independently observed published stable Release `409659401
 
 The available GitHub `fetch` capability returns UTF-8/JSON and explicitly excludes binary downloads. GET attempts through that connector at the published browser asset URLs returned `NOT_FOUND` / GitHub API 404; the API asset endpoint returned metadata, not archive octets. Workflow artifact ZIP downloading is available but does not establish the current Release asset bytes. Preserve the requested GitHub access boundary rather than substitute another remote repository client or treat artifact/registry bytes as Release bytes.
 
-Consequently the actual corrected command `sh tools/release.sh check-initial PUBLICATION.json` has **not executed against both destinations** here: invocation/output/exit status are unavailable, rather than a fabricated complete result. Task 3.2 remains unchecked. The npm-only invocation is evidence of the repaired registry reader, not canonical completion. No publisher, tag, deletion, dist-tag or destination repair operation was invoked.
+The connector-only attempt could not execute actual corrected `check-initial` against both destinations. Task 3.2 was left unchecked at implementation commit `f19514f999189b653b5a38fd14e1c88ae7902c3d`. The npm-only invocation above was partial evidence, not canonical completion. The following maintainer execution resolves this access limitation without changing destination state.
 
-For the distinct A-bootstrap handoff (#33), the remaining action is to execute `check-initial` in the maintainer's Codespace using corrected #36 tooling and the retained original `publication.json`, then record invocation time, tool commit, output and exit status. Its published source must remain `ef202b77e120332703ebeba67501ea91bfab667e`; require the original accepted size/digest above and exit 0 with `status=complete`. Pending/failure remains non-success. No publication retry is indicated.
+## Maintainer Codespace execution: task 3.2 completed
 
-Post-Apply 42P Verification and native Archive have not been invoked. Apply is 5/6 tasks complete with the live completion task blocked; these checks do not authorize integration or publication.
+The maintainer reported successful read-only execution at `2026-10-11T17:41:40+02:00` (`15:41:40Z`). Execution followed the replacement command supplied at approximately `17:40:52+02:00`; the exact process-start timestamp and transient directory name were not supplied. These times identify the execution/report interval, not an invented shell timestamp.
+
+The prior checkout output named `docs/propose-npm-stage-placeholder`, confirmed it was up to date with origin, and reported `Already up to date`. The GitHub connector independently confirmed branch head `f19514f999189b653b5a38fd14e1c88ae7902c3d` before and after the report. This correlates the reported command with that corrected tool revision; a separate maintainer `git rev-parse HEAD` transcript was not supplied. The shared-reader SHA-256 is recorded above. The existing Codespace harness had previously identified Node.js `24.19.0` / npm `11.17.0`; this command adds no harness installation or npm publication. Its shell runtime versions were not freshly printed.
+
+The first attempt failed with `ENOENT` opening `/publication.json` and exit 1 because `bootstrap_assets` was unset in that terminal. That failure was input acquisition, not a destination-verification result. The replacement command retrieves the original published record into a fresh directory and executes corrected tooling from the repository:
+
+```sh
+bootstrap_assets="$(mktemp -d)" &&
+gh release download dist/v0.1.0 --repo at-rama/sqlite-vector-wasm --pattern publication.json --dir "$bootstrap_assets" &&
+sh tools/release.sh check-initial "$bootstrap_assets/publication.json"
+printf 'Code de sortie : %s\n' "$?"
+```
+
+Maintainer-supplied sanitized output:
+
+```text
+{"status":"complete","version":"0.1.0"}
+Code de sortie : 0
+```
+
+This is actual execution evidence supplied by the maintainer, not a local agent rerun or fixture result. The existing read-only implementation checks the authoritative GitHub tag commit, published Release maturity, exact `publication.json` identity, and both GitHub/npm archive size/SHA-256 before returning `complete`. It checks the original source `ef202b77e120332703ebeba67501ea91bfab667e`, Release `409659401`, `dist/v0.1.0`, size `1147792`, SHA-256 `f730ffe041730f8f98306004e488fe97dd64bf08646c380d1a7a30f033a80ff9`, and real npm `0.1.0` on `latest`. The correction commit does not relabel the published code. The command has no publisher, tag, repack, repair, deletion or dist-tag mutation path.
+
+For the distinct A-bootstrap handoff (#33), canonical read-only initial completion now reports success with corrected #36 tooling. This supplies the bounded completion result; it does not declare all A-bootstrap account/trusted-publisher obligations complete or authorize another publication. Post-integration use of corrected tooling remains distinct from this branch execution.
+
+Apply is 6/6 tasks complete. Post-Apply 42P Verification and native Archive have not been invoked; completion evidence does not authorize integration or publication.
