@@ -92,6 +92,19 @@ test('scoped package and SemVer build metadata survive real npm packing', async 
   assert.equal(metadata.name,options.name);assert.equal(metadata.version,options.version);
 });
 
+test('selected scoped distribution installs offline and resolves every runtime subpath', async t => {
+  const options=await fixture(t);options.name='@at-rama/sqlite-vector-wasm';options.version='0.1.0';
+  const result=await assemble(options);
+  const consumer=join(options.repository,'scoped-consumer');await mkdir(consumer);
+  await writeFile(join(consumer,'package.json'),'{"private":true}');
+  await execute('npm',['install','--offline','--ignore-scripts','--no-audit','--no-fund','--package-lock=false',result.archive.path],{cwd:consumer});
+  const require=createRequire(join(consumer,'probe.cjs'));
+  const metadata=JSON.parse(await readFile(join(consumer,'node_modules/@at-rama/sqlite-vector-wasm/package.json')));
+  assert.equal(metadata.name,'@at-rama/sqlite-vector-wasm');assert.equal(metadata.version,'0.1.0');
+  for(const name of runtimeNames)assert.equal(hash(await readFile(require.resolve(`@at-rama/sqlite-vector-wasm/${name}`))),
+    options.handoff.runtimeFiles.find(f=>f.name===name).sha256);
+});
+
 test('invalid schema, source identities, configuration and inventory fail before packing', async t => {
   const f = await fixture(t);
   const cases = [h => h.schemaVersion=2, h => h.inputs.lockDigest.value='0'.repeat(64), h => h.inputs.sqlite.version='0.0.0',

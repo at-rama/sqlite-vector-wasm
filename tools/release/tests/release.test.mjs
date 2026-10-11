@@ -33,6 +33,9 @@ test('exact upstreams, four channels, numerical signals and suffix ordering', ()
 });
 
 test('stable initial, default patch, simultaneous signals and maturity', () => {
+  assert.equal(calc(pair()).name, '@at-rama/sqlite-vector-wasm');
+  assert.equal(calc(pair(), state()).name, '@at-rama/sqlite-vector-wasm');
+  assert.equal(calc(pair('0.1.10-alpha.1'), state()).name, '@at-rama/sqlite-vector-wasm');
   assert.equal(calc(pair()).version, '0.1.0');
   assert.throws(() => calc(pair('0.1.10-alpha.1')), /Initial experimental/);
   assert.equal(calc(pair(), state()).version, '0.2.1');

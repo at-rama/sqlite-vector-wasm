@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { channelFor, distribution, commitPattern, validateSnapshot } from './policy.mjs';
+import { channelFor, distribution, commitPattern, validateSnapshot, npmPackageName } from './policy.mjs';
 
 export const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 export function repositoryName(value) {
@@ -40,18 +40,18 @@ export async function pages(repository, path, get) {
 }
 
 export async function npmState(get, { allowAbsent = true } = {}) {
-  const response = await get('https://registry.npmjs.org/sqlite-vector-wasm');
+  const response = await get(`https://registry.npmjs.org/${npmPackageName.replaceAll('/', '%2f')}`);
   if (response.status === 404 && allowAbsent) {
     assert.ok(response.data?.error === 'Not found', 'Unrecognized npm absence');
-    return { name: 'sqlite-vector-wasm', versions: {}, 'dist-tags': {} };
+    return { name: npmPackageName, versions: {}, 'dist-tags': {} };
   }
   assert.equal(response.status, 200, `npm state unavailable (${response.status})`);
-  assert.equal(response.data?.name, 'sqlite-vector-wasm', 'Unexpected npm package');
+  assert.equal(response.data?.name, npmPackageName, 'Unexpected npm package');
   assert.ok(response.data.versions && typeof response.data.versions === 'object' && !Array.isArray(response.data.versions));
   assert.ok(response.data['dist-tags'] && typeof response.data['dist-tags'] === 'object');
   for (const [version, metadata] of Object.entries(response.data.versions)) {
     distribution(version);
-    assert.equal(metadata.name, 'sqlite-vector-wasm'); assert.equal(metadata.version, version);
+    assert.equal(metadata.name, npmPackageName); assert.equal(metadata.version, version);
     assert.ok(typeof metadata.dist?.tarball === 'string', 'Missing npm archive');
   }
   return response.data;
@@ -66,7 +66,7 @@ export async function download(url, get) {
 
 export function publicationIdentity(evidence) {
   assert.equal(evidence?.schemaVersion, 1, 'Unsupported publication provenance');
-  assert.equal(evidence.name, 'sqlite-vector-wasm');
+  assert.equal(evidence.name, npmPackageName);
   const parsed = distribution(evidence.version);
   assert.equal(evidence.tag, `dist/v${evidence.version}`);
   assert.equal(evidence.channel, parsed.alpha === null ? 'latest' : 'next');
