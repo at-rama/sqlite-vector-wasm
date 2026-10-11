@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 
+export const npmPackageName = '@at-rama/sqlite-vector-wasm';
+
 const number = '(?:0|[1-9][0-9]*)';
 const identifier = '(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)';
 const upstreamPattern = new RegExp(`^(${number})\\.(${number})\\.(${number})(?:\\.(${number}))?(?:-(${identifier}(?:\\.${identifier})*))?$`);
@@ -128,6 +130,6 @@ export function calculate({ selection, snapshot, comment = '' }) {
   assert.ok(upstream(selection.sqliteVec).numeric[0] !== 0 || distribution(version).numeric[0] === 0, 'Maturity ceiling conflicts with channel progression');
   const tag = `dist/v${version}`;
   assert.ok(!snapshot.tags.includes(tag) && !snapshot.releaseTags.includes(tag) && !snapshot.npmVersions.includes(version), `Publication collision: ${version}`);
-  return { name: 'sqlite-vector-wasm', version, tag, channel, signal: signal ? ['PATCH','MINOR','MAJOR'][signal - 1] : 'INITIAL',
+  return { name: npmPackageName, version, tag, channel, signal: signal ? ['PATCH','MINOR','MAJOR'][signal - 1] : 'INITIAL',
     requiredBase, initial: !stable, rollback, stableReference: stable?.version || null, channelReference: reference?.version || null };
 }

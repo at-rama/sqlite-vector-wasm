@@ -16,7 +16,7 @@ version `0.0.0-test`. A caller preparing an exact release artifact can provide
 its already selected name and version without changing the acceptance procedure:
 
 ```sh
-bash tools/acceptance.sh --name sqlite-vector-wasm --version 0.1.0
+bash tools/acceptance.sh --name @at-rama/sqlite-vector-wasm --version 0.1.0
 ```
 
 This command installs and verifies fresh tools, installs locked test dependencies,

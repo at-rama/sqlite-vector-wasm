@@ -21,7 +21,8 @@ jobs:
       - name: Select active Change qualification exercise
         id: active
         run: |
-          if test -f .42p/openspec/changes/publish-distribution/tasks.md; then
+          if test -f .42p/openspec/changes/publish-distribution/tasks.md ||
+             test -f .42p/openspec/changes/scope-npm-distribution-identity/tasks.md; then
             echo 'exercise=true' >> "$GITHUB_OUTPUT"
           else
             echo 'exercise=false' >> "$GITHUB_OUTPUT"

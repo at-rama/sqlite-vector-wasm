@@ -6,7 +6,7 @@ import { runtimeNames } from '../../build/config.mjs';
 import { productionStages, browserCases } from '../../acceptance/contracts.mjs';
 
 // Synthetic runtime/acceptance records exercise controls, never qualify a product.
-export async function releaseFixture(t, { version = '0.1.0' } = {}) {
+export async function releaseFixture(t, { version = '0.1.0', name = '@at-rama/sqlite-vector-wasm' } = {}) {
   const repository = await mkdtemp(join(tmpdir(),'release-test-'));
   t.after(()=>rm(repository,{recursive:true,force:true}));
   for (const file of ['inputs/sources.lock.json','tools/harness.sh','tools/build/config.mjs','tools/build/extra-init.c.in','tools/harness/package-lock.json','LICENSE','tools/package']) {
@@ -21,7 +21,7 @@ export async function releaseFixture(t, { version = '0.1.0' } = {}) {
   const build = {tools:Object.fromEntries(['cc','make','emcc','wasm-strip','wasm-opt','node','npm'].map(key=>[key,`${key} fixture 4.0.23`])),platform:'fixture Linux x86_64',amalgamation:['make'],configure:['configure'],wasm:['make']};
   for (const [field,path] of [['harnessSha256','tools/harness.sh'],['configSha256','tools/build/config.mjs'],['templateSha256','tools/build/extra-init.c.in'],['dependencyLockSha256','tools/harness/package-lock.json']]) build[field]=hash(await readFile(join(repository,path)));
   const constructed = {schemaVersion:1,inputs,build,runtimeDirectory,runtimeFiles};
-  const packaged = await assemble({handoff:constructed,repository,name:'sqlite-vector-wasm',version});
+  const packaged = await assemble({handoff:constructed,repository,name,version});
   const bundle = join(repository,'bundle'); await mkdir(bundle); await cp(packaged.archive.path,join(bundle,'payload.tgz'));
   const commit = 'a'.repeat(40);
   const report = {schemaVersion:1,verdict:'passed',package:packaged.package,source:{commit,dirty:false},archive:packaged.archive,
