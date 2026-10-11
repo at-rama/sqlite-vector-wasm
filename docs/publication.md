@@ -10,6 +10,8 @@ Import `calculate` from [policy](../tools/release/policy.mjs) or invoke `sh tool
 
 Output contains name/version/tag/channel, signal, required numerical base, initial/rollback flags and stable/channel reference versions. Same input/state gives the same result; there is no caller channel/version override, AI, reservation, lock or second code version. Watch/preparation should use this entry point with the same state reader, not maintain another policy. They retain their own eligibility/initiation responsibilities.
 
+The shared reader recognizes npm's `0.0.0-stage` placeholder only with the exact scoped name, matching entry/version and boolean `stub: true`. It retains that metadata but excludes it from distribution history. A placeholder-only package or a `latest`/`next` reference to it blocks ordinary calculation. Other unsupported versions and inconsistent metadata fail; real publications retain their identity, provenance and exact-byte checks.
+
 Two stable upstreams select `latest`; any prerelease selects `next`. Numerical changes ignore suffixes, using maximum MAJOR/MINOR/PATCH with default PATCH and a MAJOR-to-MINOR cap while sqlite-vec is `0.x`. Experimental required bases use current `latest` and selected numerical changes relative to its stable composition. An open series continues if that required base is less than or equal to its base; otherwise the required higher base starts at `alpha.1`. A stable publication reaching the alpha base closes it. Rollback detection retains the target channel reference and requires a comment. Tags/npm/Release collisions fail, including partial attempts. The selected initial effective publication is stable `0.1.0` with two stable upstreams; prerelease fixtures authorize no initial experimental release.
 
 ## Candidate handoff and integrated revision
@@ -60,6 +62,8 @@ sh tools/release.sh check-initial PUBLICATION.json
 ```
 
 This reads GitHub tag/Release/assets and npm version/channel/archive, compares the accepted identities and bytes, and reports complete success only for matching destinations. Absent npm stays pending; inaccessible/inconsistent evidence is non-success. It performs no publication, overwrite or other mutation and cannot repair an arbitrary partial attempt. Its input must be the selected initial `0.1.0` record. New publication attempts always retain uniqueness checks. Live OIDC/registry publication remains unexercised until an authorized integrated candidate and A-bootstrap setup exist.
+
+A recognized placeholder can coexist with the real initial distribution. Completion remains pending until `0.1.0` exists, then requires that real version on `latest` and matching destination evidence and archive bytes. The placeholder itself supplies no completion evidence.
 
 Mechanism references: [npm trusted publishing](https://docs.npmjs.com/trusted-publishers/), [npm provenance](https://docs.npmjs.com/generating-provenance-statements/) and [GitHub attestations](https://github.com/actions/attest/tree/1e69f48acb82d1966a394da916b4c1698aa569d6). Moving documentation cannot revise product obligations.
 

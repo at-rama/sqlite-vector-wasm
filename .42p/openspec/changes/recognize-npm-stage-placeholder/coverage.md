@@ -47,3 +47,9 @@ The modified requirement's original state/uniqueness clauses map to D/C-release 
 - Real publication inconsistent despite placeholder → unchanged identity, provenance, channel, revision and byte obligations; tasks 1.2/2.1/3.2.
 
 Proposal/design choices implement these contributions at the shared reader boundary. Tasks 3.1–3.2 renew checks/evidence for those obligations under the repository canon, not a new product gateway or fourth Verification control. Existing collision/inconsistency scenarios remain complete. No artifact grants publication/integration authority or claims that an actual future normal trusted release has occurred. The proposed mapping accounts for the full relevant unit through delta or retained baseline; its semantic adequacy remains subject to the separately invoked derivation examination.
+
+## Apply evidence
+
+The separately invoked pre-Apply derivation review of planning head `61a3cc993a7c1838d5cccf57d454afd5bd760e06` found both scoped directions complete (100%) against the retained baseline and delta. No semantic planning or supplying-source revision was made during Apply; the source fingerprints above remain unchanged. That review is distinct from post-Apply Verification.
+
+[Executed Apply evidence](execution-evidence.md) connects the shared reader and registered controls to tasks 1.1–2.2 and records repository/test/strict-validation outcomes for 3.1. Task 3.2 remains blocked: the corrected reader has observed the real npm archive, but actual `check-initial` against both destinations has not executed because the GitHub connector cannot retrieve Release asset octets. This partial observation does not establish initial completion or A-bootstrap acceptance.
