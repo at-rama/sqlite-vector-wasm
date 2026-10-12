@@ -7,6 +7,7 @@ import { spawnSync } from 'node:child_process';
 import { root, execute } from '../../package/package.mjs';
 import { descriptor } from '../context.mjs';
 import { githubServices } from '../services.mjs';
+import { sha256 } from '../state.mjs';
 
 test('documented candidate schema is executable and shared calculator CLI has no publication path',async t=>{
   const documentation=await readFile(join(root,'docs/publication.md'),'utf8');
@@ -21,14 +22,8 @@ test('hosted workflow pins actions, separates read qualification/write publicati
   const workflow=await readFile(join(root,'.github/workflows/release.yml'),'utf8');
   const actions=[...workflow.matchAll(/uses: ([^\s]+)@([^\s]+)/g)];assert.ok(actions.length>=6);
   for(const [,action,ref] of actions){assert.match(ref,/^[0-9a-f]{40}$/);assert.ok(action.startsWith('actions/'));}
-  assert.ok(workflow.includes('workflow_dispatch:') && !workflow.includes('NODE_AUTH_TOKEN') && !workflow.includes('NPM_TOKEN'));
-  assert.ok(workflow.includes("if: github.event_name == 'pull_request' && github.event.action != 'closed'"));
-  const recovery=workflow.split('  recover-011:')[1];
-  assert.ok(recovery.includes("github.event_name == 'workflow_dispatch'"));
-  assert.ok(recovery.includes("github.ref == 'refs/heads/main'"));
-  assert.ok(recovery.includes("run: sh tools/release.sh recover-011"));
-  assert.ok(recovery.includes('id-token: write') && recovery.includes('attestations: read') && !recovery.includes('npm publish'));
-  assert.ok(!recovery.includes('actions/attest@') && !recovery.includes('sh tools/release.sh publish'));
+  assert.ok(!workflow.includes('workflow_dispatch:') && !workflow.includes('recover-011:'));
+  assert.ok(!workflow.includes('NODE_AUTH_TOKEN') && !workflow.includes('NPM_TOKEN'));
   assert.ok(workflow.includes('github.event.pull_request.merge_commit_sha'));
   const detection=workflow.split('  candidate:')[1].split('  qualify:')[0];
   assert.ok(detection.includes("github.event.action == 'closed' && github.event.pull_request.merged == true"));
@@ -95,4 +90,31 @@ test('HTTP/qualified npm adapters use non-forced identities, exact uploads and e
   const probe=spawnSync('npm',['--version'],{encoding:'utf8',env:{...process.env,...commands[0].options.env}});
   assert.equal(probe.status,0,probe.stderr);
   assert.match(probe.stdout.trim(),/^[0-9]+\.[0-9]+\.[0-9]+$/);
+});
+
+test('npm post-publication inspection treats slow visibility as pending, not broken integrity',async()=>{
+  const bytes=Buffer.from('exact archive contents');
+  const evidence={name:'@at-rama/sqlite-vector-wasm',version:'0.1.1',channel:'latest',
+    archive:{size:bytes.length,sha256:sha256(bytes)}};
+  const tarball='https://registry.npmjs.org/@at-rama/sqlite-vector-wasm/-/sqlite-vector-wasm-0.1.1.tgz';
+  const version={name:evidence.name,version:evidence.version,dist:{tarball,attestations:{provenance:true}}};
+  const metadata=(versions={'0.1.1':version},latest='0.1.1')=>
+    ({name:evidence.name,versions,'dist-tags':{latest}});
+  const client=(m,archive=bytes)=>githubServices({repository:'a/b',token:'test',directory:'/unused',
+    get:async url=>url===tarball?{status:200,data:archive}:{status:200,data:m},environment:{}});
+  assert.equal((await client(metadata()).verifyNpm(evidence)).status,'verified');
+  const stale=await client(metadata({'0.1.1':version},'0.1.0')).verifyNpm(evidence);
+  assert.equal(stale.status,'verification-pending');assert.equal(stale.observed,'0.1.0');
+  assert.equal((await client(metadata({})).verifyNpm(evidence)).status,'verification-pending');
+  // Report an unavailable tarball as pending even if version metadata has propagated.
+  const missingArchive=githubServices({repository:'a/b',token:'test',directory:'/unused',environment:{},
+    get:async url=>url===tarball?{status:404,data:{}}:{status:200,data:metadata()}});
+  assert.equal((await missingArchive.verifyNpm(evidence)).status,'verification-pending');
+  const offline=githubServices({repository:'a/b',token:'test',directory:'/unused',environment:{},
+    get:async()=>{throw Error('registry is unavailable');}});
+  assert.equal((await offline.verifyNpm(evidence)).status,'verification-pending');
+  await assert.rejects(client(metadata({'0.1.1':version},'0.1.0'),Buffer.from('altered bytes')).verifyNpm(evidence),/archive (size|digest) mismatch/);
+  const absentProvenance={...version,dist:{tarball}};
+  await assert.rejects(client(metadata({'0.1.1':absentProvenance})).verifyNpm(evidence),/npm provenance/);
+  await assert.rejects(client({versions:{},'dist-tags':{latest:'0.1.1'}}).verifyNpm(evidence),/Unexpected npm package/);
 });

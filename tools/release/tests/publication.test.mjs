@@ -17,7 +17,7 @@ async function qualified(t) {
 function destinations(fixture,{bootstrap=false,failAt=null}={}) {
   const calls=[];
   const call = (name,result={}) => async (...args)=>{calls.push({name,args});if(name===failAt)throw Error(`injected ${name}`);return result;};
-  return {calls,initialNpmException:bootstrap,assertReady:call('ready'),createTag:call('tag'),createDraft:call('draft',{id:1}),upload:async (release,name,path)=>{assert.ok((await readFile(path)).length);return call(name)();},npmPublish:call('npm'),finalize:call('github'),verifyGitHub:call('github-identity'),verifyNpm:call('npm-identity')};
+  return {calls,initialNpmException:bootstrap,assertReady:call('ready'),createTag:call('tag'),createDraft:call('draft',{id:1}),upload:async (release,name,path)=>{assert.ok((await readFile(path)).length);return call(name)();},npmPublish:call('npm'),finalize:call('github'),verifyGitHub:call('github-identity'),verifyNpm:call('npm-identity',{status:'verified'})};
 }
 
 test('exact accepted archive remains independently inspectable after original build is gone',async t=>{
@@ -70,6 +70,23 @@ test('steady-state publication sends exact bytes, generated provenance and comme
   assert.equal(services.calls.find(c=>c.name==='npm').args[0],join(f.bundle,'payload.tgz'));
   assert.equal(services.calls.find(c=>c.name==='npm').args[1],'latest');
   assert.ok(f.handoff.notes.includes(f.context.comment));assert.deepEqual(f.evidence.sourceLock,f.report.sourceLock);assert.deepEqual(f.evidence.build,f.constructed.build);
+});
+
+test('post-publish npm visibility lag records a successful publication requiring later inspection',async t=>{
+  const f=await qualified(t),services=destinations(f);
+  services.verifyNpm=async evidence=>{services.calls.push({name:'npm-identity',args:[evidence]});
+    return {status:'verification-pending',version:evidence.version,channel:evidence.channel,
+      reason:'npm channel has not yet converged',observed:'0.0.0'};};
+  const result=await publish({...f,readSnapshot:async()=>empty(),services});
+  assert.equal(result.status,'published-verification-pending');
+  assert.equal(result.verification.observed,'0.0.0');
+  const operations=services.calls.map(c=>c.name);
+  assert.deepEqual(operations.slice(-4),['npm','github','github-identity','npm-identity']);
+  const outcome=JSON.parse(await readFile(join(f.handoff.directory,'outcome.json')));
+  assert.equal(outcome.status,'published-verification-pending');
+  assert.equal(outcome.outcomes.find(x=>x.operation==='npm').status,'succeeded');
+  assert.equal(outcome.outcomes.find(x=>x.operation==='github').status,'succeeded');
+  assert.equal(outcome.outcomes.find(x=>x.operation==='npm-identity').status,'pending');
 });
 
 test('initial exception publishes GitHub automatically, hands off the same archive and records npm pending',async t=>{

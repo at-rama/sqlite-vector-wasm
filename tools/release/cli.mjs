@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFile, appendFile, mkdir, mkdtemp } from 'node:fs/promises';
+import { readFile, appendFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { root, regularBytes } from '../package/package.mjs';
 import { command } from '../acceptance/run.mjs';
@@ -8,7 +8,6 @@ import { calculate } from './policy.mjs';
 import { readState, httpReader, repositoryName } from './state.mjs';
 import { qualify, acceptedPayload, provenance, publish, checkInitialCompletion } from './run.mjs';
 import { githubServices } from './services.mjs';
-import { recover011, recovery011 } from './recover-011.mjs';
 
 const json = async path => JSON.parse(await regularBytes(path));
 const empty = () => ({schemaVersion:1,tags:[],npmVersions:[],releaseTags:[],heads:{latest:null,next:null}});
@@ -61,23 +60,6 @@ try {
     const accepted = await acceptedPayload({bundle:result.bundle,identity:result.identity,commit:exercise.commit});
     assert.deepEqual(await json(result.evidencePath),provenance(exercise,result.identity,accepted).evidence);
     result = {...result,status:'qualified-without-publication',publicationCalls:0,publicationState:'explicit empty fixture, not live registry evidence'};
-  } else if (mode === 'recover-011') {
-    assert.equal(args.length,0,'Usage: release.sh recover-011');
-    assert.equal(env.GITHUB_REPOSITORY,recovery011.repository);
-    assert.equal(env.GITHUB_EVENT_NAME,'workflow_dispatch','Explicit human recovery dispatch required');
-    assert.equal(env.GITHUB_REF,'refs/heads/main');
-    assert.equal(env.GITHUB_WORKFLOW_REF,
-      recovery011.repository + '/.github/workflows/release.yml@refs/heads/main');
-    const event = await json(env.GITHUB_EVENT_PATH);
-    assert.equal(event.repository?.full_name,recovery011.repository);
-    assert.equal(event.sender?.type,'User','Human dispatch required');
-    assert.equal(env.RELEASE_SETUP,'trusted','Hosted trusted npm publication is required');
-    assert.equal(await command('git',['status','--porcelain','--untracked-files=all'],{cwd:root}),'','Dirty recovery checkout');
-    await mkdir(join(root,'.work/release'),{recursive:true});
-    const directory = await mkdtemp(join(root,'.work/release/recover-config-'));
-    result = await recover011({ get, services:githubServices({
-      repository:recovery011.repository,token:env.GH_TOKEN,get,directory
-    }) });
   } else if (mode === 'check-initial') {
     assert.equal(args.length,1,'Usage: release.sh check-initial PUBLICATION.json (read-only)');
     const evidence = await json(args[0]);
@@ -86,7 +68,17 @@ try {
       const response = await get(`https://api.github.com/repos/${repositoryName(value.repository)}/releases/tags/${value.tag}`);
       assert.equal(response.status,200); await services.verifyGitHub(response.data,value);
     }});
-  } else throw Error('Usage: release.sh calculate|candidate|prepare|publish|exercise|recover-011|check-initial');
+  } else throw Error('Usage: release.sh calculate|candidate|prepare|publish|exercise|check-initial');
   console.log(JSON.stringify(result));
+  if (result.status === 'published-verification-pending') {
+    const warning = 'npm publish succeeded and GitHub Release finalized, but npm visibility verification is pending: ' + result.verification.reason;
+    console.warn('::warning title=Publication verification pending::' + warning);
+    if (env.GITHUB_STEP_SUMMARY) await appendFile(env.GITHUB_STEP_SUMMARY,
+      '### Publication completed; npm visibility verification pending\n\n' +
+      'The package was published and the GitHub Release finalized. ' +
+      'Check the npm version, dist-tag, archive and provenance later. Do not rerun publication.\n\n' +
+      'Version: ' + result.identity.version + ' / ' + result.identity.channel + '\n\n' +
+      'Pending: ' + result.verification.reason + '\n');
+  }
   if (result.status === 'npm-pending') process.exitCode = 2;
 } catch (error) { console.error(`Release failed: ${error.message}`); process.exitCode = 1; }
