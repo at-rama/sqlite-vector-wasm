@@ -44,11 +44,22 @@ test('mandatory release-suite registration fails when the test file is absent',a
 
 test('publisher prerequisites fail closed on missing hosted authorization and persistent npm credentials',async()=>{
   const env={GITHUB_ACTIONS:'true',RUNNER_ENVIRONMENT:'github-hosted',ACTIONS_ID_TOKEN_REQUEST_URL:'https://oidc.invalid',ACTIONS_ID_TOKEN_REQUEST_TOKEN:'test'};
-  const service=environment=>githubServices({repository:'a/b',token:'test',get:async()=>{},directory:'/unused',environment,run:async(cmd,args)=>args.at(-1)==='--version' && args.at(-2)==='node'?'v24.19.0':'11.17.0'});
+  const commands=[];
+  const service=(environment,run=async(cmd,args)=>{commands.push([cmd,...args]);return 'Harness identities verified; product acceptance not evaluated.';})=>
+    githubServices({repository:'a/b',token:'test',get:async()=>{},directory:'/unused',environment,run});
   await service(env).assertReady({bootstrap:false});
+  assert.deepEqual(commands,[['bash','tools/harness.sh','check']]);
+  await assert.rejects(service(env,async()=>{throw Error('Harness: Expected Node 24.19.0.');}).assertReady({bootstrap:false}),/Expected Node 24.19.0/);
   await assert.rejects(service({...env,NPM_TOKEN:'persistent'}).assertReady({bootstrap:false}),/credentials/);
   await assert.rejects(service({...env,RUNNER_ENVIRONMENT:'self-hosted'}).assertReady({bootstrap:false}));
   await assert.rejects(service({...env,ACTIONS_ID_TOKEN_REQUEST_TOKEN:''}).assertReady({bootstrap:true}),/OIDC/);
+});
+
+test('harness exec keeps its identity diagnostic out of invoked command stdout',async()=>{
+  const harness=await readFile(join(root,'tools/harness.sh'),'utf8');
+  assert.match(harness,/environment; check >&2\s+exec "\$@"/);
+  assert.match(harness,/\[\[ \$\(node --version\) == v24\.19\.0 \]\]/);
+  assert.match(harness,/\[\[ \$\(npm --version\) == 11\.17\.0 \]\]/);
 });
 
 test('HTTP/qualified npm adapters use non-forced identities, exact uploads and explicit trusted-publish arguments',async t=>{
