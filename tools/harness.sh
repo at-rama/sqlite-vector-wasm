@@ -104,7 +104,8 @@ case "${1:-}" in
     exec)
         shift
         [[ $# -gt 0 ]] || fail 'exec requires a command'
-        environment; check
+        # Verification diagnostics must not contaminate the command's stdout.
+        environment; check >&2
         exec "$@"
         ;;
     *) fail 'Usage: bash tools/harness.sh {install|check|deps|smoke|exec COMMAND [ARG ...]}' ;;

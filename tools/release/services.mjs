@@ -51,10 +51,8 @@ export function githubServices({ repository, token, get, directory, initialNpmEx
       assert.ok(environment.ACTIONS_ID_TOKEN_REQUEST_URL && environment.ACTIONS_ID_TOKEN_REQUEST_TOKEN,'Missing supported OIDC/attestation authorization');
       assert.ok(!Object.entries(environment).some(([key,value])=>value && /^(NODE_AUTH_TOKEN|NPM_TOKEN|NPM_CONFIG_.*AUTH.*|npm_config_.*auth.*)$/i.test(key)), 'Persistent npm credentials are not permitted');
       assert.ok(!environment.NPM_CONFIG_PROVENANCE_FILE && !environment.npm_config_provenance_file, 'External provenance override is not permitted');
-      if (!bootstrap) {
-        assert.equal(await run('bash',['tools/harness.sh','exec','node','--version'],{env:environment}), 'v24.19.0');
-        assert.equal(await run('bash',['tools/harness.sh','exec','npm','--version'],{env:environment}), '11.17.0');
-      }
+      // The harness checks the pinned SDK paths, versions and digests itself.
+      if (!bootstrap) await run('bash',['tools/harness.sh','check'],{env:environment});
     },
     createTag: (tag,commit) => request('POST','git/refs',{ref:`refs/tags/${tag}`,sha:commit}),
     createDraft: (identity,notes) => request('POST','releases',{tag_name:identity.tag,target_commitish:undefined,name:`sqlite-vector-wasm ${identity.version}`,body:notes,draft:true,prerelease:identity.channel === 'next',make_latest:identity.channel === 'latest' ? 'true':'false'}),
