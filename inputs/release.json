@@ -2,9 +2,9 @@
   "schemaVersion": 1,
   "sqlite": "3.53.4",
   "sqliteVec": "0.1.9",
-  "releaseComment": "Documentation and npm metadata update",
+  "releaseComment": "Retry 0.1.1 publication after fixing the publisher harness preflight failure (#40). No upstream changes; documentation and npm metadata update from #37, with the distribution candidate from #39.",
   "preparation": {
-    "runId": 38185964502,
-    "url": "https://github.com/at-rama/sqlite-vector-wasm/actions/runs/38185964502"
+    "runId": 38209533993,
+    "url": "https://github.com/at-rama/sqlite-vector-wasm/actions/runs/38209533993"
   }
 }
