@@ -4,13 +4,15 @@ on:
   pull_request:
     types: [opened, reopened, synchronize, closed]
     branches: [main]
+  # One-off recovery of the already-integrated, partly published 0.1.1 only.
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
   exercise:
-    if: github.event.action != 'closed'
+    if: github.event_name == 'pull_request' && github.event.action != 'closed'
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
@@ -153,4 +155,37 @@ jobs:
           path: .work/release/
           include-hidden-files: true
           if-no-files-found: error
+          retention-days: 30
+
+  recover-011:
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && github.repository == 'at-rama/sqlite-vector-wasm'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    concurrency:
+      group: partial-release-recovery-011
+      cancel-in-progress: false
+    permissions:
+      contents: write
+      id-token: write
+      attestations: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          ref: main
+      - name: Install qualified publishing tools
+        run: bash tools/harness.sh install
+      - name: Recover only the original 0.1.1 draft, archive and npm handoff
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_SETUP: ${{ vars.RELEASE_SETUP }}
+        run: sh tools/release.sh recover-011
+      - name: Preserve bounded recovery outcome
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: release-recovery-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .work/release/recover-*/outcome.json
+          if-no-files-found: warn
           retention-days: 30

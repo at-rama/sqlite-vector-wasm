@@ -63,9 +63,11 @@ export function githubServices({ repository, token, get, directory, initialNpmEx
       assert.equal(result.name,name); assert.equal(result.state,'uploaded'); return {id:result.id,name:result.name};
     },
     async npmPublish(archive,channel) {
-      const config = join(directory,'empty.npmrc'); await writeFile(config,'\n',{flag:'wx'});
+      // npm rejects one file loaded twice as both user and global configuration.
+      const userConfig = join(directory,'empty-user.npmrc'), globalConfig = join(directory,'empty-global.npmrc');
+      await Promise.all([writeFile(userConfig,'\n',{flag:'wx'}),writeFile(globalConfig,'\n',{flag:'wx'})]);
       await run('bash',['tools/harness.sh','exec','npm','publish',archive,'--tag',channel,'--access','public','--ignore-scripts','--provenance'],
-        {env:{...environment,npm_config_userconfig:config,npm_config_globalconfig:config,npm_config_registry:'https://registry.npmjs.org/'}});
+        {env:{...environment,npm_config_userconfig:userConfig,npm_config_globalconfig:globalConfig,npm_config_registry:'https://registry.npmjs.org/'}});
       return {channel};
     },
     finalize: release => request('PATCH',`releases/${release.id}`,{draft:false}),
