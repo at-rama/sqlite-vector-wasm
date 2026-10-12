@@ -80,5 +80,7 @@ test('HTTP/qualified npm adapters use non-forced identities, exact uploads and e
   await services.npmPublish(archive,'next');
   assert.deepEqual(commands[0].args,['tools/harness.sh','exec','npm','publish',archive,'--tag','next','--access','public','--ignore-scripts','--provenance']);
   assert.equal(commands[0].options.env.npm_config_registry,'https://registry.npmjs.org/');
+  assert.notEqual(commands[0].options.env.npm_config_userconfig,commands[0].options.env.npm_config_globalconfig);
   assert.equal(await readFile(commands[0].options.env.npm_config_userconfig,'utf8'),'\n');
+  assert.equal(await readFile(commands[0].options.env.npm_config_globalconfig,'utf8'),'\n');
 });
