@@ -35,13 +35,29 @@ export function githubServices({ repository, token, get, directory, initialNpmEx
     return { id:value.id,url:value.html_url };
   };
   const verifyNpm = async evidence => {
-    const npm = await npmState(get,{allowAbsent:false});
-    assert.equal(npm['dist-tags'][evidence.channel],evidence.version, 'Published npm channel mismatch');
-    const version = npm.versions[evidence.version]; assert.ok(version,'Published npm version absent');
-    const bytes = await download(version.dist.tarball,get);
-    assert.equal(bytes.length,evidence.archive.size); assert.equal(sha256(bytes),evidence.archive.sha256);
-    assert.ok(version.dist.attestations?.provenance, 'Missing supported npm provenance');
-    return { version:evidence.version,sha256:sha256(bytes) };
+    // Successful publishing need not imply immediately consistent registry reads.
+    const pending = (reason, observed = null) => ({ status:'verification-pending',
+      version:evidence.version, channel:evidence.channel, reason, observed });
+    const url = 'https://registry.npmjs.org/' + evidence.name.replaceAll('/', '%2f');
+    let response;
+    try { response = await get(url); }
+    catch { return pending('npm registry metadata is not yet readable'); }
+    if (response.status !== 200) return pending('npm registry metadata is not yet readable');
+    // Invalid registry metadata is not propagation lag.
+    const npm = await npmState(async () => response,{allowAbsent:false});
+    const version = npm.versions[evidence.version];
+    if (!version) return pending('published npm version is not yet visible');
+    let archive;
+    try { archive = await get(version.dist.tarball,{binary:true}); }
+    catch { return pending('npm archive is not yet readable'); }
+    if (archive.status !== 200) return pending('npm archive is not yet readable');
+    assert.ok(Buffer.isBuffer(archive.data) && archive.data.length, 'Invalid npm archive response');
+    assert.equal(archive.data.length,evidence.archive.size,'Published npm archive size mismatch');
+    assert.equal(sha256(archive.data),evidence.archive.sha256,'Published npm archive digest mismatch');
+    assert.ok(version.dist.attestations?.provenance,'Missing supported npm provenance');
+    const observed = npm['dist-tags'][evidence.channel];
+    if (observed !== evidence.version) return pending('npm channel has not yet converged',observed || null);
+    return { status:'verified',version:evidence.version,sha256:sha256(archive.data) };
   };
   return {
     initialNpmException,

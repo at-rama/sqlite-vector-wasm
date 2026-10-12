@@ -21,14 +21,8 @@ test('hosted workflow pins actions, separates read qualification/write publicati
   const workflow=await readFile(join(root,'.github/workflows/release.yml'),'utf8');
   const actions=[...workflow.matchAll(/uses: ([^\s]+)@([^\s]+)/g)];assert.ok(actions.length>=6);
   for(const [,action,ref] of actions){assert.match(ref,/^[0-9a-f]{40}$/);assert.ok(action.startsWith('actions/'));}
-  assert.ok(workflow.includes('workflow_dispatch:') && !workflow.includes('NODE_AUTH_TOKEN') && !workflow.includes('NPM_TOKEN'));
-  assert.ok(workflow.includes("if: github.event_name == 'pull_request' && github.event.action != 'closed'"));
-  const recovery=workflow.split('  recover-011:')[1];
-  assert.ok(recovery.includes("github.event_name == 'workflow_dispatch'"));
-  assert.ok(recovery.includes("github.ref == 'refs/heads/main'"));
-  assert.ok(recovery.includes("run: sh tools/release.sh recover-011"));
-  assert.ok(recovery.includes('id-token: write') && recovery.includes('attestations: read') && !recovery.includes('npm publish'));
-  assert.ok(!recovery.includes('actions/attest@') && !recovery.includes('sh tools/release.sh publish'));
+  assert.ok(!workflow.includes('workflow_dispatch:') && !workflow.includes('recover-011:'));
+  assert.ok(!workflow.includes('NODE_AUTH_TOKEN') && !workflow.includes('NPM_TOKEN'));
   assert.ok(workflow.includes('github.event.pull_request.merge_commit_sha'));
   const detection=workflow.split('  candidate:')[1].split('  qualify:')[0];
   assert.ok(detection.includes("github.event.action == 'closed' && github.event.pull_request.merged == true"));

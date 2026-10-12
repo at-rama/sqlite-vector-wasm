@@ -91,7 +91,7 @@ export async function publish({ handoff, readSnapshot, services, attestation, re
   const outcomePath = join(handoff.directory, 'outcome.json');
   const save = value => writeFile(outcomePath, jsonBytes({ ...value, outcomes }));
   const step = async (operation, action) => {
-    try { const result = await action(); outcomes.push({ operation, status:'succeeded', result }); await save({ status:'in-progress' }); return result; }
+    try { const result = await action(); outcomes.push({ operation, status:result?.status === 'verification-pending' ? 'pending' : 'succeeded', result }); await save({ status:'in-progress' }); return result; }
     catch (error) { outcomes.push({ operation, status:'failed', diagnostic:error.message }); throw error; }
   };
   try {
@@ -118,7 +118,12 @@ export async function publish({ handoff, readSnapshot, services, attestation, re
       const result = { status:'npm-pending', identity:handoff.identity, release, evidencePath:handoff.evidencePath, archivePath:accepted.archivePath };
       await save(result); return result;
     }
-    await step('npm-identity', () => services.verifyNpm(expected.evidence));
+    const verification = await step('npm-identity', () => services.verifyNpm(expected.evidence));
+    assert.ok(['verified','verification-pending'].includes(verification?.status), 'Unexpected npm verification verdict');
+    if (verification.status === 'verification-pending') {
+      const result = { status:'published-verification-pending', identity:handoff.identity, release, verification };
+      await save(result); return result;
+    }
     const result = { status:'complete', identity:handoff.identity, release }; await save(result); return result;
   } catch (error) {
     await save({ status:'failed', diagnostic:error.message }); error.message += `; per-operation evidence: ${outcomePath}`; throw error;
