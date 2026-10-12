@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile, writeFile, mkdtemp, mkdir, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
+import { spawnSync } from 'node:child_process';
 import { root, execute } from '../../package/package.mjs';
 import { descriptor } from '../context.mjs';
 import { githubServices } from '../services.mjs';
@@ -26,7 +27,7 @@ test('hosted workflow pins actions, separates read qualification/write publicati
   assert.ok(recovery.includes("github.event_name == 'workflow_dispatch'"));
   assert.ok(recovery.includes("github.ref == 'refs/heads/main'"));
   assert.ok(recovery.includes("run: sh tools/release.sh recover-011"));
-  assert.ok(recovery.includes('id-token: write') && !recovery.includes('npm publish'));
+  assert.ok(recovery.includes('id-token: write') && recovery.includes('attestations: read') && !recovery.includes('npm publish'));
   assert.ok(!recovery.includes('actions/attest@') && !recovery.includes('sh tools/release.sh publish'));
   assert.ok(workflow.includes('github.event.pull_request.merge_commit_sha'));
   const detection=workflow.split('  candidate:')[1].split('  qualify:')[0];
@@ -90,4 +91,8 @@ test('HTTP/qualified npm adapters use non-forced identities, exact uploads and e
   assert.notEqual(commands[0].options.env.npm_config_userconfig,commands[0].options.env.npm_config_globalconfig);
   assert.equal(await readFile(commands[0].options.env.npm_config_userconfig,'utf8'),'\n');
   assert.equal(await readFile(commands[0].options.env.npm_config_globalconfig,'utf8'),'\n');
+  // Exercise real npm config parsing offline: the incident failed even on npm --version.
+  const probe=spawnSync('npm',['--version'],{encoding:'utf8',env:{...process.env,...commands[0].options.env}});
+  assert.equal(probe.status,0,probe.stderr);
+  assert.match(probe.stdout.trim(),/^[0-9]+\.[0-9]+\.[0-9]+$/);
 });

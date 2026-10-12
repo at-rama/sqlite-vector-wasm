@@ -107,7 +107,9 @@ export async function recover011({ get, services, repository = root, target = re
     await writeFile(archivePath, assets['payload.tgz'], { flag: 'wx' });
     // Verify the actual Sigstore-signed GitHub attestation, not only DSSE structure.
     await step('signed-attestation', () => run('gh',
-      ['attestation', 'verify', archivePath, '--repo', target.repository], { cwd: repository }));
+      ['attestation', 'verify', archivePath, '--repo', target.repository,
+        '--signer-workflow', target.repository + '/.github/workflows/release.yml',
+        '--source-digest', target.commit], { cwd: repository }));
     await step('publisher-readiness', () => services.assertReady({ bootstrap: false }));
     await step('npm', () => services.npmPublish(archivePath, 'latest'));
     await step('github', () => services.finalize(release));
