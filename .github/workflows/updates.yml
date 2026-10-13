@@ -1,4 +1,5 @@
 name: Updates
+run-name: ${{ github.event_name == 'workflow_dispatch' && format('candidate sqlite={0} sqlite-vec={1}', inputs.sqlite_version, inputs.sqlite_vec_version) || 'Updates PR rehearsal' }}
 
 on:
   workflow_dispatch:
