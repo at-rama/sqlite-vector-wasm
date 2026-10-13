@@ -61,6 +61,7 @@ export function renderPlan(plan) {
           if(c.kind==='pr')result+=` ${link('Preparation',c.preparation)}; attempt ${c.attempt}; head ${escape(c.head)}.`;
           if(c.run)result+=` Active attempt ${c.run.attempt}: ${escape(c.run.status)}.`;
           result+='\n';}
+        result+=`\n${link('Updates workflow',workflow)} (navigation only; the existing preparation is shown above).\n`;
       } else result+=`${link('Open Updates for a separate human preparation action',workflow)}.\n`;
       result+='\nExact Updates parameters (no channel or version override):\n\n';
       result+=`- sqlite_version: ${escape(e.parameters.sqlite_version)}\n- sqlite_vec_version: ${escape(e.parameters.sqlite_vec_version)}\n- release_comment: empty string\n`;

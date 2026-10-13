@@ -27,6 +27,7 @@ export function diagnostic(error,secrets=[]) {
 
 export async function runWatch({context,get,writeSummary,writeEvidence,secrets=[]}) {
   let stage='discovery';
+  const observationStartedAt=new Date().toISOString();
   try {
     repositoryName(context.repository);
     const reader=cachedReader(get);
@@ -35,11 +36,11 @@ export async function runWatch({context,get,writeSummary,writeEvidence,secrets=[
     stage='candidate state';const candidates=await candidateState({repository:context.repository,get:reader});
     stage='calculation';const plan=makePlan({repository:context.repository,inventory,publication,candidates});
     stage='presentation';
-    await writeSummary(renderPlan(plan)+`\nInvocation: ${context.event}; revision ${context.revision}; Node ${context.node}.\n`);
-    stage='evidence';await writeEvidence({schemaVersion:1,context,plan});
+    await writeSummary(renderPlan(plan)+`\nInvocation: ${context.event}; revision ${context.revision}; Node ${context.node}.\nObservation started: ${observationStartedAt}; service reads are not an atomic snapshot.\n`);
+    stage='evidence';await writeEvidence({schemaVersion:1,context,observationStartedAt,inventory,publication,candidates,plan});
     return plan;
   } catch(error) {
-    const message=diagnostic(error,secrets),failure={schemaVersion:1,outcome:'failed',stage,diagnostic:message,context};
+    const message=diagnostic(error,secrets),failure={schemaVersion:1,outcome:'failed',stage,diagnostic:message,context,observationStartedAt};
     try {await writeSummary(renderFailure(stage,message));}catch { /* Output failure still leaves a failed execution. */ }
     try {await writeEvidence(failure);}catch { /* Evidence failure cannot become a successful or empty result. */ }
     return failure;

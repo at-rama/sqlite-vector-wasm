@@ -20,6 +20,9 @@ test('complete scheduled and manual fixture plans use the same read/compute/rend
   assert.deepEqual(scheduled.entries.map(e=>[e.selection.sqlite,e.selection.sqliteVec,e.identity.channel,e.identity.version]),[
     ['3.54.0','0.1.9','latest','0.2.0'],['3.53.4','0.1.10-alpha.4','next','0.1.1-alpha.1'],['3.54.0','0.1.10-alpha.4','next','0.2.0-alpha.1']]);
   assert.equal(summary[0].split('Invocation:')[0],summary[1].split('Invocation:')[0]);assert.equal(evidence.length,2);
+  assert.match(evidence[0].observationStartedAt,/^\d{4}-\d{2}-\d{2}T/);
+  assert.equal(evidence[0].inventory.sqlite[1].release,'https://sqlite.org/releaselog/3_54_0.html');
+  assert.equal(evidence[0].publication.snapshot.heads.latest.version,'0.1.0');
   assert.ok(f.calls.every(u=>!u.includes('dispatches')));
 });
 test('normal empty plan succeeds with readable summary and invocation evidence',async()=>{

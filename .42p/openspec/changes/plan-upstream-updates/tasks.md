@@ -25,7 +25,7 @@
 - [x] 4.2 Implement orchestration, the thin entry point and sanitized ignored evidence using the same path for scheduled/manual planning; verify read/calculation failures cannot become empty success, presentation contains no claim of acceptance and no custom transport or candidate mutation is invoked.
 - [x] 4.3 Add Friday `08:00` `Europe/Paris` scheduling and independent Watch `workflow_dispatch` in `.github/workflows/watch.yml`, read-only GitHub permissions and pinned actions; verify winter/summer configuration, identical planning policy for both events, no preparation/override inputs and no automatic live Watch execution on PRs or candidate/publishing mutation.
 - [x] 4.4 Document summary consultation, native account notification preferences/limits, acceptable empty-plan notifications, distinct manual Watch/Updates actions and manual inactivity reactivation in `docs/watch.md`; verify links and instructions against workflow configuration with no promised push/format, mail setup or fallback service.
-- [ ] 4.5 Register the implemented watch suites in `tools/test-repository.sh`; verify the registered command executes the mandatory watch tests offline and fails if an implemented watch suite is missing, preserving existing suite registration.
+- [x] 4.5 Register the implemented watch suites in `tools/test-repository.sh`; verify the registered command executes the mandatory watch tests offline and fails if an implemented watch suite is missing, preserving existing suite registration.
 
 ## 5. Integrated realization checks
 
