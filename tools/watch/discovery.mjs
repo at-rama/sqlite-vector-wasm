@@ -38,7 +38,7 @@ export function sqliteTags(html) {
 
 export function vecReleases(records) {
   assert.ok(Array.isArray(records));
-  const found = [], seen = new Set();
+  const found = [], seen = new Set(), resources = new Set();
   for (const r of records) {
     assert.equal(typeof r.draft, 'boolean'); assert.equal(typeof r.prerelease, 'boolean');
     if (r.draft || r.published_at === null) continue;
@@ -48,6 +48,9 @@ export function vecReleases(records) {
     if (compareUpstream(version,baselines.sqliteVec,'sqliteVec') < 0) continue;
     assert.match(version, /^(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)(?:-(?:alpha|beta|rc)(?:\.(?:0|[1-9][0-9]*))?)?$/);
     assert.equal(r.prerelease, !!upstream(version).prerelease.length, 'Contradictory sqlite-vec maturity');
+    assert.ok(Number.isSafeInteger(r.id) && r.id > 0, 'Invalid sqlite-vec Release resource ID');
+    assert.equal(r.url, `https://api.github.com/repos/asg017/sqlite-vec/releases/${r.id}`, 'sqlite-vec Release ID/URL mismatch');
+    assert.ok(!resources.has(r.id), 'Ambiguous repeated sqlite-vec Release resource'); resources.add(r.id);
     assert.ok(!seen.has(version), 'Ambiguous sqlite-vec release'); seen.add(version);
     assert.equal(r.html_url, `https://github.com/asg017/sqlite-vec/releases/tag/v${version}`);
     assert.match(r.url || '', /^https:\/\/api\.github\.com\/repos\/asg017\/sqlite-vec\/releases\/[1-9][0-9]*$/);

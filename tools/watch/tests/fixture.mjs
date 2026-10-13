@@ -7,13 +7,14 @@ export async function planningFixture({empty=false}={}) {
   const repository='at-rama/sqlite-vector-wasm',api=`https://api.github.com/repos/${repository}/`;
   const html=await readFile(new URL('./fixtures/sqlite-taglist.html',import.meta.url));
   const release=await readFile(new URL('./fixtures/sqlite-release.html',import.meta.url));
-  const vec=JSON.parse(await readFile(new URL('./fixtures/sqlite-vec-release.json',import.meta.url)));
+  // Complete the captured subset with its URL identity for this synthetic observation.
+  const vec={...JSON.parse(await readFile(new URL('./fixtures/sqlite-vec-release.json',import.meta.url))),id:324084102};
   const bytes=Buffer.from('synthetic publication payload'),commit='a'.repeat(40);
   const selection={sqlite:empty?'3.54.0':'3.53.4',sqliteVec:'0.1.9'};
   const evidence={schemaVersion:1,name:npmPackageName,version:'0.1.0',tag:'dist/v0.1.0',channel:'latest',commit,upstreams:selection,
     archive:{sha256:createHash('sha256').update(bytes).digest('hex'),size:bytes.length},
     sourceLock:Object.fromEntries(Object.entries(selection).map(([k,version])=>[k,{version,archiveUrl:'https://example.invalid/synthetic-source',digest:{algorithm:'sha256',value:'b'.repeat(64)}}])),build:{tools:{}},acceptance:{verdict:'passed'}};
-  const stable={...vec,tag_name:'v0.1.9',prerelease:false,url:'https://api.github.com/repos/asg017/sqlite-vec/releases/900001',html_url:'https://github.com/asg017/sqlite-vec/releases/tag/v0.1.9',assets:[{name:'sqlite-vec-0.1.9-amalgamation.tar.gz',state:'uploaded',digest:'sha256:'+'c'.repeat(64),browser_download_url:'https://github.com/asg017/sqlite-vec/releases/download/v0.1.9/sqlite-vec-0.1.9-amalgamation.tar.gz'}]};
+  const stable={...vec,id:900001,tag_name:'v0.1.9',prerelease:false,url:'https://api.github.com/repos/asg017/sqlite-vec/releases/900001',html_url:'https://github.com/asg017/sqlite-vec/releases/tag/v0.1.9',assets:[{name:'sqlite-vec-0.1.9-amalgamation.tar.gz',state:'uploaded',digest:'sha256:'+'c'.repeat(64),browser_download_url:'https://github.com/asg017/sqlite-vec/releases/download/v0.1.9/sqlite-vec-0.1.9-amalgamation.tar.gz'}]};
   const replies=new Map([
     [fossilTags,{status:200,data:html}],
     ['https://sqlite.org/releaselog/3_54_0.html',{status:200,data:release}],

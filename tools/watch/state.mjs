@@ -61,7 +61,7 @@ export async function candidateState({repository,get}) {
     return {...r,data:r.data.workflow_runs};
   });
   assert.equal(runs.length,total,'Truncated preparation inventory');
-  const active=new Set(['queued','in_progress','waiting','pending','requested']);
+  const active=new Set(['queued','in_progress','waiting','pending','requested']), seenRuns=new Set();
   for(const run of runs) {
     if(run.status==='completed')continue;
     assert.ok(active.has(run.status),'Unknown preparation state');
@@ -71,6 +71,9 @@ export async function candidateState({repository,get}) {
     assert.ok(Number.isSafeInteger(run.id) && run.id>0);
     assert.ok(Number.isSafeInteger(run.run_attempt) && run.run_attempt>0);
     assert.equal(run.html_url,`https://github.com/${repository}/actions/runs/${run.id}`);
+    const identity=JSON.stringify([run.id,run.run_attempt]);
+    assert.ok(!seenRuns.has(identity),`Repeated active preparation observation: ${run.html_url} attempt ${run.run_attempt}`);
+    seenRuns.add(identity);
     const selected=/^candidate sqlite=(\S+) sqlite-vec=(\S+)$/.exec(run.display_title || '');
     assert.ok(selected,`Unresolved active preparation: ${run.html_url}`);
     const selection={sqlite:selected[1],sqliteVec:selected[2]};
@@ -101,7 +104,7 @@ export async function candidateState({repository,get}) {
   // Preserve every distinct PR. Join each active run to the first corresponding PR only.
   const result=items.filter(x=>x.kind==='pr').map(x=>({...x}));
   for(const run of items.filter(x=>x.kind==='run')) {
-    const pr=result.find(x=>x.runId===run.runId && x.attempt===run.attempt);
+    const pr=result.find(x=>x.kind==='pr' && x.runId===run.runId && x.attempt===run.attempt);
     if(pr)pr.run=run;else result.push(run);
   }
   return result.sort((a,b)=>pairKey(a.selection).localeCompare(pairKey(b.selection)) || a.runId-b.runId || (a.number||0)-(b.number||0));

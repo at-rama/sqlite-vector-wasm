@@ -5,8 +5,9 @@ import { sqliteTags, vecReleases, discover, fossilTags } from '../discovery.mjs'
 
 const html = await readFile(new URL('./fixtures/sqlite-taglist.html',import.meta.url),'utf8');
 const release = await readFile(new URL('./fixtures/sqlite-release.html',import.meta.url));
-const vec = JSON.parse(await readFile(new URL('./fixtures/sqlite-vec-release.json',import.meta.url)));
-const record = version => ({...structuredClone(vec),tag_name:`v${version}`,prerelease:version.includes('-'),
+// The captured subset omits id; complete the test observation without editing it.
+const vec = {...JSON.parse(await readFile(new URL('./fixtures/sqlite-vec-release.json',import.meta.url))),id:324084102};
+const record = (version,id=900001) => ({...structuredClone(vec),id,url:`https://api.github.com/repos/asg017/sqlite-vec/releases/${id}`,tag_name:`v${version}`,prerelease:version.includes('-'),
   html_url:`https://github.com/asg017/sqlite-vec/releases/tag/v${version}`,
   assets: [{name:`sqlite-vec-${version}-amalgamation.tar.gz`,state:'uploaded',digest:'sha256:'+'1'.repeat(64),
     browser_download_url:`https://github.com/asg017/sqlite-vec/releases/download/v${version}/sqlite-vec-${version}-amalgamation.tar.gz`}]});
@@ -38,4 +39,15 @@ test('complete paginated discovery verifies official release logs and fails inco
   assert.ok(requests.some(x=>x.includes('page=2')));
   await assert.rejects(()=>discover({get:async()=>({status:503})}),/unavailable/);
   await assert.rejects(()=>discover({get:async(url)=>url.includes('/releaselog/')?{status:200,data:Buffer.from('wrong identity')}:get(url)}),/Contradictory/);
+  await assert.rejects(()=>discover({get:async(url)=>url.includes('page=2')?{status:200,data:[record('0.1.10-alpha.4')],headers:{}}:get(url)}),/repeated sqlite-vec Release resource/);
+});
+
+test('Release resource identities reject contradictory versions, copies and ID/URL mismatches',()=>{
+  const stable=record('0.1.9',vec.id);
+  assert.throws(()=>vecReleases([stable,vec]),/repeated sqlite-vec Release resource/);
+  assert.throws(()=>vecReleases([vec,structuredClone(vec)]),/repeated sqlite-vec Release resource/);
+  for(const id of [undefined,0,-1,'900001',Number.MAX_SAFE_INTEGER+1])
+    assert.throws(()=>vecReleases([{...record('0.1.9'),id}]),/resource ID/);
+  assert.throws(()=>vecReleases([{...record('0.1.9'),url:vec.url}]),/ID\/URL mismatch/);
+  assert.throws(()=>vecReleases([record('0.1.9'),record('0.1.9',900002)]),/Ambiguous sqlite-vec release/);
 });

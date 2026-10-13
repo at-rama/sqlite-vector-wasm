@@ -29,6 +29,36 @@ test('normal empty plan succeeds with readable summary and invocation evidence',
   const {result,summaries,evidence}=await exercise({empty:true});
   assert.equal(result.outcome,'empty');assert.match(summaries[0],/Normal empty plan/);assert.equal(evidence[0].plan.outcome,'empty');
 });
+
+test('F1 Release identity contradictions fail discovery rather than presenting a plan',async()=>{
+  const f=await planningFixture();
+  const releases=f.replies.get('https://api.github.com/repos/asg017/sqlite-vec/releases?per_page=100').data;
+  releases[0].id=releases[1].id;releases[0].url=releases[1].url;
+  const {result,summaries,evidence}=await exercise({get:f.get});
+  assert.equal(result.outcome,'failed');assert.equal(result.stage,'discovery');
+  assert.match(result.diagnostic,/repeated sqlite-vec Release resource/);
+  assert.match(summaries[0],/planning failed/);assert.match(summaries[0],/discovery/);
+  assert.doesNotMatch(summaries[0],/Normal empty plan|## latest|## next/);
+  assert.equal(evidence[0].outcome,'failed');assert.equal(evidence[0].stage,'discovery');
+  assert.equal(result.entries,undefined);assert.equal(evidence[0].plan,undefined);
+});
+
+test('F2 contradictory pre-PR preparation selections fail candidate state without launch advice',async()=>{
+  const f=await planningFixture(),repository=f.repository;
+  const run={id:17,run_attempt:1,status:'queued',event:'workflow_dispatch',head_branch:'main',
+    path:'.github/workflows/updates.yml',repository:{full_name:repository},head_sha:f.context.revision,
+    html_url:`https://github.com/${repository}/actions/runs/17`};
+  const runs=['3.54.0','3.54.1'].map(sqlite=>({...run,display_title:`candidate sqlite=${sqlite} sqlite-vec=0.1.9`}));
+  f.replies.get(`https://api.github.com/repos/${repository}/actions/workflows/updates.yml/runs?branch=main&event=workflow_dispatch&per_page=100`).data={total_count:2,workflow_runs:runs};
+  const {result,summaries,evidence}=await exercise({get:f.get});
+  assert.equal(result.outcome,'failed');assert.equal(result.stage,'candidate state');
+  assert.match(result.diagnostic,/Repeated active preparation observation/);
+  assert.match(summaries[0],/planning failed/);assert.match(summaries[0],/candidate state/);
+  assert.doesNotMatch(summaries[0],/Normal empty plan|gh workflow run|## latest|## next/);
+  assert.equal(evidence[0].outcome,'failed');assert.equal(evidence[0].stage,'candidate state');
+  assert.equal(result.entries,undefined);assert.equal(evidence[0].plan,undefined);
+  assert.ok(f.calls.every(u=>!u.includes('dispatches')));
+});
 test('source, state, candidate and calculation failures retain stage, redacted diagnostics and failure outcome',async()=>{
   for(const [target,stage] of [['src/taglist','discovery'],['/tags?','publication state'],['actions/workflows/','candidate state']]) {
     const f=await planningFixture();const {result,summaries,evidence}=await exercise({get:async(u,o)=>{if(u.includes(target))throw Error('synthetic-private-token unavailable');return f.get(u,o);}});

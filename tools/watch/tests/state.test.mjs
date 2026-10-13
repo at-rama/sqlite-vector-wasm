@@ -87,12 +87,26 @@ test('exact-head changed descriptors join active preparation while keeping disti
   const f=candidateFixture();f.prs.push(pr(45));f.runs.push(run(17,2));
   const observed=await candidateState({repository,get:f.get});
   assert.equal(observed.length,3);assert.ok(observed.find(x=>x.number===44).run);
+  assert.equal(observed.filter(x=>x.kind==='pr').length,2);
+  assert.equal(observed.filter(x=>x.kind==='pr'&&x.run).length,1);
+  assert.ok(observed.every(x=>!x.run || x.kind==='pr'));
   assert.ok(observed.find(x=>x.kind==='run'&&x.attempt===2));
   assert.ok(f.requests.filter(u=>u.includes('/contents/')).every(u=>u.endsWith('?ref='+commit)));
 });
 test('inherited descriptor, completed failures and unrelated branches do not become candidates or refusal records',async()=>{
   const f=candidateFixture();f.changed.set(44,'unchanged');f.runs[0].status='completed';f.prs.push({...pr(45),head:{ref:'unrelated',sha:commit}});
   assert.deepEqual(await candidateState({repository,get:f.get}),[]);
+});
+
+test('same run and attempt cannot supply repeated or contradictory pre-PR selections',async()=>{
+  for(const title of ['candidate sqlite=3.54.0 sqlite-vec=0.1.9','candidate sqlite=3.54.1 sqlite-vec=0.1.9']) {
+    const f=candidateFixture();f.prs.length=0;f.runs.push({...run(),display_title:title});
+    await assert.rejects(()=>candidateState({repository,get:f.get}),/Repeated active preparation observation/);
+  }
+  const f=candidateFixture();f.prs.length=0;f.runs.push(run(17,2),run(18,1));
+  const observed=await candidateState({repository,get:f.get});
+  assert.deepEqual(observed.map(x=>[x.runId,x.attempt]).sort(),[[17,1],[17,2],[18,1]]);
+  assert.ok(observed.every(x=>x.kind==='run' && !x.run));
 });
 test('legacy, unsafe, truncated and contradictory candidate reads fail explicitly',async()=>{
   for(const modify of [f=>f.runs[0].display_title='Updates',f=>f.runs[0].repository.full_name='other/repository',f=>f.runs[0].head_branch='other',f=>f.runs[0].path='.github/workflows/other.yml',f=>f.prs[0].changed_files=2,
