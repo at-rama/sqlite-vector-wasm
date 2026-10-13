@@ -30,6 +30,6 @@
 ## 5. Integrated realization checks
 
 - [x] 5.1 Run a read-only complete discovery/state/plan exercise from a clean checkout with no write-capable GitHub services or candidate dispatch; verify exact pair/reference identities and retain sanitized evidence, distinguishing live observations from fixture checks and from actual implementation acceptance.
-- [ ] 5.2 Recheck every spec scenario and both directions of `coverage.md` against the committed implementation, then run `sh tools/check-repository.sh`, `sh tools/test-repository.sh` and strict OpenSpec validation from `.42p`; completion requires passing applicable commands and no unresolved allocated obligation.
+- [x] 5.2 Recheck every spec scenario and both directions of `coverage.md` against the committed implementation, then run `sh tools/check-repository.sh`, `sh tools/test-repository.sh` and strict OpenSpec validation from `.42p`; completion requires passing applicable commands and no unresolved allocated obligation.
 
 Apply ends before post-Apply Verification. The subsequent explicitly invoked `42p-verify-change` workflow owns the report and verdict; archive/synchronization, live Watch invocation, account notification settings and human integration are separate actions, not checked-off implementation substitutes.
