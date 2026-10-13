@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Realize A-watch by presenting eligible official upstream combinations and current candidate state in a deterministic weekly email plan, leaving preparation and adoption under human control.
+Realize A-watch by presenting eligible official upstream combinations and current candidate state in a deterministic weekly or manually invoked execution summary, leaving preparation and adoption under human control.
 
 ## ADDED Requirements
 
@@ -124,7 +124,7 @@ Each eligible pair SHALL use A-release's common deterministic calculation for ch
 
 ### Requirement: Actionable human job plan
 
-The email SHALL contain every eligible pair with exact upstream versions, forecast channel/increment/version, exact Updates workflow parameters, a GitHub Actions link and existing candidate state when present. The maintainer SHALL remain able to choose zero, one or several jobs. A plan SHALL NOT assert build compatibility or publication acceptance from discovery or forecasting alone.
+The directly consultable execution summary SHALL contain every eligible pair with exact upstream versions, forecast channel/increment/version, exact Updates workflow parameters, a GitHub Actions link and existing candidate state when present. The maintainer SHALL remain able to choose zero, one or several jobs. A plan SHALL NOT assert build compatibility or publication acceptance from discovery or forecasting alone.
 
 #### Scenario: Pair has no existing candidate
 - **WHEN** a nonempty plan contains an eligible pair without current preparation
@@ -134,29 +134,41 @@ The email SHALL contain every eligible pair with exact upstream versions, foreca
 - **WHEN** an eligible pair has an active run or open candidate PR
 - **THEN** the entry presents those references and states without recommending a duplicate dispatch
 
-### Requirement: Conditional Gmail delivery
+### Requirement: Readable execution outcomes
 
-The watch SHALL send a nonempty computed plan through Gmail SMTP to the privately configured recipient, using the privately selected same account as sender. A complete successfully computed empty plan SHALL send no email. SMTP configuration or delivery failure for a nonempty plan SHALL remain unsuccessful; no notification issue or silent alternate transport SHALL replace delivery.
+The watch SHALL present its result directly in the GitHub Actions execution summary without requiring raw-log inspection. A complete nonempty plan, a complete empty plan and a discovery/state/calculation failure SHALL have distinct readable outcomes. An empty plan SHALL be normal; errors SHALL remain unsuccessful executions rather than fabricated empty plans.
+
+#### Scenario: Nonempty plan is available
+- **WHEN** complete discovery, state reads and calculation yield eligible entries
+- **THEN** the execution summary presents the complete actionable plan and its reference state
 
 #### Scenario: Empty successful plan
 - **WHEN** complete discovery and state reads yield zero eligible entries
-- **THEN** the run reports an empty plan and performs no SMTP connection or email send
+- **THEN** the execution summary explicitly presents a normal empty plan and the run succeeds
 
-#### Scenario: Nonempty plan
-- **WHEN** a complete plan contains one or more entries and mail configuration is usable
-- **THEN** it is sent as one job-plan email and the outcome records SMTP acceptance without claiming recipient inbox delivery
+#### Scenario: Planning fails
+- **WHEN** discovery, state acquisition or calculation cannot complete correctly
+- **THEN** the execution summary identifies the failed stage and diagnostic, the run fails and no complete empty-plan claim is made
 
-#### Scenario: Mail fails
-- **WHEN** a nonempty plan cannot authenticate or be accepted by Gmail SMTP
-- **THEN** the run fails with sanitized diagnostics and retains no complete-delivery claim or automatic issue fallback
+### Requirement: Native completion notifications
 
-### Requirement: Private mail configuration
+The watch SHALL rely exclusively on native GitHub Actions completion notifications, subject to supported GitHub capabilities and account preferences. Notifications SHALL remain acceptable for empty plans. No dedicated email delivery, substitute transport, mobile push guarantee or prescribed native notification format SHALL be introduced.
 
-Real mail addresses and SMTP credentials SHALL remain in GitHub Actions secrets and SHALL NOT enter tracked documents/configuration, public logs, job summaries or artifacts. Planning evidence SHALL contain only nonsecret operational results. The GitHub noreply commit identity SHALL NOT substitute for the actual mail account or recipient.
+#### Scenario: Account notification preferences apply
+- **WHEN** a scheduled or manual watch execution completes, including with an empty plan
+- **THEN** native notification handling remains subject to GitHub and the account preferences, while the result stays consultable in the execution summary without a custom sender or delivery-success claim
 
-#### Scenario: Public repository and diagnostics
-- **WHEN** configuration, a successful run or a failed mail operation is inspected publicly
-- **THEN** only secret names and sanitized results are exposed, without real address values, passwords or raw SMTP diagnostics
+### Requirement: Independent manual planning
+
+A-watch SHALL support manual GitHub Actions `workflow_dispatch` independently of its weekly schedule. Manual invocation SHALL use the same discovery, pair eligibility and shared forecast policy and only recalculate/present the plan. It SHALL NOT initiate or dispatch A-updates candidate preparation, select candidates for adoption or introduce channel/version overrides.
+
+#### Scenario: Plan outside the weekly schedule
+- **WHEN** the maintainer invokes the watch manually before its next scheduled execution
+- **THEN** A-watch calculates and presents the plan without waiting for the cron or starting candidate preparation
+
+#### Scenario: Same planning state under both triggers
+- **WHEN** scheduled and manual executions observe identical upstream, publication and candidate state
+- **THEN** they produce the same job plan and forecasts while remaining distinct from the separate manual Updates workflow
 
 ### Requirement: Weekly Paris schedule
 
@@ -172,15 +184,15 @@ The watch SHALL run through GitHub Actions each Friday with a scheduled time of 
 
 ### Requirement: Planning stops before preparation
 
-The watch SHALL stop at the plan and email. It SHALL NOT change source pins, acquire/build a candidate, dispatch preparation, create candidate PRs, merge, enable auto-merge, create tags or publish distributions. Manual preparation SHALL remain independent of plan history, and human integration and mandatory acceptance gates SHALL retain their existing roles.
+The watch SHALL stop at plan presentation and native Actions notifications, for both scheduled and manual invocation. It SHALL NOT change source pins, acquire/build a candidate, dispatch preparation, create candidate PRs, merge, enable auto-merge, create tags or publish distributions. Manual preparation SHALL remain independent of plan history, and human integration and mandatory acceptance gates SHALL retain their existing roles.
 
 #### Scenario: Successful watch execution
-- **WHEN** a watch plan is successfully computed and emailed
+- **WHEN** a watch plan is successfully computed and presented after scheduled or manual invocation
 - **THEN** repository, candidate and publication state remain unchanged and no preparation or publication has been initiated
 
 ### Requirement: Stateless deterministic operation
 
-Nominal discovery, selection and forecasting SHALL operate deterministically without AI. The watch SHALL use official upstream state, published references/history and current candidates, introducing no refusal registry, persistent proposal/delivery history, version reservation, application lock, second version domain or permanent distribution branch.
+Nominal discovery, selection and forecasting SHALL operate deterministically without AI. The watch SHALL use official upstream state, published references/history and current candidates, introducing no refusal registry, persistent proposal history, version reservation, application lock, second version domain or permanent distribution branch.
 
 #### Scenario: Eligible pair is not selected
 - **WHEN** the maintainer does not launch a proposed eligible pair and the relevant state stays unchanged

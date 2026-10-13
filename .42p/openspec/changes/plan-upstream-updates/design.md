@@ -2,7 +2,7 @@
 
 ## Context
 
-See [proposal](proposal.md) for motivation and source identity. This design is required because A-watch crosses upstream discovery, Git/npm reads, candidate observation, scheduling and private SMTP delivery. The [delta spec](specs/upstream-watch/spec.md) defines the behavior; this document selects its realization.
+See [proposal](proposal.md) for motivation and source identity. This design is required because A-watch crosses upstream discovery, Git/npm reads, candidate observation, scheduling/manual invocation and native Actions presentation/notifications. The [delta spec](specs/upstream-watch/spec.md) defines the behavior; this document selects its realization.
 
 At source commit `8e9de3c42334e12eb065440b4155aad06391ff27`, `tools/release/policy.mjs` exports upstream comparison, channel classification and the common calculation. `tools/release/state.mjs` supplies complete paginated GitHub reads, scoped npm interpretation, provenance validation and verified channel HEADs, but its snapshot exposes only HEAD compositions. `tools/release/context.mjs` validates candidate descriptors against their source locks. Updates creates `candidate/run-<runId>-<attempt>` and `inputs/release.json`; the workflow has no pair-bearing run name. Its API run record does not expose dispatch inputs.
 
@@ -10,17 +10,17 @@ Current source resolution in `tools/inputs.py` is not a complete discovery inven
 
 ## Goals / Non-Goals
 
-**Goals:** Keep selection/forecasting pure over acquired snapshots; make incomplete reads explicit; expose every eligible job and current preparation; deliver the conditional plan without disclosing private configuration.
+**Goals:** Keep selection/forecasting pure over acquired snapshots; make incomplete reads explicit; expose every eligible job and current preparation; present the plan and failure outcomes directly through native Actions mechanisms.
 
-**Non-Goals:** Reimplement numbering, extend source admissibility, demonstrate runtime compatibility, coordinate concurrent candidates, retain refusals/delivery history, change candidate preparation or publication semantics, or evolve 42P. A-watch's metadata reader is not a substitute for A-inputs integrity or A-acceptance.
+**Non-Goals:** Reimplement numbering, extend source admissibility, demonstrate runtime compatibility, coordinate concurrent candidates, retain refusals/proposal history, change candidate preparation or publication semantics, or evolve 42P. A-watch's metadata reader is not a substitute for A-inputs integrity or A-acceptance.
 
 ## Decisions
 
 ### 1. Small tooling modules with no new runtime distribution
 
-Use repository-style Node.js ES modules under `tools/watch/` for discovery adapters, state/candidate observation, pure selection and rendering, with a thin `tools/watch.sh` entry point. Use Python's standard-library `smtplib`, `ssl` and `email` only for the SMTP adapter, called with the message through stdin and secrets through its environment. This avoids adding an npm SMTP dependency or implementing SMTP/TLS in Node. Node 18+ and Python 3.9+ match existing tooling prerequisites; log actual versions in nonsecret run evidence. No SDK/browser installation is needed for planning.
+Use repository-style Node.js ES modules under `tools/watch/` for discovery adapters, state/candidate observation, pure selection and Markdown rendering, with a thin `tools/watch.sh` entry point. Native Actions summary/notification mechanisms need no mail adapter, account credentials, added dependency or alternative notification infrastructure. Node 18+ matches existing tooling prerequisites; log its actual version in nonsecret run evidence. No SDK/browser installation is needed for planning.
 
-Keep read dependencies and the mail adapter injectable for offline verification. No generic automation framework or shared policy service is introduced. Imported modules must be side-effect-free; the watch never calls `qualify`, `prepareCandidate` or publication services.
+Keep read dependencies and summary output injectable for offline verification. No generic automation framework or shared policy service is introduced. Imported modules must be side-effect-free; the watch never calls `qualify`, `prepareCandidate` or publication services.
 
 ### 2. Release identity comes from official publication evidence
 
@@ -50,21 +50,21 @@ Normalize and sort exact upstream lists, filter against the two design baselines
 
 Call `calculate` once per retained pair against the same acquired snapshot. Never update the snapshot with forecasts to pretend the maintainer will integrate jobs sequentially. Equal predicted numbers are legitimate independent possibilities, explicitly labeled unreserved. Missing stable bootstrap state or a calculation collision is an explicit diagnostic under the shared policy, not grounds for inventing another numbering rule. Sort entries deterministically by channel then component versions; source response order is irrelevant. Proposed default `release_comment` is empty, since ordinary eligibility contains no implicit rollback; manual dispatch retains its existing free-text input.
 
-### 6. Render once, send only after successful nonempty planning
+### 6. Present each outcome in the execution summary
 
-Produce one readable plain-text email grouped by channel, with exact versions, increment, forecast version, reference state, exact Updates parameters and `https://github.com/<repository>/actions/workflows/updates.yml`. Existing-candidate entries carry run/PR links and no suggested duplicate dispatch. A safely quoted ready-to-copy `gh workflow run` command for entries without candidates is optional; its inclusion cannot execute anything. Discovery/forecasting do not establish build compatibility.
+Render readable Markdown through `GITHUB_STEP_SUMMARY`, grouped by channel, with exact versions, increment, forecast version, reference state, exact Updates parameters and `https://github.com/<repository>/actions/workflows/updates.yml`. Existing-candidate entries carry run/PR links and no suggested duplicate dispatch. A safely quoted ready-to-copy `gh workflow run` command for entries without candidates remains optional; rendering it cannot execute it. Discovery/forecasting do not establish build compatibility.
 
-Before SMTP, finish every required read and calculation. A zero-entry successful plan records `empty` and makes no mail-adapter call or credential check. A nonempty plan reads `WATCH_MAIL_ADDRESS` and `WATCH_SMTP_APP_PASSWORD` from GitHub Actions secrets; the one address supplies sender, recipient and SMTP username. Use Gmail `smtp.gmail.com:465` with verified TLS, a finite timeout and a dedicated app password when the account permits it. Google requires 2-Step Verification for app passwords; actual availability/setup is a private deployment prerequisite, not established here. The ordinary account password is not accepted as setup.
+A complete zero-entry plan produces an explicit normal empty summary. On discovery/state/calculation failure, write the failed stage and sanitized available diagnostic to the summary and preserve the failing exit status; do not label an incomplete result as a complete or empty plan. Keep only nonsecret invocation evidence/plan diagnostics under ignored `.work/watch/` or CI artifacts, never as selection state for future runs. Tests cover all three summary outcomes and do not invoke a live watch.
 
-Never emit SMTP debug traces or raw exception bodies; use sanitized error classes/statuses. Keep addresses/passwords out of command arguments, plan files, summaries and archived diagnostics. Mask secret values before operations that could emit them and ensure child-process capture cannot persist private output. Successful return records `smtp-accepted`, not confirmed inbox receipt. If acceptance is uncertain after a transport failure, record unsuccessful/uncertain outcome without automatic resend. There is no delivery registry or fallback issue.
+Use GitHub Actions' native execution-completion notification behavior, determined by supported account capabilities/preferences. Empty-plan notifications are acceptable; the watch does not suppress them through a dedicated sender. Do not configure mail addresses, Gmail secrets or a transport, create notification issues, claim confirmed delivery, promise mobile push or require a particular native notification format. Documentation points the maintainer to the execution summary and ordinary account notification preferences; configuring those preferences remains outside this Change's automation.
 
-Store only nonsecret invocation evidence and the plan under ignored `.work/watch/` or CI artifacts; record `empty`, `smtp-accepted` or failed stage, references and counts. These are diagnostics for this invocation, never state inputs for future selection. Privacy fixtures must inspect all retained output paths, including error paths, for synthetic address/password leakage.
+### 7. Weekly and independent manual planning, read-only GitHub authorization
 
-### 7. One timezone-aware schedule, read-only GitHub authorization
+Use native GitHub Actions schedule `cron: '0 8 * * 5'` with `timezone: Europe/Paris`. Current GitHub workflow documentation supports IANA timezone schedules; dual UTC crons plus a local-time filter are unnecessary. The schedule is a requested execution time, not a guarantee against hosted queue delays. Scheduled execution uses the default branch with read permissions for contents, pull requests and actions, native token for authenticated reads, and no GitHub write or publishing OIDC authorization. Pin checkout/artifact actions to full commits using existing repository conventions.
 
-Use native GitHub Actions schedule `cron: '0 8 * * 5'` with `timezone: Europe/Paris`. Current GitHub workflow documentation supports IANA timezone schedules; dual UTC crons plus a local-time filter are unnecessary. The schedule is a requested execution time, not a guarantee against hosted queue delays. Run from the default branch with read permissions for contents, pull requests and actions, native token for authenticated reads, and no GitHub write or publishing OIDC authorization. Pin checkout/artifact actions to full commits using existing repository conventions.
+Add A-watch `workflow_dispatch` independently of the Friday schedule, with no candidate-selection, channel or distribution-version override inputs. Scheduled and manual events call the same read/compute/render path; event identity and executed revision are recorded for diagnostics, without changing the planner's policy. Dispatching Watch never calls or dispatches Updates; a preparation link is navigation for a subsequent separate human action. Manual branch selection can support development checks under GitHub's supported dispatch rules; its workflow definition must be available on the default branch before hosted manual invocation. This does not authorize integration merely to enable a test.
 
-PR validation invokes offline suites without SMTP credentials or external delivery; the sending job is schedule-only. No manual preparation input, automatic keepalive, repository write or external scheduler is added. Inactivity deactivation and manual reactivation are documented rather than prevented.
+PR validation invokes the offline suites; it does not automatically run the live watch. No preparation input, automatic keepalive, repository write or external scheduler is added. Inactivity deactivation and manual reactivation are documented rather than prevented.
 
 ## Risks / Trade-offs
 
@@ -72,21 +72,19 @@ PR validation invokes offline suites without SMTP credentials or external delive
 - Historical SQLite archive digests can disappear from current download metadata -> distinguish discovery from later exact-source resolution; expose insufficient source evidence and escalate A-inputs dependencies without acquiring a fallback or rewriting pins.
 - Concurrent publications or candidate transitions -> tie reads to exact identities and report inconsistent state; forecasts remain snapshots, not locks or reservations.
 - Several alpha releases produce a longer plan -> retain all eligible pairs as allocated; grouping and deterministic ordering aid reading without an unauthorized newest-only filter.
-- SMTP failure after possible acceptance -> explicit uncertain failure without automatic retry; later weekly planning recomputes from source state and does not pretend exactly-once delivery.
-- Gmail app passwords may be unavailable or revoked -> private setup/rotation prerequisite; fail explicitly for nonempty plans rather than switch transport silently.
-- Public CI evidence can leak private values -> pass secrets separately, sanitize before output and test retained summaries/artifacts with synthetic credentials.
+- Native notifications depend on GitHub/account preferences -> expose the result directly in the execution summary without claiming delivery or building a fallback transport.
+- Failed summary output or incomplete reads -> preserve a failed execution and available diagnostics, never an artificial empty-plan success.
 
 ## Migration Plan
 
 Implement on this Change's branch after authorization, including the bounded Updates metadata addition and meaningful offline suites registered in `tools/test-repository.sh`. Renew coverage after any semantic revision, complete post-Apply Verification and archive under existing repository rules before human integration. Do not rewrite historical records or change merge gates to integrate an unimplemented plan.
 
-The maintainer configures the two secrets privately before enabling operational delivery. No credentials are requested in chat or committed. No email test is authorized by this Proposition; a later explicitly authorized live exercise must distinguish SMTP acceptance from inbox receipt and retain sanitized evidence. Removing/disabling the watch schedule stops future planning without changing preparation/publication or creating rollback state.
+No mail configuration or notification settings are changed by this documentary revision. After implementation is separately authorized and the workflow is available under GitHub's dispatch rules, manual Watch invocation can exercise calculation/presentation independently of the cron without initiating Updates. No such execution is authorized by the present mission. Disabling the schedule stops scheduled planning; manual planning remains a distinct trigger until the workflow itself is disabled or removed. Candidate preparation/publication and refusal state are unaffected.
 
 ## Mechanism references
 
 - [GitHub schedule timezone syntax and run names](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax), read 2026-10-13.
-- [GitHub workflow-run API](https://docs.github.com/en/rest/actions/workflow-runs) and [Actions secrets](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-secrets).
-- [Google app passwords](https://support.google.com/accounts/answer/185833) and [Python SMTP client](https://docs.python.org/3/library/smtplib.html).
+- [GitHub workflow-run API](https://docs.github.com/en/rest/actions/workflow-runs), [job summaries](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-commands#adding-a-job-summary) and [Actions notifications](https://docs.github.com/en/subscriptions-and-notifications/how-tos/managing-github-actions-notifications).
 - [SQLite Fossil tags](https://sqlite.org/src/taglist), [release timeline](https://sqlite.org/src/timeline?t=release) and [SQLite download metadata](https://sqlite.org/download.html).
 
 These sources explain mechanisms, not product authority or implementation evidence. Official-source and live-service observations from exploration are not proof of this Change's realization.

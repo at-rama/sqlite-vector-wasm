@@ -4,9 +4,9 @@
 
 Current direct inputs. The full reconciliation of 2026-10-10 is retained; the subsequent bounded review below re-examines the authorized release refinements and their affected contributions:
 
-- [Distribution Capture](2026-10-04_sqlite-vec-wasm_capture_edit-0.1.md), snapshot SHA-256 `337273bf5a887939a8f25b9c0a2739c6ab85d705e9fbaeef57953215e8309e00`.
+- [Distribution Capture](2026-10-04_sqlite-vec-wasm_capture_edit-0.1.md), snapshot SHA-256 `59b54e5ecc19861ce13da5c018d9ba546a4ff33f215fe678d1cda2e01ae0649a`.
 - [Site Capture](2026-10-08_sqlite-vec-wasm_site_capture_edit-0.1.md), snapshot SHA-256 `4312d2c6f83bbfaae09cc9d23322d07f3d60f1e9203bc9588c4be5b24ba7b085`.
-- [Release/Watch Capture](2026-10-09_sqlite-vec-wasm_release-watch_capture_edit-0.1.md), snapshot SHA-256 `91337974c24eefbf9031aa0a9bf866763cad5cbdba2a99d3739362010e15a944`.
+- [Release/Watch Capture](2026-10-09_sqlite-vec-wasm_release-watch_capture_edit-0.1.md), snapshot SHA-256 `0cfd081230e972027c18d53819203079e8267a88ae47e3fa473925b801a5f5cb`.
 
 Reference prefixes `D`, `S` and `W` identify these scopes; a handle is local to its Capture. The links above retrieve the current input files; their fingerprints identify the exact bytes examined. The immutable comparison revision below preserves the preceding state, not these refreshed editorial snapshots. Instituted sources and decisions retain authority. Captures project them; this Allocation attributes responsibility without instituting requirements or certifying realization. Explicit scoped supersessions recorded in the Captures govern the revised release/watch matter. Related sources and projections are not independent corroboration.
 
@@ -19,6 +19,8 @@ Distribution-facing responsibilities share [D/C-purpose]'s runtime/selected-engi
 The [technical architecture](2026-10-04_sqlite-vec-wasm_technical_architecture_edit-0.1.md) supplies downstream realization context, not design authority or completion evidence. Historical Changes retain their own contracts, snapshots and evidence. The current contract impacts recorded below are distinct from Allocation coverage and do not constitute post-Apply Verification.
 
 The user's subsequent `S-release-refinement` decisions, projected in Distribution `C-release`/`C-bootstrap` and Release/Watch `C-semver`/`C-publication`, refine the alpha required-base reference and bounded initial npm path. The incremental review covers `A-release` policy/publication/completion, `A-watch` and `A-updates` consumption of that common policy, and `A-bootstrap` setup/manual first-npm handoff. Their existing qualified references cover these contributions without new units or transferred duties. `A-release` owns read-only completion checking; `A-bootstrap` performs the unavoidable manual operation. Other inputs, boundaries, historical contracts and evidence are unchanged; this incremental review does not renew a global verification verdict. The active `publish-distribution` Change is reconciled against these refreshed snapshots; future watch/update/bootstrap Changes must consume the current references.
+
+The 2026-10-13 `S-watch-native` mission performs a bounded reconciliation of `A-watch` only: native notification/direct plan consultation, normal empty results and independent manual planning replace its email orientation. The refreshed Capture fingerprints above identify the examined bytes; their other allocated contributions and all other unit texts remain unchanged. The present derivation review covers this watch field in both directions and does not renew the earlier global verdict or historical realization evidence.
 
 ## Allocation units
 
@@ -58,9 +60,9 @@ Establish the required evidence for the actual packaged runtime and complete pro
 
 Produce the human-readable upstream job plan.
 
-**Qualified references:** [D/C-watch] and [W/C-watch], discovery sources/baselines, cadence, plan/email contents, scheduling and planning stop; [W/C-selection], pair eligibility, published references, candidate deduplication and no refusal registry; [W/C-determinism], [W/C-semver] and [W/C-channels], use of the shared calculation for forecasts; [D/C-autonomy], separation from manual initiation; [D/R-updates] and [W/R-frugality], applicable automation/state constraints and rationale.
+**Qualified references:** [D/C-watch] and [W/C-watch], discovery sources/baselines, cadence, plan contents/direct consultation and native notification limits, weekly/manual planning initiation, scheduling and planning stop; [W/C-selection], pair eligibility, published references, candidate deduplication and no refusal registry; [W/C-determinism], [W/C-semver] and [W/C-channels], use of the shared calculation for forecasts; [D/C-autonomy], separation from manual candidate initiation; [D/R-updates] and [W/R-frugality], applicable automation/state constraints and rationale.
 
-**Boundary and dependencies:** use `A-inputs`' admissibility criteria, `A-release`'s publication state/policy and `A-updates`' current candidate state. A plan does not reserve a version or initiate candidate preparation. Forecast policy belongs to `A-release`; the common mechanism does not prescribe another unit.
+**Boundary and dependencies:** use `A-inputs`' admissibility criteria, `A-release`'s publication state/policy and `A-updates`' current candidate state. A plan does not reserve a version or initiate candidate preparation; manually invoking A-watch remains distinct from manually initiating A-updates. Forecast policy belongs to `A-release`; the common mechanism does not prescribe another unit.
 
 ### A-updates — Manual candidate preparation
 
@@ -109,7 +111,7 @@ The following correspondence accounts for all 41 non-source handles. Attribution
 | [D/C-storage] | `A-build`: behavior/conditions; `A-package`: faithful consumer behavior/documentation; `A-acceptance`: mandatory persistence evidence under those prerequisites. |
 | [D/C-release] | `A-release`: policy, identity, publication and notices; `A-package`: envelope/metadata/notices; `A-acceptance`: authoritative-revision/exact-payload evidence. Watch forecasts, candidate preparation and bootstrap consume that policy through their dependencies; none owns an alternative number. |
 | [D/C-verification] | `A-acceptance`: all mandatory controls and evidence conditions; `A-updates`/`A-release` consume the corresponding gate results/applicable evidence. |
-| [D/C-watch] | `A-watch`: complete planning/notification/scheduling boundary; candidate/publication state supplied by `A-updates`/`A-release`. |
+| [D/C-watch] | `A-watch`: complete summary/native-notification and weekly/manual planning boundary, including normal empty plans and explicit failures; candidate/publication state supplied by `A-updates`/`A-release`. |
 | [D/C-autonomy] | `A-updates`: initiation/preparation/human integration; `A-release`: normal post-merge publication; `A-bootstrap`: bounded initial exception; `A-watch`: planning stops before initiation. |
 | [D/R-updates] | `A-watch`/`A-updates`/`A-release`: shared calculation, constrained automation/state and human authority; earlier alternatives remain rationale, not current conflicting rules. |
 | [D/C-failure] | `A-updates`: candidate/integration eligibility stop; `A-release`: publication stop; contributing production/acceptance results remain mandatory. No waiver or automatic repair responsibility is invented. |
@@ -133,7 +135,7 @@ The following correspondence accounts for all 41 non-source handles. Attribution
 | [W/C-version-identity] | `A-release`: distribution/code identity and branch model; `A-updates`: candidate branches/commit identity; `A-package`: carried identity; `A-site`: published identity consumption. |
 | [W/C-semver] | `A-release`: full numerical, maturity, initial/default and alpha-series policy; `A-watch`/`A-updates`: calculation use; `A-bootstrap`: initial-rule consumption. Compatibility evidence remains `A-acceptance`'s distinct contribution. |
 | [W/C-channels] | `A-release`: classification, separate HEADs, monotonic progression and shared namespace; `A-watch`/`A-updates`: forecast/preparation use; `A-site`: stable-publication consumption. |
-| [W/C-watch] | `A-watch`: official discovery/baselines, weekly email plan contents, stop and scheduling lifecycle, including no keepalive. |
+| [W/C-watch] | `A-watch`: official discovery/baselines, directly consultable plan contents and native notification limits, weekly/manual planning, normal empty plans, explicit failures and stop/scheduling lifecycle, including no keepalive. |
 | [W/C-selection] | `A-watch`: pair progress/no-regression filters, published references, candidate deduplication and absence of refusal memory; manual selections remain outside these watch filters. |
 | [W/C-dispatch] | `A-updates`: exact inputs/comment, manual independence, rollback classification/comment; `A-release` consumes invocation context for numbering/provenance. |
 | [W/C-candidate] | `A-updates`: full preparation composition ending at a PR; producing units and `A-acceptance` retain their respective contributions. |
@@ -142,17 +144,17 @@ The following correspondence accounts for all 41 non-source handles. Attribution
 | [W/R-frugality] | `A-watch`/`A-updates`/`A-release`: material state/automation prohibitions and shared-policy boundary; retained alternatives/rationale do not create extra mechanisms. |
 | [W/C-reconciliation] | Documentary reconciliation instruction: this Allocation replaces its superseded mapping, reports downstream impacts and preserves history. It is not a product realization unit or evidence of implementation. |
 
-All 18 source handles have the following provenance treatment. Their decisions/relationships govern interpretation of the attributed passages; they do not create source-processing product units.
+The source handles have the following provenance treatment. Their decisions/relationships govern interpretation of the attributed passages; they do not create source-processing product units.
 
 | Scope | Source handles and treatment |
 | --- | --- |
-| Distribution | [D/S-release-watch-design] and [D/S-local-reconciliation]: scoped supersessions; [D/S-capture-reconciliation]: adopted Capture-level reconciliation; [D/S-product-design]: identity/engine decision; [D/S-spec]: immutable historical contract; [D/S-release-model], [D/S-doc-model] and [D/S-watch-model]: retained lifecycle/documentation/watch provenance with recorded revision limits. |
+| Distribution | [D/S-watch-native]: bounded watch notification/manual-planning supersession; [D/S-release-watch-design] and [D/S-local-reconciliation]: scoped supersessions; [D/S-capture-reconciliation]: adopted Capture-level reconciliation; [D/S-product-design]: identity/engine decision; [D/S-spec]: immutable historical contract; [D/S-release-model], [D/S-doc-model] and [D/S-watch-model]: retained lifecycle/documentation/watch provenance with recorded revision limits. |
 | Site | [S/S-capture-reconciliation] and [S/S-product-design]: bounded provenance/identity consequences; [S/S-site-design] and [S/S-site-exploration]: behavior, observations and alternatives; [S/S-site-mission]: representation migration and one instituted site unit. |
-| Release/Watch | [W/S-capture-reconciliation]: earlier bounded reconciliation scope; [W/S-release-watch-design] and [W/S-local-reconciliation]: design and explicit scoped revisions; [W/S-capture-mission]: dedicated Capture identity; [W/S-repository-state]: retrievable comparison/provenance state, not decision authority or implementation evidence. |
+| Release/Watch | [W/S-watch-native]: the same primary watch revision, not independent corroboration; [W/S-capture-reconciliation]: earlier bounded reconciliation scope; [W/S-release-watch-design] and [W/S-local-reconciliation]: design and explicit scoped revisions; [W/S-capture-mission]: dedicated Capture identity; [W/S-repository-state]: retrievable comparison/provenance state, not decision authority or implementation evidence. |
 
 Material prose outside handles is also covered: scope/authority and explicit revision relations govern this input interpretation; Distribution's material relationships ground the acquisition/build/package/acceptance and watch/candidate/publication compositions; Site's separation/open-choice prose constrains `A-site`; Release/Watch's retained-invariant prose and impact map constrain the common lifecycle and the downstream findings below. Historical source setup restrictions remain attached to their interventions rather than becoming permanent product restrictions. Moving upstream documentation and source-stated technical context are not renewed evidence.
 
-**Bidirectional result:** the full three-Capture responsibility field is accounted for: 41 non-source elements, 18 provenance elements, material prose and all nine units. Every material realization obligation has qualified production/check/publication contributions; every unit contribution and dependency has current grounding. There is no unresolved Allocation attribution or new unit. This is a semantic Capture↔Allocation responsibility result, not a claim of fidelity to reacquired original sources, current implementation conformity or release readiness. Open Site choices retain their original role.
+**Preceding bidirectional result (historical reconciliation scope):** the full three-Capture responsibility field was accounted for: 41 non-source elements, 18 provenance elements, material prose and all nine units. Every material realization obligation has qualified production/check/publication contributions; every unit contribution and dependency has current grounding. There is no unresolved Allocation attribution or new unit. This is a semantic Capture↔Allocation responsibility result, not a claim of fidelity to reacquired original sources, current implementation conformity or release readiness. Open Site choices retain their original role. This preceding global conclusion is not renewed by the current A-watch-only revision; current input fingerprints and the bounded watch examination are distinguished above.
 
 **Downstream impacts outside this edit:** the active [upstream-inputs spec](../openspec/specs/upstream-inputs/spec.md) and [browser-build spec](../openspec/specs/browser-build/spec.md) retain superseded stable-only qualifiers; [source-acquisition documentation](../../docs/source-acquisition.md) and the current resolver likewise describe/enforce the older restriction. They need allocated realization/contract reconciliation before prerelease support can be claimed. Exact candidate dispatch does not by itself remove the acquisition helper's separate omitted-version convenience. The [browser-package](../openspec/specs/browser-package/spec.md) and [browser-acceptance](../openspec/specs/browser-acceptance/spec.md) contracts retain payload/evidence boundaries; their applicability must be reassessed for changed inputs or package-affecting numbers, without inferring a blanket failure. Four archived Changes retain historical snapshot-bound coverage/evidence; there is no active Change to rewrite. Capture current-state passages have been refreshed to reflect this responsibility reconciliation; their earlier mission scopes remain identifiable in provenance. Canon/context prose referring to two Captures still needs a separately scoped adjustment. This status-only update changes no responsibility, contract, implementation, canon or historical evidence.
 
@@ -172,6 +174,7 @@ Material prose outside handles is also covered: scope/authority and explicit rev
 [D/C-bootstrap]: 2026-10-04_sqlite-vec-wasm_capture_edit-0.1.md#c-bootstrap--publication-setup-exception-and-publication-mechanisms
 [D/C-obsolescence]: 2026-10-04_sqlite-vec-wasm_capture_edit-0.1.md#c-obsolescence--end-of-project-responsibility
 [D/R-engine]: 2026-10-04_sqlite-vec-wasm_capture_edit-0.1.md#r-engine--selected-engine-trade-offs-and-reconsideration
+[D/S-watch-native]: 2026-10-04_sqlite-vec-wasm_capture_edit-0.1.md#material-sources
 [D/S-release-watch-design]: 2026-10-04_sqlite-vec-wasm_capture_edit-0.1.md#material-sources
 [D/S-local-reconciliation]: 2026-10-04_sqlite-vec-wasm_capture_edit-0.1.md#material-sources
 [D/S-capture-reconciliation]: 2026-10-04_sqlite-vec-wasm_capture_edit-0.1.md#material-sources
@@ -202,7 +205,7 @@ Material prose outside handles is also covered: scope/authority and explicit rev
 [W/C-version-identity]: 2026-10-09_sqlite-vec-wasm_release-watch_capture_edit-0.1.md#c-version-identity--one-distribution-version-domain
 [W/C-semver]: 2026-10-09_sqlite-vec-wasm_release-watch_capture_edit-0.1.md#c-semver--deterministic-increments-and-maturity-ceiling
 [W/C-channels]: 2026-10-09_sqlite-vec-wasm_release-watch_capture_edit-0.1.md#c-channels--stable-and-experimental-publication
-[W/C-watch]: 2026-10-09_sqlite-vec-wasm_release-watch_capture_edit-0.1.md#c-watch--weekly-planning-and-email-boundary
+[W/C-watch]: 2026-10-09_sqlite-vec-wasm_release-watch_capture_edit-0.1.md#c-watch--weekly-planning-and-native-notification-boundary
 [W/C-selection]: 2026-10-09_sqlite-vec-wasm_release-watch_capture_edit-0.1.md#c-selection--two-dimensional-eligibility-and-no-refusal-registry
 [W/C-dispatch]: 2026-10-09_sqlite-vec-wasm_release-watch_capture_edit-0.1.md#c-dispatch--exact-manual-selection-and-rollback
 [W/C-candidate]: 2026-10-09_sqlite-vec-wasm_release-watch_capture_edit-0.1.md#c-candidate--automated-preparation-ending-at-a-pr
@@ -210,6 +213,7 @@ Material prose outside handles is also covered: scope/authority and explicit rev
 [W/C-provenance]: 2026-10-09_sqlite-vec-wasm_release-watch_capture_edit-0.1.md#c-provenance--distribution-composition-and-publication-identity
 [W/R-frugality]: 2026-10-09_sqlite-vec-wasm_release-watch_capture_edit-0.1.md#r-frugality--bounded-automation-and-retained-alternatives
 [W/C-reconciliation]: 2026-10-09_sqlite-vec-wasm_release-watch_capture_edit-0.1.md#c-reconciliation--replace-superseded-active-rules-preserve-history
+[W/S-watch-native]: 2026-10-09_sqlite-vec-wasm_release-watch_capture_edit-0.1.md#material-sources
 [W/S-capture-reconciliation]: 2026-10-09_sqlite-vec-wasm_release-watch_capture_edit-0.1.md#material-sources
 [W/S-release-watch-design]: 2026-10-09_sqlite-vec-wasm_release-watch_capture_edit-0.1.md#material-sources
 [W/S-capture-mission]: 2026-10-09_sqlite-vec-wasm_release-watch_capture_edit-0.1.md#material-sources
