@@ -71,5 +71,5 @@ export function renderPlan(plan) {
 }
 
 export function renderFailure(stage,diagnostic) {
-  return `# Upstream planning failed\n\nStage: ${escape(stage)}.\n\n${escape(diagnostic)}\n\nNo complete plan is available. This is not an empty-plan result.\n`;
+  return `# Upstream planning failed\n\nStage: ${escape(stage)}.\n\n${escape(diagnostic)}\n\nThe execution did not complete successfully. This is not an empty-plan result.\n`;
 }

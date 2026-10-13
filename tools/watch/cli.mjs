@@ -1,4 +1,4 @@
-import { readFile, mkdir, writeFile, appendFile } from 'node:fs/promises';
+import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { httpReader } from '../release/state.mjs';
 import { invocation, runWatch, diagnostic } from './run.mjs';
 import { renderFailure } from './plan.mjs';
@@ -8,7 +8,7 @@ const token=process.env.GH_TOKEN || '';
 const secrets=[token];
 const writeSummary=async text=>{
   if(!process.env.GITHUB_STEP_SUMMARY)throw Error('Missing GitHub execution summary destination');
-  await appendFile(process.env.GITHUB_STEP_SUMMARY,text);
+  await writeFile(process.env.GITHUB_STEP_SUMMARY,text);
 };
 const writeEvidence=async evidence=>{
   await mkdir(directory,{recursive:true});
