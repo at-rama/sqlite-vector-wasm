@@ -13,7 +13,6 @@ export function invocation(event,environment) {
   assert.match(environment.GITHUB_SHA || '',commitPattern);
   if(environment.GITHUB_EVENT_NAME==='schedule')assert.equal(environment.GITHUB_REF,`refs/heads/${event.repository.default_branch}`,'Schedule must use the default branch');
   else {
-    assert.equal(event.sender?.type,'User','Manual Watch requires a human actor');
     assert.ok(!event.inputs || (typeof event.inputs==='object'&&!Array.isArray(event.inputs)&&Object.keys(event.inputs).length===0),'Watch accepts no preparation or override inputs');
   }
   return {repository,event:environment.GITHUB_EVENT_NAME,revision:environment.GITHUB_SHA,node:process.version};

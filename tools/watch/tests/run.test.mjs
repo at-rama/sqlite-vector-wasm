@@ -49,6 +49,7 @@ test('invocation separates Watch events from preparation and rejects overrides',
   const environment={GITHUB_ACTIONS:'true',GITHUB_REPOSITORY:'at-rama/sqlite-vector-wasm',GITHUB_EVENT_NAME:'workflow_dispatch',GITHUB_SHA:'a'.repeat(40),GITHUB_REF:'refs/heads/development'};
   const event={repository:{full_name:environment.GITHUB_REPOSITORY,default_branch:'main'},sender:{type:'User'},inputs:{}};
   assert.equal(invocation(event,environment).event,'workflow_dispatch');
+  assert.equal(invocation({...event,sender:{type:'Bot'}},environment).event,'workflow_dispatch','GitHub-authorized API dispatch only recalculates the plan');
   assert.throws(()=>invocation({...event,inputs:{sqlite_version:'3.54.0'}},environment));
   assert.throws(()=>invocation(event,{...environment,GITHUB_EVENT_NAME:'pull_request'}));
   assert.throws(()=>invocation(event,{...environment,GITHUB_EVENT_NAME:'schedule'}));
