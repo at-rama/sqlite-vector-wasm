@@ -4,7 +4,7 @@
 
 Change: `plan-upstream-updates`. Allocation unit: exactly `A-watch`.
 
-Read the current [global Allocation](../../../engineering/2026-10-04_sqlite-vec-wasm_allocation_edit-0.1.md), SHA-256 `bc49443fcc63610d370c5527782897e6e8cb02b131213d9226044e6021dda780`, reconciled on the existing PR #44 from revision `2b5edf80d76af6d83e0edc2d6d23b0824d42c20b` under the 2026-10-13 mission. The fingerprints below identify the revised candidate inputs, not their preceding bytes. Its qualified passages select:
+Read the current [global Allocation](../../../engineering/2026-10-04_sqlite-vec-wasm_allocation_edit-0.1.md), SHA-256 `e6a518b8b9c7f957ba222164a091873e4b6cd0af60cfc054a110f2e48cc52dfc`, reconciled on the existing PR #44 from revision `2b5edf80d76af6d83e0edc2d6d23b0824d42c20b` under the 2026-10-13 mission. The fingerprints below identify the revised candidate inputs, not their preceding bytes. Its qualified passages select:
 
 - [Distribution Capture](../../../engineering/2026-10-04_sqlite-vec-wasm_capture_edit-0.1.md), SHA-256 `59b54e5ecc19861ce13da5c018d9ba546a4ff33f215fe678d1cda2e01ae0649a`: `C-watch`, `C-autonomy`, `R-updates`, plus the A-inputs admissibility dependency in `C-inputs`.
 - [Release/Watch Capture](../../../engineering/2026-10-09_sqlite-vec-wasm_release-watch_capture_edit-0.1.md), SHA-256 `0cfd081230e972027c18d53819203079e8267a88ae47e3fa473925b801a5f5cb`: `C-watch`, `C-selection`, `C-determinism`, `C-semver`, `C-channels` and `R-frugality` with their conditions, exclusions and responsibility boundaries.
