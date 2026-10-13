@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { sqliteTags, vecReleases, discover, fossilTags } from '../discovery.mjs';
 
-const html = await readFile(new URL('./fixtures/sqlite-taglist.html',import.meta.url),'utf8');
-const release = await readFile(new URL('./fixtures/sqlite-release.html',import.meta.url));
+const html = await readFile(new URL('./fixtures/sqlite-taglist.html.txt',import.meta.url),'utf8');
+const release = await readFile(new URL('./fixtures/sqlite-release.html.txt',import.meta.url));
 // The captured subset omits id; complete the test observation without editing it.
 const vec = {...JSON.parse(await readFile(new URL('./fixtures/sqlite-vec-release.json',import.meta.url))),id:324084102};
 const record = (version,id=900001) => ({...structuredClone(vec),id,url:`https://api.github.com/repos/asg017/sqlite-vec/releases/${id}`,tag_name:`v${version}`,prerelease:version.includes('-'),
@@ -25,6 +25,15 @@ test('captured sqlite-vec prerelease metadata, baselines and nonrelease exclusio
   for(const r of [{...vec,prerelease:false},{...vec,assets:[]},{...vec,assets:[{...vec.assets[0],digest:null}]}])
     assert.throws(()=>vecReleases([r]));
   assert.throws(()=>vecReleases([vec,vec]),/Ambiguous/);
+});
+
+test('Fossil cells reject nested, incomplete and unexpected markup without stripping it',()=>{
+  const cell='<span class="tagDsp">version-3.54.0</span>';
+  for(const bad of ['<span class="tagDsp"><script>version-3.54.0</script></span>',
+    '<span class="tagDsp"><SCRIPT>version-3.54.0</SCRIPT></span>',
+    '<span class="tagDsp">version-3.54.0<script</span>',
+    '<a>version-3.54.0</a>'])
+    assert.throws(()=>sqliteTags(html.replace(cell,bad)),/Unrecognized Fossil cell markup/);
 });
 test('complete paginated discovery verifies official release logs and fails incomplete reads',async()=>{
   const requests=[];

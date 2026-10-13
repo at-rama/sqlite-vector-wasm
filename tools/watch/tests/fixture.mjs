@@ -5,8 +5,8 @@ import { fossilTags } from '../discovery.mjs';
 
 export async function planningFixture({empty=false}={}) {
   const repository='at-rama/sqlite-vector-wasm',api=`https://api.github.com/repos/${repository}/`;
-  const html=await readFile(new URL('./fixtures/sqlite-taglist.html',import.meta.url));
-  const release=await readFile(new URL('./fixtures/sqlite-release.html',import.meta.url));
+  const html=await readFile(new URL('./fixtures/sqlite-taglist.html.txt',import.meta.url));
+  const release=await readFile(new URL('./fixtures/sqlite-release.html.txt',import.meta.url));
   // Complete the captured subset with its URL identity for this synthetic observation.
   const vec={...JSON.parse(await readFile(new URL('./fixtures/sqlite-vec-release.json',import.meta.url))),id:324084102};
   const bytes=Buffer.from('synthetic publication payload'),commit='a'.repeat(40);

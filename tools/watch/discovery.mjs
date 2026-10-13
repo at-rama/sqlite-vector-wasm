@@ -4,7 +4,13 @@ import { pages } from '../release/state.mjs';
 
 export const baselines = Object.freeze({ sqlite: '3.53.4', sqliteVec: '0.1.9' });
 export const fossilTags = 'https://sqlite.org/src/taglist';
-const text = html => html.replace(/<[^>]*>/g, '').replace(/&nbsp;|&#160;/g, ' ').trim();
+// Extract the observed Fossil cell form; do not sanitize arbitrary HTML.
+const text = cell => {
+  const span = /^\s*<span class="tagDsp">([^<>]*)<\/span>\s*$/.exec(cell);
+  const value = (span ? span[1] : cell).replace(/&nbsp;|&#160;/g, ' ').trim();
+  assert.ok(!/[<>]/.test(value), 'Unrecognized Fossil cell markup');
+  return value;
+};
 
 export function sqliteTags(html) {
   assert.equal(typeof html, 'string');

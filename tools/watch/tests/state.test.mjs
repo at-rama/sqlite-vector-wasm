@@ -33,7 +33,7 @@ function publicationFixture(){
     if(url===api+'releases?page=2')return {status:200,data:releases.slice(1),headers:{}};
     if(url.includes('/releases/assets/')) {const id=+url.split('/').at(-1);return {status:200,data:id<10?Buffer.from(JSON.stringify(evidence[id-1])):bytes};}
     if(url.includes('/payload-'))return {status:200,data:bytes};
-    if(url.includes('registry.npmjs.org/'))return {status:200,data:npm};
+    if(url==='https://registry.npmjs.org/@at-rama%2fsqlite-vector-wasm')return {status:200,data:npm};
     throw Error('Unexpected read '+url);
   };
   return {get,calls,tags,releases,npm,evidence};

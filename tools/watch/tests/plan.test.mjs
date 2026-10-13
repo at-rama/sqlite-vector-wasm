@@ -55,6 +55,10 @@ test('complete summary is deterministic, actionable and preserves candidate link
 });
 test('normal empty and failed outcomes stay distinct; diagnostics cannot inject summary HTML',()=>{
   const c=context();c.inventory=inventory(['3.54.0'],['0.1.9']);assert.match(renderPlan(makePlan(c)),/Normal empty plan/);
-  const failed=renderFailure('discovery','<script>unavailable</script>');assert.match(failed,/planning failed/);
-  assert.match(failed,/not an empty-plan/);assert.doesNotMatch(failed,/<script>/);
+  for(const tag of ['script','SCRIPT']) {
+    const failed=renderFailure('discovery',`<${tag}>unavailable</${tag}>`);assert.match(failed,/planning failed/);
+    assert.match(failed,/not an empty-plan/);
+    assert.ok(failed.includes(`&lt;${tag}&gt;unavailable&lt;/${tag}&gt;`));
+    assert.ok(!failed.includes('<') && !failed.includes('>'));
+  }
 });
