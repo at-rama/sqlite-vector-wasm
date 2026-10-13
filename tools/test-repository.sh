@@ -43,3 +43,12 @@ if [ -f tools/updates/run.mjs ]; then
     test -f tools/updates/tests/updates.test.mjs
     node --test tools/updates/tests/*.test.mjs
 fi
+
+# Planning controls use captured metadata and injected read-only services offline.
+if [ -f tools/watch/run.mjs ]; then
+    test -f tools/watch/tests/discovery.test.mjs
+    test -f tools/watch/tests/state.test.mjs
+    test -f tools/watch/tests/plan.test.mjs
+    test -f tools/watch/tests/run.test.mjs
+    node --test tools/watch/tests/*.test.mjs
+fi

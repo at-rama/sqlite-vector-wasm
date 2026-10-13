@@ -1,0 +1,35 @@
+name: Watch
+
+on:
+  schedule:
+    - cron: '0 8 * * 5'
+      timezone: Europe/Paris
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+  actions: read
+
+jobs:
+  plan:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+      - name: Calculate and present the upstream plan
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: sh tools/watch.sh
+      - name: Preserve available planning diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: watch-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .work/watch/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 30
