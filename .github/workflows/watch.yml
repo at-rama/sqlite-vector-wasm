@@ -33,3 +33,10 @@ jobs:
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 30
+      - name: Send the nonempty plan email
+        if: success()
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          RESEND_FROM: ${{ vars.RESEND_FROM }}
+          RESEND_TO: ${{ vars.RESEND_TO }}
+        run: node tools/watch/notify-cli.mjs

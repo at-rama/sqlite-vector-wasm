@@ -50,6 +50,11 @@ if [ -f tools/watch/run.mjs ]; then
     test -f tools/watch/tests/state.test.mjs
     test -f tools/watch/tests/plan.test.mjs
     test -f tools/watch/tests/run.test.mjs
+    if [ -f tools/watch/notify.mjs ]; then
+        test -f tools/watch/tests/notify.test.mjs
+        test -f tools/watch/tests/notify-cli.test.mjs
+        test -f tools/watch/tests/notify-workflow.test.mjs
+    fi
     node --test tools/watch/tests/*.test.mjs
 fi
 
