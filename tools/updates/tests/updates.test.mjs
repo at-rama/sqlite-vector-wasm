@@ -19,6 +19,7 @@ const published = version => {const s=empty();s.heads.latest={version,commit:'a'
 test('dispatch is exact, hosted, main and comments remain data', () => {
   assert.throws(()=>invocation({event:{...event(),sender:{type:'Bot'}},environment:environment()}));
   const c=context();assert.equal(c.branch,'candidate/run-17-2');assert.equal(candidateDescriptor(c,lock(pair)).releaseComment,event().inputs.release_comment);
+  const optional=event();delete optional.inputs.release_comment;assert.equal(invocation({event:optional,environment:environment()}).comment,'');
   for(const override of [{GITHUB_REF:'refs/heads/other'},{GITHUB_EVENT_NAME:'push'},{GITHUB_ACTIONS:'false'},{GITHUB_RUN_ID:'0'},{GITHUB_RUN_ID:'17x'},{GITHUB_RUN_ATTEMPT:'0'}]) assert.throws(()=>invocation({event:event(),environment:{...environment(),...override}}));
   for(const inputs of [{...event().inputs,channel:'latest'},{...event().inputs,sqlite_version:'latest'},{...event().inputs,release_comment:null}]) assert.throws(()=>invocation({event:{...event(),inputs},environment:environment()}));
   assert.throws(()=>candidateDescriptor(c,lock({...pair,sqliteVec:'0.1.8'})));
