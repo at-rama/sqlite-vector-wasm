@@ -6,9 +6,11 @@ After the preparation workflow is integrated on main, a maintainer starts **Upda
 | --- | --- |
 | `sqlite_version` | Exact official SQLite version, for example `3.53.4` |
 | `sqlite_vec_version` | Exact published sqlite-vec version, for example `0.1.9` |
-| `release_comment` | Free text; nonempty for a rollback |
+| `sqlite_comment` | Optional SQLite release-note paragraph |
+| `sqlite_vec_comment` | Optional sqlite-vec release-note paragraph |
+| `misc_comment` | Optional miscellaneous release-note paragraph |
 
-Selection does not depend on watch suggestions or intervening releases. There is no channel or distribution-version input. Comments, including quotes and shell metacharacters, remain JSON data. The existing resolver determines source admissibility: stable SQLite full-source releases and published sqlite-vec stable/prerelease amalgamations with sufficient official integrity metadata. Development snapshots and unsupported selections fail. An established pin cannot silently acquire a new digest. Selecting the recorded pair preserves its source-lock bytes.
+Selection does not depend on watch suggestions or intervening releases. There is no channel or distribution-version input. Nonempty comments are trimmed at their edges and joined in SQLite → sqlite-vec → miscellaneous order with one blank line between them; the resulting single release comment is required for a rollback. Comments, including quotes, real newlines and shell metacharacters, remain JSON data. The existing resolver determines source admissibility: stable SQLite full-source releases and published sqlite-vec stable/prerelease amalgamations with sufficient official integrity metadata. Development snapshots and unsupported selections fail. An established pin cannot silently acquire a new digest. Selecting the recorded pair preserves its source-lock bytes.
 
 The workflow resolves and validates `inputs/sources.lock.json`, then introduces or updates `inputs/release.json` using A-release's existing schema:
 
