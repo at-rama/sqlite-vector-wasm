@@ -28,6 +28,16 @@ jobs:
       - name: Run repository tests
         shell: sh
         run: sh tools/test-repository.sh
+      - name: Install and validate locked OpenSpec
+        shell: sh
+        env:
+          npm_config_cache: ${{ runner.temp }}/openspec-npm-cache
+          OPENSPEC_TELEMETRY: '0'
+        run: |
+          sh tools/openspec.sh install
+          sh tools/openspec.sh check
+          sh tools/openspec.sh exec list --json
+          sh tools/openspec.sh exec validate --all --strict
 
   verification:
     runs-on: ubuntu-24.04

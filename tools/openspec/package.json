@@ -1,0 +1,7 @@
+{
+  "name": "sqlite-vector-wasm-openspec-tooling",
+  "private": true,
+  "version": "1.0.0",
+  "engines": { "node": ">=20.19.0" },
+  "dependencies": { "@fission-ai/openspec": "1.14.0" }
+}

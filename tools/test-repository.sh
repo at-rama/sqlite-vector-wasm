@@ -52,3 +52,9 @@ if [ -f tools/watch/run.mjs ]; then
     test -f tools/watch/tests/run.test.mjs
     node --test tools/watch/tests/*.test.mjs
 fi
+
+# OpenSpec preflight controls use isolated fake CLI/dependency fixtures offline.
+if [ -f tools/openspec/tooling.mjs ]; then
+    test -f tools/openspec/tests/test_tooling.py
+    PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tools/openspec/tests
+fi
