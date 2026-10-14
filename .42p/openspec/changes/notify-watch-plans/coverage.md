@@ -1,0 +1,31 @@
+# Pre-Apply Allocation ↔ Change coverage
+
+## Examined identity and limits
+
+Selected unit: **A-notifications**, exactly one unit of [the global Allocation](../../../engineering/2026-10-04_sqlite-vec-wasm_allocation_edit-0.1.md), snapshot SHA-256 `ed381776c7b45d559640174b66155947f9c2ec1537a6896ab24a539c660e441e`, read at `36f21e86d9fbede24a5c5dbd8757eb451ceaae70`. The handle, qualified references, boundary/dependencies and relevant correspondence rows were examined together, rather than treating the short unit title as its complete command.
+
+The selected full passages are Notifications N/C-status, N/C-summary, N/C-noise, N/O-resend and N/C-trigger in [Notifications Capture](../../../engineering/2026-10-14_sqlite-vector-wasm_workflow-notifications_capture_edit-0.1.md), SHA-256 `a2b1fe9cd3ae4c0df5ef884b1829ca86705f63d7a12868bd5cd65bc4a6439668`; Distribution D/C-watch and D/R-updates in [Distribution Capture](../../../engineering/2026-10-04_sqlite-vec-wasm_capture_edit-0.1.md), SHA-256 `e1a3d3beb5e025630a6dc5d5d26ce3f3cb08e7da0858a115d3584eaa1476f718`; and W/C-watch and W/R-frugality in [Release/Watch Capture](../../../engineering/2026-10-09_sqlite-vec-wasm_release-watch_capture_edit-0.1.md), SHA-256 `1b4f23f3df25f73ec7d8da9ca5ad3015dfd9a23b154424878b80eeb0bb64ce94`. Only their notification contributions and preserved dependencies are allocated here; discovery, candidate awareness and forecast obligations are producer context, not additional Change duties. Instituted sources retain authority; snapshots establish examined identity, not independent corroboration.
+
+Reviewed Change artifacts: `proposal.md`, `specs/watch-plan-notifications/spec.md`, `design.md`, `tasks.md`. The current upstream-watch specification has 15 producer requirements, including Reference result handoff, with no remaining Native completion notifications requirement. Its obsolete introductory note is a documentation correction, not an added producer requirement. The [archived Summary Change verification](../archive/2026-10-14-simplify-watch-job-summary/verification.md) records a passing verdict for the sequencing prerequisite; its scope does not include sending mail.
+
+## Bidirectional semantic mapping
+
+Each row accounts for the complete obligation or exclusion, its notification requirement and the relevant scenarios/tasks. Reading rows in reverse accounts for every requirement of the sole new capability.
+
+| Allocation obligation and selected authority projection | Change requirement | Scenarios and tasks |
+| --- | --- | --- |
+| Consume actual Watch plan/outcome/run, preserve technical outcomes, no repeated discovery/eligibility/forecast/candidate inspection; Summary simplification before integration (unit boundary, N/C-status, N/C-summary, D/W C-watch) | Actual producer result consumption | Completed producer handoff; Producer failure. Tasks 1.1–1.2, 2.1–2.2. Design uses successful CLI completion plus nested plan outcome; no new completeness flag or API. |
+| Exactly one mail for successful complete nonempty planning, including some/all existing candidates; no project notification for empty/error and no further relevance test (N/C-status, N/C-trigger, scoped D/W C-watch) | Closed plan notification rule | Nonempty complete plan; Existing candidates cover part or all; Normal empty plan; Failed or incomplete planning. Tasks 1.1–1.2, 2.1. |
+| Same rule for schedule/manual; each eligible execution has a fresh mail; no notification deduplication or sent-mail/plan history (N/C-trigger, D/R-updates, W/R-frugality) | Trigger invariance and fresh execution mail | Both invocation types; Repeated plan. Tasks 1.1–1.2, 2.1. |
+| Short message pointing to concerned run, complete detail/diagnostics retained in producer Summary/artifacts (N/C-summary, scoped D/W C-watch) | Short reference-linked message | Several pairs and diagnostics. Tasks 1.1–1.3, 2.1–2.2. |
+| Resend API → Gmail, dedicated sender domain with OVH domain example not promoted to a required configured value; no SMTP, global CI workaround, issue/comment/mention, account-setting duty, other notification case or general infrastructure; preserved human preparation/integration/publication boundaries (N/O-resend, N/C-noise, N/C-trigger, scoped D/C-watch, W/C-watch, D/R-updates, W/R-frugality, unit boundary) | Bounded Resend delivery | Configured eligible execution; Account-controlled GitHub notification; Notification does not initiate adoption. Tasks 1.1–1.3, 2.1–2.2. Configuration names and failure handling are bounded realization choices, not new product criteria or delivery guarantees. |
+
+All task groups remain constrained by these five requirements. Tasks 3.1–3.2 perform integrated correspondence/checks rather than adding product requirements. Sender operational errors preserve the producer's actual success/failure and send no fallback error notification. Request bounds and lack of automatic retry protect the bounded single-send integration without instituting a transport deduplication mechanism. Dedicated domain setup is supplied deployment context; A-bootstrap's publication-only setup is not extended. No domain example or address becomes normative, and no general service, preparation/publication trigger, acceptance gate or account-setting duty is added.
+
+## Gate result
+
+**A-notifications → Change = 100%.** Every material obligation, modality, exclusion, sequencing condition and responsibility boundary of the selected unit has a correspondence above.
+
+**Change → A-notifications = 100%.** Each of the five requirements is justified by that unit's qualified passages; scenarios and proposed tasks add no separate notification case or relevance rule. The proposed operational failure behavior is technical glue consistent with actual-status preservation, not a notification eligibility extension.
+
+These percentages record documentary semantic coverage before Apply, not implementation conformity, live delivery, complete upstream fidelity or acceptance. No insufficiency, contradiction or needed upstream semantic revision was found in this bounded examination. Any such finding or authorized semantic revision during Apply invalidates the affected mapping and must be escalated and re-examined. Post-Apply 42P Verification remains a separate invocation.
