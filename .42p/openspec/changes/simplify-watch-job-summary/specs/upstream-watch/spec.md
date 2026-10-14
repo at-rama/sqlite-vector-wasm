@@ -4,7 +4,7 @@
 
 ### Requirement: Actionable human job plan
 
-The directly consultable execution summary SHALL contain every eligible pair with exact upstream versions, forecast channel/increment/version, exact Updates workflow parameters, a GitHub Actions link and existing candidate state when present. The simplified presentation SHALL preserve all this information in the Summary. The maintainer SHALL remain able to choose zero, one or several jobs. A plan SHALL NOT assert build compatibility or publication acceptance from discovery or forecasting alone.
+The directly consultable execution summary SHALL contain every eligible pair with exact upstream versions, exact Updates parameters, a GitHub Actions link and existing candidate state. A central Forecast section SHALL associate each pair with its channel/increment/version without repetition in pair blocks or information loss. Pairs SHALL retain their current order under latest and next. The maintainer SHALL remain able to choose zero, one or several jobs. A plan SHALL NOT assert build or publication acceptance.
 
 #### Scenario: Pair has no existing candidate
 - **WHEN** a nonempty plan contains an eligible pair without current preparation
@@ -16,7 +16,19 @@ The directly consultable execution summary SHALL contain every eligible pair wit
 
 #### Scenario: Shared instructions reduce repetition
 - **WHEN** common parameter instructions or forecast caveats are stated once for several entries
-- **THEN** each entry still unambiguously supplies its exact pair, channel/increment/version and applicable Updates parameters/link directly in the Summary, without consulting raw logs or downloading an artifact
+- **THEN** each entry and its centralized forecast association still unambiguously supply its exact pair, channel/increment/version and applicable Updates parameters/link directly in the Summary, without consulting raw logs or downloading an artifact
+
+#### Scenario: Channel has a common forecast
+- **WHEN** every eligible pair in a channel has the same forecast version and increment
+- **THEN** the Forecast section states that channel/version/increment once and the channel's pair blocks contain no repeated forecast
+
+#### Scenario: Channel has differing forecasts
+- **WHEN** eligible pairs within one channel have different forecast versions or increments
+- **THEN** the Forecast section presents all distinct forecasts and unambiguously associates them with their exact upstream pairs, using a SQLite-only selector only when sufficient, without treating the first pair as representative or changing pair order
+
+#### Scenario: Forecasts are alternatives at the observed state
+- **WHEN** forecasts are centralized for several pairs or channels
+- **THEN** they remain independent and unreserved at the observed published state, with an explicit publication recalculation caveat rather than a sequential publication plan
 
 #### Scenario: All eligible entries already have candidates
 - **WHEN** every eligible pair is associated with current preparation or an open candidate PR

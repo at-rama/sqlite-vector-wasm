@@ -18,31 +18,44 @@ Design is included because the new presentation is deliberately unspecified upst
 
 Keep `makePlan` and the entry order unchanged. Replace repetitive per-pair paragraphs in `renderPlan` with channel sections and one short block per pair. Vertical blocks keep exact versions and candidate details readable on narrow screens; a wide table would combine too many long fields. A table, interactive UI or separate artifact-only plan adds no needed capability.
 
-The opening identifies nonempty work, normal empty success or failed planning. For a nonempty result, show the jobs before the technical reference context. Keep the shared forecast caveat and human action instructions once, close to the entries, without suggesting qualification or reservation. No entry count limit, heuristic, filtering or hiding of candidate-backed entries is introduced.
+The opening identifies nonempty work, normal empty success or failed planning. For a nonempty result, show `Forecast`, then `latest` and `next` pair sections in the existing order, then the technical reference context. Keep the shared forecast caveat and human action instructions once, without suggesting qualification or reservation. No entry count limit, heuristic, filtering or hiding of candidate-backed entries is introduced.
 
-Each pair block states the exact input names/values and forecast, with candidate references if present. The common instruction explicitly states `release_comment = ""` for all displayed jobs, the absence of channel/version override inputs, and links to Updates once. This binding must be unambiguous for every entry. Do not add a ready-to-copy `gh` command: it remains optional upstream and is unnecessary for this simplification.
+Centralize forecasts from the existing structured entries; do not recalculate or simulate sequential adoption. When all pairs in a channel share the same forecast version and increment, show one channel line. When they differ, show each distinct forecast with explicit upstream selectors identifying its applicable pairs. A SQLite-only selector is sufficient only when it unambiguously determines the forecast for every matching pair; otherwise retain the full exact SQLite × sqlite-vec associations. Preserve channel, increment and version and never choose the first pair as a representative for a heterogeneous channel. Only channels with eligible entries have forecasts; an empty plan offers no forecast. The text explains that forecasts are independent, unreserved, based on the observed published state and recalculated at publication, including after another channel progresses.
+
+Each pair block states the exact input names/values, with candidate references if present, but no repeated forecast. Its channel section and the centralized associations must let the reader recover its complete forecast directly in the Summary. The common instruction explicitly states `release_comment = ""` for all displayed jobs, the absence of channel/version override inputs, and links to Updates once. This binding must be unambiguous for every entry. Do not add a ready-to-copy `gh` command: it remains optional upstream and is unnecessary for this simplification.
 
 Illustrative content only, using synthetic identities and a placeholder candidate locator:
 
 ```markdown
 # Upstream job plan
 
-Forecasts are independent and unreserved; discovery does not qualify a build or publication.
+Complete plan: 3 eligible pairs.
+
+Forecasts are independent and unreserved, based on the observed published state and recalculated at publication. Discovery does not qualify a build or publication.
 Choose zero, one or several jobs in [Updates](https://github.com/at-rama/sqlite-vector-wasm/actions/workflows/updates.yml).
 Use each entry's exact inputs below and release_comment = ""; no channel/version override.
 
+## Forecast
+
+- latest: 0.2.0 · MINOR
+- next:
+  - SQLite 3.53.4: 0.1.2-alpha.1 · PATCH
+  - SQLite 3.54.0: 0.2.0-alpha.1 · MINOR
+
 ## latest
 
-### SQLite 3.54.1 × sqlite-vec 0.1.9
-sqlite_version: 3.54.1 · sqlite_vec_version: 0.1.9
-Forecast: 0.1.1 · PATCH · latest
+### SQLite 3.54.0 × sqlite-vec 0.1.9
+sqlite_version: 3.54.0 · sqlite_vec_version: 0.1.9
 Preparation: none; a separate human action can start this job.
 
 ## next
 
+### SQLite 3.53.4 × sqlite-vec 0.1.10-alpha.1
+sqlite_version: 3.53.4 · sqlite_vec_version: 0.1.10-alpha.1
+Preparation: none; a separate human action can start this job.
+
 ### SQLite 3.54.0 × sqlite-vec 0.1.10-alpha.1
 sqlite_version: 3.54.0 · sqlite_vec_version: 0.1.10-alpha.1
-Forecast: 0.2.0-alpha.2 · PATCH · next
 Existing preparation: [candidate run/PR link and actual state]. Do not start a duplicate.
 
 ## Reference state
@@ -70,6 +83,7 @@ Do not copy or alter historical archives. During later authorized synchronizatio
 
 ## Risks / Trade-offs
 
+- A single channel line could conceal different forecasts → centralize only identical version/increment values, retain explicit pair associations for heterogeneous channels and test both SQLite-only and full-pair selectors. Centralization must not imply ranking or a publication sequence.
 - Shared instructions could make per-job parameters ambiguous → state their binding explicitly and test exact pair values, the empty comment and the single workflow link against the source plan.
 - Concision could conceal distinct candidates or empty/error conditions → retain all candidate details and exercise multiple candidates, all-candidate plans, empty results and each failure class.
 - Markdown restructuring could weaken escaping → retain escaping/link validation and hostile diagnostic cases; review a representative long-suffix/multiple-candidate Markdown rendering.
@@ -79,3 +93,5 @@ Do not copy or alter historical archives. During later authorized synchronizatio
 ## Migration Plan
 
 After a separately requested Apply, update the renderer and tests, then the Watch reading guide. No persisted state migration, new package or dependency installation is needed. Compare representative outputs before/after against the unchanged plan values and run the applicable checks. Complete 42P Verification before Archive and human integration. A renderer-only rollback restores previous presentation without changing plan semantics or artifacts; contract revisions still follow the existing lifecycle.
+
+The 2026-10-14 Update refines the already applied layout. Existing Apply/Verification evidence remains historical to its checked candidate; it does not establish conformity to this centralization. Reopened tasks require renewed implementation, affected coverage reconciliation and a separately invoked 42P Verification before Archive.
