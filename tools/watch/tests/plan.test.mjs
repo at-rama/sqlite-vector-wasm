@@ -50,7 +50,7 @@ test('complete summary is deterministic, actionable and preserves candidate link
   assert.match(rendered,/3.54.1 × sqlite-vec 0.1.9/);assert.match(rendered,/- latest: 0.1.1 · PATCH/);
   assert.match(rendered,/Existing preparation; do not launch a duplicate/);assert.match(rendered,/actions\/runs\/17/);
   assert.match(rendered,/`sqlite_vec_version`: `0.1.10-alpha.2`/);assert.match(rendered,/`release_comment` = `""` for every job/);
-  assert.match(rendered,/actions\/workflows\/updates.yml/);
+  assert.match(rendered,/actions\/workflows\/updates.yml/);assert.doesNotMatch(rendered,/Preparation: none/);
   for(const k of ['sqlite','sqliteVec'])c.inventory[k].reverse();assert.equal(renderPlan(makePlan(c)),rendered);
 });
 test('compact entries preserve every plan fact while sharing instructions and retaining all candidates',()=>{
