@@ -47,11 +47,64 @@ test('shared alpha-series policy responds to changed publication state',()=>{
 test('complete summary is deterministic, actionable and preserves candidate links without duplicate advice',()=>{
   const c=context();c.candidates=[{kind:'run',selection:{sqlite:'3.54.1',sqliteVec:'0.1.9'},runId:17,attempt:1,status:'queued',url:`https://github.com/${repository}/actions/runs/17`}];
   const rendered=renderPlan(makePlan(c));
-  assert.match(rendered,/3.54.1 × sqlite-vec 0.1.9/);assert.match(rendered,/Forecast: 0.1.1; increment PATCH/);
+  assert.match(rendered,/3.54.1 × sqlite-vec 0.1.9/);assert.match(rendered,/Forecast: 0.1.1 · PATCH · latest/);
   assert.match(rendered,/Existing preparation; do not launch a duplicate/);assert.match(rendered,/actions\/runs\/17/);
-  assert.match(rendered,/sqlite_vec_version: 0.1.10-alpha.2/);assert.match(rendered,/release_comment: empty string/);
+  assert.match(rendered,/`sqlite_vec_version`: `0.1.10-alpha.2`/);assert.match(rendered,/`release_comment` = `""` for every job/);
   assert.match(rendered,/actions\/workflows\/updates.yml/);
   for(const k of ['sqlite','sqliteVec'])c.inventory[k].reverse();assert.equal(renderPlan(makePlan(c)),rendered);
+});
+test('compact entries preserve every plan fact while sharing instructions and retaining all candidates',()=>{
+  const c=context(),selection={sqlite:'3.54.1',sqliteVec:'0.1.9'};
+  c.publication.partial=['0.8.0-alpha.7'];
+  c.candidates=[
+    {kind:'run',selection,runId:17,attempt:2,status:'queued',url:`https://github.com/${repository}/actions/runs/17`},
+    {kind:'pr',selection,number:42,status:'open',url:`https://github.com/${repository}/pull/42`,
+      preparation:`https://github.com/${repository}/actions/runs/18`,attempt:3,head:'b'.repeat(40),run:{attempt:3,status:'in_progress'}},
+    {kind:'pr',selection,number:43,status:'open',url:`https://github.com/${repository}/pull/43`,
+      preparation:`https://github.com/${repository}/actions/runs/19`,attempt:1,head:'c'.repeat(40)}];
+  const plan=makePlan(c),before=JSON.stringify(plan),rendered=renderPlan(plan);
+  assert.match(rendered,/Complete plan: 5 eligible pairs/);
+  assert.equal((rendered.match(/actions\/workflows\/updates.yml/g)||[]).length,1);
+  assert.equal((rendered.match(/`release_comment`/g)||[]).length,1);
+  assert.match(rendered,/no channel or version override/);
+  assert.equal((rendered.match(/^### SQLite /gm)||[]).length,plan.entries.length);
+  for(const e of plan.entries) {
+    const heading=`### SQLite ${e.selection.sqlite} × sqlite-vec ${e.selection.sqliteVec}\n`;
+    const block=rendered.split(heading)[1].split(/\n##(?:#)? /)[0];
+    assert.ok(block.includes(`\`sqlite_version\`: \`${e.parameters.sqlite_version}\``));
+    assert.ok(block.includes(`\`sqlite_vec_version\`: \`${e.parameters.sqlite_vec_version}\``));
+    assert.ok(block.includes(`Forecast: ${e.identity.version} · ${e.identity.signal} · ${e.identity.channel}`));
+    assert.equal(e.parameters.release_comment,'');
+    for(const candidate of e.candidates)assert.ok(block.includes(candidate.url));
+  }
+  assert.match(rendered,/Preparation 17, attempt 2.*\(queued\)/);
+  for(const number of [42,43])assert.match(rendered,new RegExp(`Candidate PR #${number}`));
+  assert.match(rendered,/actions\/runs\/18.*attempt 3; head b{40}/);
+  assert.match(rendered,/actions\/runs\/19.*attempt 1; head c{40}/);
+  assert.match(rendered,/Active attempt 3: in_progress/);
+  assert.ok(rendered.indexOf('## Reference state')>rendered.lastIndexOf('### SQLite'));
+  for(const [channel,h] of Object.entries(plan.references)) {
+    assert.ok(rendered.includes(`${channel}: ${h.version}; SQLite ${h.upstreams.sqlite}, sqlite-vec ${h.upstreams.sqliteVec}; revision ${h.commit}`));
+  }
+  assert.match(rendered,/Partial occupied identities \(not completed publications\): 0.8.0-alpha.7/);
+  assert.equal(JSON.stringify(plan),before,'presentation cannot mutate the result handed to a consumer');
+});
+test('all-candidate plans remain complete nonempty results without per-entry launch advice',()=>{
+  const c=context();c.candidates=makePlan(c).entries.map((e,i)=>({kind:'run',selection:e.selection,runId:20+i,attempt:1,status:'queued',url:`https://github.com/${repository}/actions/runs/${20+i}`}));
+  const plan=makePlan(c),rendered=renderPlan(plan);
+  assert.equal(plan.outcome,'nonempty');assert.equal(plan.entries.length,5);
+  assert.equal((rendered.match(/Existing preparation; do not launch a duplicate/g)||[]).length,5);
+  assert.doesNotMatch(rendered,/Normal empty plan|Preparation: none/);
+  for(const candidate of c.candidates)assert.ok(rendered.includes(candidate.url));
+});
+test('long suffixes and absent next remain visible; unsafe links are rejected',()=>{
+  const c=context();c.publication.snapshot.heads.next=null;
+  c.inventory.sqliteVec.push({version:'0.1.10-alpha.123456'});
+  const rendered=renderPlan(makePlan(c));
+  assert.match(rendered,/`sqlite_vec_version`: `0.1.10-alpha.123456`/);
+  assert.match(rendered,/next: no published HEAD/);
+  c.candidates=[{kind:'run',selection:{sqlite:'3.54.1',sqliteVec:'0.1.9'},runId:17,attempt:1,status:'queued',url:'javascript:alert(1)'}];
+  assert.throws(()=>renderPlan(makePlan(c)));
 });
 test('normal empty and failed outcomes stay distinct; diagnostics cannot inject summary HTML',()=>{
   const c=context();c.inventory=inventory(['3.54.0'],['0.1.9']);assert.match(renderPlan(makePlan(c)),/Normal empty plan/);

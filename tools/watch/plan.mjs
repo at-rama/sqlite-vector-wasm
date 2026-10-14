@@ -41,32 +41,35 @@ const link=(label,url)=>{assert.match(url || '',/^https:\/\/github\.com\/[A-Za-z
 export function renderPlan(plan) {
   const workflow=`https://github.com/${repositoryName(plan.repository)}/actions/workflows/updates.yml`;
   let result='# Upstream job plan\n\n';
+  result+=plan.outcome==='empty'
+    ? '## Normal empty plan\n\nComplete discovery and state reads produced no eligible unpublished pairs.\n\n'
+    : `Complete plan: ${plan.entries.length} eligible ${plan.entries.length===1?'pair':'pairs'}.\n\n`;
   result+='Forecasts are independent and unreserved. Discovery is not build qualification or publication acceptance. Human selection and integration remain separate actions.\n\n';
-  result+='## Published references\n\n';
-  for(const channel of ['latest','next']) {
-    const h=plan.references[channel];
-    result+=h?`- ${channel}: ${escape(h.version)}; SQLite ${escape(h.upstreams.sqlite)}, sqlite-vec ${escape(h.upstreams.sqliteVec)}; revision ${escape(h.commit)}.\n`:`- ${channel}: no published HEAD.\n`;
+  if(plan.outcome!=='empty') {
+    result+=`Choose zero, one or several jobs in ${link('Updates',workflow)}. Use each entry's exact inputs below and \`release_comment\` = \`""\` for every job; no channel or version override. Do not start duplicate preparation for entries with existing candidates.\n`;
   }
-  if(plan.partial.length)result+=`\nPartial occupied identities (not completed publications): ${plan.partial.map(escape).join(', ')}.\n`;
-  if(plan.outcome==='empty')return result+'\n## Normal empty plan\n\nComplete discovery and state reads produced no eligible unpublished pairs.\n';
   for(const channel of ['latest','next']) {
     const rows=plan.entries.filter(e=>e.identity.channel===channel);if(!rows.length)continue;
     result+=`\n## ${channel}\n`;
     for(const e of rows) {
       result+=`\n### SQLite ${escape(e.selection.sqlite)} × sqlite-vec ${escape(e.selection.sqliteVec)}\n\n`;
-      result+=`Forecast: ${escape(e.identity.version)}; increment ${escape(e.identity.signal)}; unreserved.\n\n`;
+      result+=`- \`sqlite_version\`: \`${escape(e.parameters.sqlite_version)}\` · \`sqlite_vec_version\`: \`${escape(e.parameters.sqlite_vec_version)}\`\n`;
+      result+=`- Forecast: ${escape(e.identity.version)} · ${escape(e.identity.signal)} · ${escape(e.identity.channel)}\n`;
       if(e.candidates.length) {
-        result+='Existing preparation; do not launch a duplicate:\n\n';
+        result+='\nExisting preparation; do not launch a duplicate:\n\n';
         for(const c of e.candidates){result+=`- ${link(c.kind==='pr'?`Candidate PR #${c.number}`:`Preparation ${c.runId}, attempt ${c.attempt}`,c.url)} (${escape(c.status)}).`;
           if(c.kind==='pr')result+=` ${link('Preparation',c.preparation)}; attempt ${c.attempt}; head ${escape(c.head)}.`;
           if(c.run)result+=` Active attempt ${c.run.attempt}: ${escape(c.run.status)}.`;
           result+='\n';}
-        result+=`\n${link('Updates workflow',workflow)} (navigation only; the existing preparation is shown above).\n`;
-      } else result+=`${link('Open Updates for a separate human preparation action',workflow)}.\n`;
-      result+='\nExact Updates parameters (no channel or version override):\n\n';
-      result+=`- sqlite_version: ${escape(e.parameters.sqlite_version)}\n- sqlite_vec_version: ${escape(e.parameters.sqlite_vec_version)}\n- release_comment: empty string\n`;
+      } else result+='- Preparation: none; a separate human action can start this job.\n';
     }
   }
+  result+='\n## Reference state\n\n';
+  for(const channel of ['latest','next']) {
+    const h=plan.references[channel];
+    result+=h?`- ${channel}: ${escape(h.version)}; SQLite ${escape(h.upstreams.sqlite)}, sqlite-vec ${escape(h.upstreams.sqliteVec)}; revision ${escape(h.commit)}.\n`:`- ${channel}: no published HEAD.\n`;
+  }
+  if(plan.partial.length)result+=`\nPartial occupied identities (not completed publications): ${plan.partial.map(escape).join(', ')}.\n`;
   return result;
 }
 
