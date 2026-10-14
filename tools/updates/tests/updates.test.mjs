@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, readFile, writeFile, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, writeFile, rm, cp } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { command } from '../../acceptance/run.mjs';
@@ -8,12 +8,21 @@ import { calculate } from '../../release/policy.mjs';
 import { invocation, candidateDescriptor, candidateBody } from '../context.mjs';
 import { prepareCandidate, resolveSources } from '../run.mjs';
 import { candidateServices } from '../services.mjs';
+import { reconcileNotices } from '../notices.mjs';
+import { noticeInputs, root, hash } from '../../package/package.mjs';
+const baselineLock = JSON.parse(await readFile(new URL('../../../inputs/sources.lock.json', import.meta.url), 'utf8'));
 const pair = { sqlite:'3.53.4',sqliteVec:'0.1.9' };
 const empty = () => ({schemaVersion:1,tags:[],releaseTags:[],npmVersions:[],heads:{latest:null,next:null}});
 const event = () => ({repository:{full_name:'a/b'},sender:{type:'User'},inputs:{sqlite_version:pair.sqlite,sqlite_vec_version:pair.sqliteVec,sqlite_comment:'  SQLite line 1\nSQLite line 2  ',sqlite_vec_comment:'$(touch BAD); `echo data`\n"quoted"',misc_comment:'  Misc note  '}});
 const environment = () => ({GITHUB_REPOSITORY:'a/b',GITHUB_ACTIONS:'true',GITHUB_EVENT_NAME:'workflow_dispatch',GITHUB_REF:'refs/heads/main',GITHUB_RUN_ID:'17',GITHUB_RUN_ATTEMPT:'2'});
 const context = () => invocation({event:event(),environment:environment()});
-const lock = selection => ({sqlite:{version:selection.sqlite},sqliteVec:{version:selection.sqliteVec}});
+const lock = selection => {
+  const value=structuredClone(baselineLock);
+  const code=selection.sqlite.split('.').map((n,i)=>i?String(n).padStart(2,'0'):n).join('')+'00';
+  value.sqlite={...value.sqlite,version:selection.sqlite,archiveUrl:`https://sqlite.org/2026/sqlite-src-${code}.zip`,releaseUrl:`https://sqlite.org/releaselog/${selection.sqlite.replaceAll('.','_')}.html`};
+  value.sqliteVec={...value.sqliteVec,version:selection.sqliteVec,archiveUrl:`https://github.com/asg017/sqlite-vec/releases/download/v${selection.sqliteVec}/sqlite-vec-${selection.sqliteVec}-amalgamation.tar.gz`,releaseUrl:`https://github.com/asg017/sqlite-vec/releases/tag/v${selection.sqliteVec}`};
+  return value;
+};
 const published = version => {const s=empty();s.heads.latest={version,commit:'a'.repeat(40),upstreams:pair};s.tags=[`dist/v${version}`];s.releaseTags=[`dist/v${version}`];s.npmVersions=[version];return s;};
 
 test('dispatch is exact, hosted, main and comments remain data', () => {
@@ -38,26 +47,43 @@ test('dispatch is exact, hosted, main and comments remain data', () => {
 async function fixture(t, options={}) {
   const repository=await mkdtemp(join(tmpdir(),'updates-test-'));t.after(()=>rm(repository,{recursive:true,force:true}));
   await mkdir(join(repository,'inputs'));await writeFile(join(repository,'.gitignore'),'.work/\n');await writeFile(join(repository,'inputs/sources.lock.json'),JSON.stringify(lock(pair)));
+  await mkdir(join(repository,'tools/package'),{recursive:true});
+  for(const name of ['tools/package/notices.json','tools/package/notices','tools/package/NOTICE.txt','LICENSE']) await cp(join(root,name),join(repository,name),{recursive:true});
+  const baselineNoticesPath=join(repository,'tools/package/notices.json');
+  const baselineNotices=JSON.parse(await readFile(baselineNoticesPath));
+  for(const record of baselineNotices.notices)if(pair[record.project]) {record.version=pair[record.project];record.origin='controlled offline fixture';delete record.source;}
+  await writeFile(baselineNoticesPath,JSON.stringify(baselineNotices,null,2)+'\n');
   const git=args=>command('git',args,{cwd:repository});await git(['init','-b','main']);await git(['add','.']);await git(['-c','user.name=Fixture','-c','user.email=fixture@example.invalid','commit','-m','fixture']);
   const calls=[];let reads=0;const c={...context(),...options.context};
-  const run=async (cmd,args,opts)=>{if(cmd==='sh'){calls.push(args[0]);if(options.failure===args[0])throw Error('mandatory check failed');return '';}return command(cmd,args,opts);};
+  const run=async (cmd,args,opts)=>{if(cmd==='sh'){await noticeInputs({inputs:lock(c.selection)},repository);assert.equal(await git(['status','--porcelain','--untracked-files=all']),'');calls.push(args[0]);if(options.failure===args[0])throw Error('mandatory check failed');return '';}if(options.failure==='commit'&&cmd==='git'&&args.includes('commit'))throw Error('commit denied');return command(cmd,args,opts);};
   const services={push:async(branch,commit)=>{calls.push('push');assert.equal(await git(['rev-parse','HEAD']),commit);if(options.failure==='push')throw Error('push denied');return {branch,head:commit};},createPullRequest:async value=>{calls.push('pr');assert.match(value.body,/not reserved or published/);if(options.failure==='pr')throw Error('PR denied');return {number:1,url:'https://github.com/a/b/pull/1',head:options.failure==='head'?'b'.repeat(40):value.commit};}};
   const qualification=async({context:ctx,readSnapshot})=>{calls.push('qualify');const snapshot=await readSnapshot();if(options.failure==='qualify')throw Error('browser failed');const evidencePath=join(repository,'.work/evidence.json');await writeFile(evidencePath,JSON.stringify({commit:options.failure==='revision'?'b'.repeat(40):ctx.commit,upstreams:ctx.selection,invocation:{preparation:ctx.preparation,comment:ctx.comment},archive:{sha256:'c'.repeat(64),size:123}}));return {identity:calculate({selection:ctx.selection,snapshot,comment:ctx.comment}),evidencePath,bundle:join(repository,'.work/bundle')};};
-  const execute=()=>prepareCandidate({repository,context:c,run,services:c.rehearsal?undefined:services,resolve:async()=>{calls.push('resolve');if(options.failure==='resolve')throw Error('digest drift');return lock(c.selection);},readSnapshot:async()=>{calls.push('state');if(options.failure==='state')throw Error('unavailable');return options.states?.[reads++]||empty();},qualification});
+  const reconcile=async parameters=>{calls.push('notices');if(options.failure==='notices')throw Error('notice source unavailable');
+    if(JSON.stringify(c.selection)===JSON.stringify(pair))return reconcileNotices(parameters);
+    const prepared=join(parameters.directory,'prepared');await mkdir(prepared);await cp(join(repository,'tools'),join(prepared,'tools'),{recursive:true});await cp(join(repository,'LICENSE'),join(prepared,'LICENSE'));
+    const manifestPath=join(prepared,'tools/package/notices.json'), manifest=JSON.parse(await readFile(manifestPath));
+    for(const record of manifest.notices)if(c.selection[record.project]&&c.selection[record.project]!==pair[record.project]) {
+      record.version=c.selection[record.project];
+      const bytes=Buffer.from(`independently selected fixture notice ${record.name} ${record.version}\n`);
+      await writeFile(join(prepared,'tools/package/notices',record.name),bytes);record.sha256=hash(bytes);
+    }
+    await writeFile(manifestPath,JSON.stringify(manifest,null,2)+'\n');return {prepared};};
+  const execute=()=>prepareCandidate({repository,context:c,run,reconcile,services:c.rehearsal?undefined:services,resolve:async()=>{calls.push('resolve');if(options.failure==='resolve')throw Error('digest drift');return lock(c.selection);},readSnapshot:async()=>{calls.push('state');if(options.failure==='state')throw Error('unavailable');return options.states?.[reads++]||empty();},qualification});
   return {repository,git,calls,execute};
 }
 
 test('qualified committed pair precedes push/PR; diagnostics stay ignored',async t=>{
   // Candidate preparation consumes the release-owned npm identity.
-  const f=await fixture(t);const result=await f.execute();assert.equal(result.status,'candidate-ready');assert.equal(result.identity.version,'0.1.0');assert.deepEqual(f.calls,['resolve','state','tools/check-repository.sh','tools/test-repository.sh','qualify','state','push','pr']);
+  const f=await fixture(t);const result=await f.execute();assert.equal(result.status,'candidate-ready');assert.equal(result.identity.version,'0.1.0');assert.deepEqual(f.calls,['resolve','state','notices','tools/check-repository.sh','tools/test-repository.sh','qualify','state','push','pr']);
   assert.equal(result.preflight.name,'@at-rama/sqlite-vector-wasm');assert.equal(result.identity.name,'@at-rama/sqlite-vector-wasm');
   assert.equal(await f.git(['status','--porcelain','--untracked-files=all']),'');assert.deepEqual((await f.git(['diff-tree','--no-commit-id','--name-only','-r',result.commit])).split('\n'),['inputs/release.json']);
   const descriptor=JSON.parse(await readFile(join(f.repository,'inputs/release.json')));assert.equal(descriptor.releaseComment,context().comment);
   assert.deepEqual(Object.keys(descriptor).sort(),['preparation','releaseComment','schemaVersion','sqlite','sqliteVec']);
   assert.match(candidateBody(result),/attempt 2/);
 });
-for(const failure of ['resolve','state','tools/check-repository.sh','tools/test-repository.sh','qualify','revision','push','pr','head']) test(`mandatory ${failure} failure stops and retains truthful evidence`,async t=>{
+for(const failure of ['resolve','state','notices','commit','tools/check-repository.sh','tools/test-repository.sh','qualify','revision','push','pr','head']) test(`mandatory ${failure} failure stops and retains truthful evidence`,async t=>{
   const f=await fixture(t,{failure});let path;await assert.rejects(f.execute(),error=>{path=error.message.split('evidence: ')[1];return !!path;});const evidence=JSON.parse(await readFile(path));assert.equal(evidence.status,'failed');assert.ok(evidence.diagnostic);
+  if(['notices','commit'].includes(failure)) {assert.equal(evidence.commit,undefined);assert.ok(!f.calls.includes('tools/check-repository.sh'));assert.ok(!f.calls.includes('qualify'));}
   if(!['push','pr','head'].includes(failure))assert.ok(!f.calls.includes('push'));
   if(['pr','head'].includes(failure))assert.equal(evidence.branchResult.head,evidence.commit);
 });
@@ -107,4 +133,37 @@ test('registered entry point fails if candidate implementation lacks its require
   for(const name of ['test_change_gates.py','test_repository.py'])await writeFile(join(repository,'tools/gates/tests',name),'');
   await writeFile(join(repository,'tools/updates/run.mjs'),'');await writeFile(join(repository,'tools/test-repository.sh'),await readFile(new URL('../../test-repository.sh',import.meta.url)));
   await command('git',['init'],{cwd:repository});await assert.rejects(command('sh',['tools/test-repository.sh'],{cwd:repository}));
+});
+
+for (const selection of [
+  {...pair,sqlite:'3.54.0'}, {...pair,sqliteVec:'0.1.10'},
+  {sqlite:'3.54.0',sqliteVec:'0.1.10-alpha.1'}, {...pair,sqlite:'3.52.0'},
+]) test(`selected notice snapshot is committed before checks: ${JSON.stringify(selection)}`, async t=>{
+  const f=await fixture(t,{context:{selection},states:[published('0.1.0'),published('0.1.0')]});
+  const result=await f.execute();
+  const names=(await f.git(['diff-tree','--no-commit-id','--name-only','-r',result.commit])).split('\n');
+  const changedNotices=selection.sqlite!==pair.sqlite?['SQLite-LICENSE.txt','SQLite-WASM-NOTICE.txt']:[];
+  if(selection.sqliteVec!==pair.sqliteVec)changedNotices.push('sqlite-vec-MIT.txt','sqlite-vec-APACHE.txt');
+  assert.deepEqual(names,['inputs/release.json','inputs/sources.lock.json','tools/package/notices.json',...changedNotices.map(name=>`tools/package/notices/${name}`)].sort());
+  const manifest=JSON.parse(await f.git(['show',`${result.commit}:tools/package/notices.json`]));
+  for(const record of manifest.notices) if(selection[record.project])assert.equal(record.version,selection[record.project]);
+});
+
+test('real reconciliation rejects corrupt baseline before invoking its helper and keeps a report',async t=>{
+  const f=await fixture(t);const directory=join(f.repository,'.work/updates/corruption');await mkdir(directory,{recursive:true});
+  await writeFile(join(f.repository,'tools/package/notices/SQLite-LICENSE.txt'),'tampered');
+  await assert.rejects(reconcileNotices({repository:f.repository,directory,lock:lock(pair),run:async()=>assert.fail('helper must not run')}),/Notice digest mismatch/);
+  const report=JSON.parse(await readFile(join(directory,'notices.json')));
+  assert.equal(report.status,'failed');assert.match(report.diagnostic,/SQLite-LICENSE.txt/);
+});
+
+test('real reconciliation rejects invalid helper output before tracked promotion',async t=>{
+  const f=await fixture(t),directory=join(f.repository,'.work/updates/invalid-helper');await mkdir(directory,{recursive:true});
+  const before=await f.git(['rev-parse','HEAD']);
+  const prepared=join(directory,'prepared');await mkdir(prepared);await cp(join(f.repository,'tools'),join(prepared,'tools'),{recursive:true});
+  await cp(join(f.repository,'LICENSE'),join(prepared,'LICENSE'));
+  const path=join(prepared,'tools/package/notices.json'),manifest=JSON.parse(await readFile(path));manifest.notices[0].version='99.0.0';await writeFile(path,JSON.stringify(manifest));
+  await assert.rejects(reconcileNotices({repository:f.repository,directory,lock:lock(pair),run:async()=>JSON.stringify({prepared,reportPath:join(directory,'notices.json')})}),/Wrong notice association/);
+  assert.equal(await f.git(['rev-parse','HEAD']),before);assert.equal(await f.git(['status','--porcelain','--untracked-files=all']),'');
+  assert.equal(JSON.parse(await readFile(join(directory,'notices.json'))).status,'failed');
 });

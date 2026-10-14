@@ -184,3 +184,32 @@ test('two successful invocations use distinct workspaces and retain exact bytes'
   const f=await fixture(t), first=await assemble(f), second=await assemble(f);
   assert.notEqual(first.workspace,second.workspace);assert.deepEqual(first.files,second.files);
 });
+
+test('refreshed notice provenance survives the actual archive while strict associations remain mandatory', async t => {
+  const options = await fixture(t);
+  const manifestPath = join(options.repository, 'tools/package/notices.json');
+  const records = JSON.parse(await readFile(manifestPath));
+  const notice = records.notices.find(record => record.name === 'SQLite-LICENSE.txt');
+  const bytes = Buffer.from('Refreshed notice fixture\n');
+  await writeFile(join(options.repository, 'tools/package/notices', notice.name), bytes);
+  notice.sha256 = hash(bytes);
+  notice.source = { kind: 'archive', archiveUrl: JSON.parse(await readFile(join(options.repository, 'inputs/sources.lock.json'))).sqlite.archiveUrl,
+    archiveDigest: options.handoff.inputs.sqlite.digest, path: 'sqlite-src-3530400/LICENSE.md', sha256: hash(bytes) };
+  notice.origin = notice.source.archiveUrl + '#' + notice.source.path;
+  await writeFile(manifestPath, JSON.stringify(records, null, 2) + '\n');
+  const result = await assemble(options);
+  const extracted = join(options.repository, 'notice-inspection');
+  await inspectArchive(result.archive.path, result.files, extracted);
+  assert.deepEqual(JSON.parse(await readFile(join(extracted, 'licenses/origins.json'))), records);
+  assert.equal(hash(await readFile(join(extracted, 'licenses/SQLite-LICENSE.txt'))), notice.sha256);
+  for (const mutation of [record => { record.version = '99.0.0'; }, record => { record.project = 'sqliteVec'; }]) {
+    const invalid = structuredClone(records); mutation(invalid.notices[0]);
+    await writeFile(manifestPath, JSON.stringify(invalid));
+    await assert.rejects(noticeInputs(options.handoff, options.repository), /Wrong notice association/);
+  }
+  await writeFile(manifestPath, JSON.stringify(records));
+  await writeFile(join(options.repository, 'tools/package/notices', notice.name), 'changed bytes');
+  await assert.rejects(noticeInputs(options.handoff, options.repository), /Notice digest mismatch/);
+  records.notices.pop(); await writeFile(manifestPath, JSON.stringify(records));
+  await assert.rejects(noticeInputs(options.handoff, options.repository), /Missing\/duplicate\/extra notice association/);
+});

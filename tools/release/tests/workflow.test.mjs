@@ -12,7 +12,10 @@ import { sha256 } from '../state.mjs';
 test('documented candidate schema is executable and shared calculator CLI has no publication path',async t=>{
   const documentation=await readFile(join(root,'docs/publication.md'),'utf8');
   const example=JSON.parse(documentation.match(/```json\n([\s\S]*?)\n```/)[1]);
-  descriptor(example,JSON.parse(await readFile(join(root,'inputs/sources.lock.json'))));
+  // A durable example demonstrates the schema, not the candidate's current source pair.
+  const exampleLock={sqlite:{version:example.sqlite},sqliteVec:{version:example.sqliteVec}};
+  descriptor(example,exampleLock);
+  assert.throws(()=>descriptor({...example,sqlite:'3.0.0'},exampleLock));
   const dir=await mkdtemp(join(tmpdir(),'release-cli-'));t.after(()=>rm(dir,{recursive:true,force:true}));
   const path=join(dir,'input.json');await writeFile(path,JSON.stringify({selection:{sqlite:example.sqlite,sqliteVec:example.sqliteVec},snapshot:{schemaVersion:1,tags:[],releaseTags:[],npmVersions:[],heads:{latest:null,next:null}}}));
   const output=JSON.parse(await execute('sh',['tools/release.sh','calculate',path],{cwd:root}));assert.equal(output.version,'0.1.0');

@@ -41,6 +41,8 @@ fi
 # Candidate preparation controls exercise qualified commits and create-only presentation.
 if [ -f tools/updates/run.mjs ]; then
     test -f tools/updates/tests/updates.test.mjs
+    test -f tools/updates/tests/test_notices.py
+    PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tools/updates/tests -p 'test_*.py'
     node --test tools/updates/tests/*.test.mjs
 fi
 

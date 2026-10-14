@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, readFile, writeFile, rename, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
-import { root } from '../package/package.mjs';
+import { root, noticeInputs, regularBytes } from '../package/package.mjs';
+import { reconcileNotices, noticePaths } from './notices.mjs';
 import { command } from '../acceptance/run.mjs';
 import { calculate, commitPattern } from '../release/policy.mjs';
 import { qualify } from '../release/run.mjs';
@@ -31,7 +32,7 @@ export async function resolveSources({ repository, directory, context, run = com
 }
 
 export async function prepareCandidate({ context, readSnapshot, services, repository = root,
-  resolve = resolveSources, qualification = qualify, run = command }) {
+  resolve = resolveSources, reconcile = reconcileNotices, qualification = qualify, run = command }) {
   await mkdir(join(repository, '.work/updates'), { recursive: true });
   const directory = await mkdtemp(join(repository, '.work/updates/run-'));
   const result = { schemaVersion: 1, status: 'in-progress', ...context, directory, operations: [] };
@@ -57,12 +58,19 @@ export async function prepareCandidate({ context, readSnapshot, services, reposi
     const selected = candidateDescriptor(context, lock);
     result.preflightState = await step('state', readSnapshot);
     result.preflight = calculate({ selection: context.selection, snapshot: result.preflightState, comment: context.comment });
+    result.noticeReport = join(directory, 'notices.json');
+    const notices = await step('notices', () => reconcile({ repository, directory, lock, run }));
     result.commit = await step('commit', async () => {
       await run('git', ['switch', '-c', context.branch], { cwd: repository });
       const lockPath = join(repository, 'inputs/sources.lock.json');
       if (JSON.stringify(await json(lockPath)) !== JSON.stringify(lock)) await saveJson(lockPath, lock);
       await saveJson(join(repository, 'inputs/release.json'), selected);
-      await run('git', ['add', '--', 'inputs/sources.lock.json', 'inputs/release.json'], { cwd: repository });
+      for (const path of noticePaths) {
+        const data = await regularBytes(join(notices.prepared, path));
+        if (!(await regularBytes(join(repository, path))).equals(data)) await writeFile(join(repository, path), data);
+      }
+      await noticeInputs({ inputs: lock }, repository);
+      await run('git', ['add', '--', 'inputs/sources.lock.json', 'inputs/release.json', ...noticePaths], { cwd: repository });
       await run('git', ['-c', 'user.name=sqlite-vector-wasm preparation', '-c', 'user.email=41898282+github-actions[bot]@users.noreply.github.com',
         'commit', '-m', 'chore: prepare distribution candidate'], { cwd: repository });
       const commit = await run('git', ['rev-parse', 'HEAD'], { cwd: repository }); assert.match(commit, commitPattern);
