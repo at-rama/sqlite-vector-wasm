@@ -27,7 +27,7 @@ openspec instructions proposal --change <change> --json
 openspec archive <change>
 ```
 
-MUST NOT run normal commands from the repository root or rely on downward discovery of `.42p/openspec/`. Setup/update operations that accept a project path MUST target `.42p`; pathless refresh commands MUST run from `.42p`. If initial setup is required, use `openspec init . --tools agents --profile core` through the launcher, which already runs in `.42p`. Then select the core workflows plus `verify` before refreshing the generated skills as described below. Use the locked repository tooling above for the official CLI; it is separate from product and browser-harness dependencies.
+MUST NOT run normal commands from the repository root or rely on downward discovery of `.42p/openspec/`. Setup/update operations that accept a project path MUST target `.42p`; pathless refresh commands MUST run from `.42p`. This checkout already contains its OpenSpec project and generated skills; initial setup is not part of normal execution. Keep the core workflows plus `verify` when refreshing the generated skills as described below. Use the locked repository tooling above for the official CLI; it is separate from product and browser-harness dependencies.
 
 Before any workflow write, resolve the local project with `openspec list --json` or `openspec context --json` from `.42p`. The returned project root MUST be this checkout's `.42p`; generated change and spec paths MUST remain inside `.42p/openspec/`. Stop on a missing or different root. Interpret generated `openspec/...` paths relative to `.42p`; repository implementation files remain relative to the repository root, its parent.
 
@@ -41,7 +41,7 @@ The required workflow selection is the core set (`propose`, `explore`, `apply`, 
 sh tools/openspec.sh refresh
 ```
 
-The explicit `refresh` command checks the installed CLI and lock, sets this workflow selection, runs the CLI-owned update from `.42p`, then checks the resulting skill metadata. It permits old generated metadata only during this refresh; normal execution refuses it. These settings configure the execution environment; generated repository skills remain CLI-owned. Keep this workflow selection when refreshing so Verification remains available.
+The explicit `refresh` command checks the installed CLI and lock, sets this workflow selection, runs the CLI-owned `update --force` from `.42p`, then checks the resulting skill metadata. It permits old generated metadata only during this refresh; normal execution refuses it. These settings configure the execution environment; generated repository skills remain CLI-owned. Keep this workflow selection when refreshing so Verification remains available.
 
 Use the generated skills directly in ChatGPT Work by reading their files through repository access. Add an adapter only for a demonstrated Work incompatibility; MUST NOT duplicate workflow logic in advance. Repository 42P rules override generic OpenSpec assumptions where they differ, including fluid Apply and archive suggestions. The repository-owned [42p-verify-change composition skill](../.agents/skills/42p-verify-change/SKILL.md) orchestrates the three Verification controls and delegates to the current generated verify skill. MUST NOT copy or modify an OpenSpec skill to encode repository policy; keep composition skills separate from CLI-owned `openspec-*` skills.
 

@@ -80,7 +80,7 @@ try {
       ['config', 'set', 'profile', 'custom'],
       ['config', 'set', 'workflows', '["propose","explore","apply","update","sync","archive","verify"]'],
       ['config', 'set', 'delivery', 'skills'],
-      ['update'],
+      ['update', '--force'],
     ]) run(process.execPath, [cli, ...args]);
     check();
   } else if (action === 'check' && args.length === 0) {
