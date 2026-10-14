@@ -29,6 +29,29 @@ test('normal empty plan succeeds with readable summary and invocation evidence',
   const {result,summaries,evidence}=await exercise({empty:true});
   assert.equal(result.outcome,'empty');assert.match(summaries[0],/Normal empty plan/);assert.equal(evidence[0].plan.outcome,'empty');
 });
+test('all-candidate plans under either trigger preserve reference evidence and every preparation',async()=>{
+  const f=await planningFixture(),api=`https://api.github.com/repos/${f.repository}/`;
+  const selections=[['3.54.0','0.1.9'],['3.53.4','0.1.10-alpha.4'],['3.54.0','0.1.10-alpha.4']];
+  f.replies.get(api+'actions/workflows/updates.yml/runs?branch=main&event=workflow_dispatch&per_page=100').data={total_count:3,
+    workflow_runs:selections.map(([sqlite,vec],i)=>({id:20+i,run_attempt:1,status:'queued',event:'workflow_dispatch',head_branch:'main',
+      path:'.github/workflows/updates.yml',repository:{full_name:f.repository},head_sha:f.context.revision,
+      html_url:`https://github.com/${f.repository}/actions/runs/${20+i}`,display_title:`candidate sqlite=${sqlite} sqlite-vec=${vec}`}))};
+  for(const event of ['schedule','workflow_dispatch']) {
+    const summaries=[],records=[];
+    const context={...f.context,event};
+    const result=await runWatch({context,get:f.get,writeSummary:async s=>summaries.push(s),writeEvidence:async e=>records.push(e)});
+    assert.equal(result.outcome,'nonempty');assert.equal(result.entries.length,3);
+    assert.ok(result.entries.every(e=>e.candidates.length===1));
+    assert.equal((summaries[0].match(/Existing preparation; do not launch a duplicate/g)||[]).length,3);
+    assert.doesNotMatch(summaries[0],/Normal empty plan|Preparation: none/);
+    assert.match(summaries[0],new RegExp(`Invocation: ${event}; revision ${f.context.revision}`));
+    assert.equal(records.length,1);assert.equal(records[0].schemaVersion,1);
+    assert.deepEqual(records[0].context,context);assert.deepEqual(records[0].plan,result);
+    assert.deepEqual(Object.keys(records[0]).sort(),['candidates','context','inventory','observationStartedAt','plan','publication','schemaVersion']);
+    for(const entry of result.entries)assert.ok(summaries[0].includes(entry.candidates[0].url));
+  }
+  assert.ok(f.calls.every(u=>!u.includes('dispatches')));
+});
 
 test('F1 Release identity contradictions fail discovery rather than presenting a plan',async()=>{
   const f=await planningFixture();
@@ -73,6 +96,20 @@ test('summary or evidence write failure cannot produce successful empty executio
     const f=await planningFixture();const args={context:f.context,get:f.get,writeSummary:async()=>{},writeEvidence:async()=>{}};
     args[key]=async()=>{throw Error('destination unavailable');};const r=await runWatch(args);
     assert.equal(r.outcome,'failed');assert.equal(r.stage,key==='writeSummary'?'presentation':'evidence');
+  }
+});
+test('available failure restitution replaces a successful plan after an output destination fails',async()=>{
+  for(const target of ['summary','evidence']) {
+    const f=await planningFixture(),summaries=[],records=[];
+    let first=true;
+    const result=await runWatch({context:f.context,get:f.get,
+      writeSummary:async s=>{if(target==='summary'&&first){first=false;throw Error('summary unavailable');}summaries.push(s);},
+      writeEvidence:async e=>{if(target==='evidence'&&first){first=false;throw Error('evidence unavailable');}records.push(e);}});
+    assert.equal(result.outcome,'failed');assert.equal(result.stage,target==='summary'?'presentation':'evidence');
+    assert.equal(result.plan,undefined);assert.equal(result.entries,undefined);
+    const finalSummary=summaries.at(-1);assert.match(finalSummary,/planning failed/);
+    assert.ok(finalSummary.includes(`Stage: ${result.stage}`));assert.doesNotMatch(finalSummary,/Complete plan:|Normal empty plan/);
+    assert.deepEqual(records,[result]);
   }
 });
 test('invocation separates Watch events from preparation and rejects overrides',()=>{
