@@ -44,9 +44,28 @@ export function renderPlan(plan) {
   result+=plan.outcome==='empty'
     ? '## Normal empty plan\n\nComplete discovery and state reads produced no eligible unpublished pairs.\n\n'
     : `Complete plan: ${plan.entries.length} eligible ${plan.entries.length===1?'pair':'pairs'}.\n\n`;
-  result+='Forecasts are independent and unreserved. Discovery is not build qualification or publication acceptance. Human selection and integration remain separate actions.\n\n';
+  result+='Forecasts are independent and unreserved, based on the observed published state and recalculated at publication. Discovery is not build qualification or publication acceptance. Human selection and integration remain separate actions.\n\n';
   if(plan.outcome!=='empty') {
     result+=`Choose zero, one or several jobs in ${link('Updates',workflow)}. Use each entry's exact inputs below and \`release_comment\` = \`""\` for every job; no channel or version override. Do not start duplicate preparation for entries with existing candidates.\n`;
+    result+='\n## Forecast\n\n';
+    for(const channel of ['latest','next']) {
+      const rows=plan.entries.filter(e=>e.identity.channel===channel);if(!rows.length)continue;
+      const forecast=e=>`${escape(e.identity.version)} · ${escape(e.identity.signal)}`;
+      if(rows.every(e=>forecast(e)===forecast(rows[0]))) {
+        result+=`- ${channel}: ${forecast(rows[0])}\n`;
+      } else {
+        result+=`- ${channel}:\n`;
+        const sqliteVersions=[...new Set(rows.map(e=>e.selection.sqlite))];
+        for(const sqlite of sqliteVersions) {
+          const matching=rows.filter(e=>e.selection.sqlite===sqlite);
+          if(matching.every(e=>forecast(e)===forecast(matching[0]))) {
+            result+=`  - SQLite ${escape(sqlite)}: ${forecast(matching[0])}\n`;
+          } else {
+            for(const e of matching)result+=`  - SQLite ${escape(sqlite)} × sqlite-vec ${escape(e.selection.sqliteVec)}: ${forecast(e)}\n`;
+          }
+        }
+      }
+    }
   }
   for(const channel of ['latest','next']) {
     const rows=plan.entries.filter(e=>e.identity.channel===channel);if(!rows.length)continue;
@@ -54,7 +73,6 @@ export function renderPlan(plan) {
     for(const e of rows) {
       result+=`\n### SQLite ${escape(e.selection.sqlite)} × sqlite-vec ${escape(e.selection.sqliteVec)}\n\n`;
       result+=`- \`sqlite_version\`: \`${escape(e.parameters.sqlite_version)}\` · \`sqlite_vec_version\`: \`${escape(e.parameters.sqlite_vec_version)}\`\n`;
-      result+=`- Forecast: ${escape(e.identity.version)} · ${escape(e.identity.signal)} · ${escape(e.identity.channel)}\n`;
       if(e.candidates.length) {
         result+='\nExisting preparation; do not launch a duplicate:\n\n';
         for(const c of e.candidates){result+=`- ${link(c.kind==='pr'?`Candidate PR #${c.number}`:`Preparation ${c.runId}, attempt ${c.attempt}`,c.url)} (${escape(c.status)}).`;

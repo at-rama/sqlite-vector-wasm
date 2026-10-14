@@ -47,7 +47,7 @@ test('shared alpha-series policy responds to changed publication state',()=>{
 test('complete summary is deterministic, actionable and preserves candidate links without duplicate advice',()=>{
   const c=context();c.candidates=[{kind:'run',selection:{sqlite:'3.54.1',sqliteVec:'0.1.9'},runId:17,attempt:1,status:'queued',url:`https://github.com/${repository}/actions/runs/17`}];
   const rendered=renderPlan(makePlan(c));
-  assert.match(rendered,/3.54.1 × sqlite-vec 0.1.9/);assert.match(rendered,/Forecast: 0.1.1 · PATCH · latest/);
+  assert.match(rendered,/3.54.1 × sqlite-vec 0.1.9/);assert.match(rendered,/- latest: 0.1.1 · PATCH/);
   assert.match(rendered,/Existing preparation; do not launch a duplicate/);assert.match(rendered,/actions\/runs\/17/);
   assert.match(rendered,/`sqlite_vec_version`: `0.1.10-alpha.2`/);assert.match(rendered,/`release_comment` = `""` for every job/);
   assert.match(rendered,/actions\/workflows\/updates.yml/);
@@ -73,7 +73,8 @@ test('compact entries preserve every plan fact while sharing instructions and re
     const block=rendered.split(heading)[1].split(/\n##(?:#)? /)[0];
     assert.ok(block.includes(`\`sqlite_version\`: \`${e.parameters.sqlite_version}\``));
     assert.ok(block.includes(`\`sqlite_vec_version\`: \`${e.parameters.sqlite_vec_version}\``));
-    assert.ok(block.includes(`Forecast: ${e.identity.version} · ${e.identity.signal} · ${e.identity.channel}`));
+    assert.doesNotMatch(block,/Forecast:/);
+    assert.ok(rendered.split("## Forecast\n")[1].split("\n## latest")[0].includes(`${e.identity.version} · ${e.identity.signal}`));
     assert.equal(e.parameters.release_comment,'');
     for(const candidate of e.candidates)assert.ok(block.includes(candidate.url));
   }
@@ -114,4 +115,41 @@ test('normal empty and failed outcomes stay distinct; diagnostics cannot inject 
     assert.ok(failed.includes(`&lt;${tag}&gt;unavailable&lt;/${tag}&gt;`));
     assert.ok(!failed.includes('<') && !failed.includes('>'));
   }
+});
+
+test('central forecasts summarize homogeneous channels once before unchanged pair sections',()=>{
+  const c=context(),plan=makePlan(c),before=JSON.stringify(plan),rendered=renderPlan(plan);
+  const section=rendered.split('## Forecast\n')[1].split('\n## latest')[0];
+  assert.equal(section.trim(),'- latest: 0.1.1 · PATCH\n- next: 0.2.0-alpha.2 · PATCH');
+  assert.ok(rendered.indexOf('## Forecast')<rendered.indexOf('## latest'));
+  assert.deepEqual([...rendered.matchAll(/^### SQLite (.+) × sqlite-vec (.+)$/gm)].map(m=>[m[1],m[2]]),plan.entries.map(e=>[e.selection.sqlite,e.selection.sqliteVec]));
+  assert.doesNotMatch(rendered,/Forecast:/);
+  assert.match(rendered,/observed published state and recalculated at publication/);
+  assert.equal(JSON.stringify(plan),before);
+});
+test('different forecasts within next are mapped by sufficient SQLite selectors',()=>{
+  const c=context();c.publication.snapshot.heads.latest=published('0.1.1','3.53.4','0.1.9');
+  c.publication.snapshot.heads.next=null;c.publication.snapshot.tags=['dist/v0.1.1'];
+  c.publication.snapshot.releaseTags=['dist/v0.1.1'];c.publication.snapshot.npmVersions=['0.1.1'];
+  c.inventory=inventory(['3.53.4','3.54.0'],['0.1.9','0.1.10-alpha.1','0.1.10-alpha.2']);
+  const plan=makePlan(c),rendered=renderPlan(plan),section=rendered.split('## Forecast\n')[1].split('\n## latest')[0];
+  assert.equal(section.trim(),'- latest: 0.2.0 · MINOR\n- next:\n  - SQLite 3.53.4: 0.1.2-alpha.1 · PATCH\n  - SQLite 3.54.0: 0.2.0-alpha.1 · MINOR');
+  assert.deepEqual([...rendered.matchAll(/^### SQLite (.+) × sqlite-vec (.+)$/gm)].map(m=>[m[1],m[2]]),plan.entries.map(e=>[e.selection.sqlite,e.selection.sqliteVec]));
+});
+test('SQLite selector falls back to exact pairs when sqlite-vec changes the forecast',()=>{
+  const c=context();c.publication.snapshot.heads.next=null;
+  for(const key of ['tags','releaseTags'])c.publication.snapshot[key]=['dist/v0.1.0'];
+  c.publication.snapshot.npmVersions=['0.1.0'];
+  c.inventory=inventory(['3.54.0'],['0.1.10-alpha.1','0.2.0-alpha.1']);
+  const plan=makePlan(c),rendered=renderPlan(plan),section=rendered.split('## Forecast\n')[1].split('\n## next')[0];
+  assert.equal(section.trim(),'- next:\n  - SQLite 3.54.0 × sqlite-vec 0.1.10-alpha.1: 0.1.1-alpha.1 · PATCH\n  - SQLite 3.54.0 × sqlite-vec 0.2.0-alpha.1: 0.2.0-alpha.1 · MINOR');
+  assert.doesNotMatch(section,/- latest:/);
+  assert.doesNotMatch(section,/SQLite 3.54.0:/);
+});
+test('empty plan has no invented forecast or channel pair section',()=>{
+  const c=context();c.inventory=inventory(['3.54.0'],['0.1.9']);
+  const rendered=renderPlan(makePlan(c));
+  assert.match(rendered,/Normal empty plan/);
+  assert.doesNotMatch(rendered,/## Forecast|## latest|## next/);
+  assert.match(rendered,/## Reference state/);
 });
