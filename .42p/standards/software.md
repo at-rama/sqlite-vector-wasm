@@ -1,6 +1,6 @@
 # Technical repository canon
 
-This is the repository-wide engineering authority, subordinate to the instituted design decisions and sources under [the repository authority rules](../../AGENTS.md). It translates repository concerns from the two current [Captures and global Allocation](../engineering/) without changing their scoped obligations or giving the Captures decision authority. Executable configuration defines the current checks; this document explains their scope and prerequisites.
+This is the repository-wide engineering authority, subordinate to the instituted design decisions and sources under [the repository authority rules](../../AGENTS.md). It translates repository concerns from the current [Captures and global Allocation](../engineering/) without changing their scoped obligations or giving the Captures decision authority. Executable configuration defines the current checks; this document explains their scope and prerequisites.
 
 ## Lightweight repository gateway
 
