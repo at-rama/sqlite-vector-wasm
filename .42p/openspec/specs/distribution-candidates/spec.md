@@ -8,7 +8,7 @@ Realize A-updates by preparing exact human-selected official upstream combinatio
 
 ### Requirement: Exact human dispatch
 
-Candidate preparation SHALL start from human `workflow_dispatch` with exact `sqlite_version`, exact `sqlite_vec_version` and free-text `release_comment`. It SHALL accept no manual channel or distribution-version override and SHALL operate independently of watch plans, polling history and intervening releases. Nominal preparation SHALL be deterministic without AI selection or repair.
+Candidate preparation SHALL start from human `workflow_dispatch` with exact `sqlite_version`, exact `sqlite_vec_version` and optional free-text `sqlite_comment`, `sqlite_vec_comment` and `misc_comment`. Nonempty comment fields SHALL be trimmed at their edges and joined in that order with one blank line into the single canonical release comment. It SHALL accept no manual channel or distribution-version override and SHALL operate independently of watch plans, polling history and intervening releases. Nominal preparation SHALL be deterministic without AI selection or repair.
 
 #### Scenario: Exact pair outside watch suggestions
 - **WHEN** the maintainer selects an admissible pair absent from any watch plan, skipping intermediate releases or rebuilding the recorded pair
@@ -18,9 +18,13 @@ Candidate preparation SHALL start from human `workflow_dispatch` with exact `sql
 - **WHEN** either exact version is missing, malformed or accompanied by an unsupported channel/version override
 - **THEN** preparation fails without substituting a latest version or publishing anything
 
-#### Scenario: Comment is structured data
-- **WHEN** a comment contains quotes, newlines or shell metacharacters
-- **THEN** its value is retained as data without executing it or changing selection
+#### Scenario: Comments aggregate as structured data
+- **WHEN** one or more comment fields contain text, including quotes, real newlines or shell metacharacters
+- **THEN** nonempty trimmed fields are joined in SQLite → sqlite-vec → miscellaneous order with one blank line, retained as data without execution, and do not change selection
+
+#### Scenario: Comments are absent or blank
+- **WHEN** all three comment fields are absent, empty or whitespace-only
+- **THEN** the canonical release comment is empty
 
 ### Requirement: Official pinned candidate inputs
 
@@ -84,7 +88,7 @@ Preparation SHALL evaluate the clean committed candidate containing its input re
 
 ### Requirement: Release descriptor handoff
 
-The candidate SHALL introduce or update `inputs/release.json` in the format consumed by A-release, with selections matching `inputs/sources.lock.json`, the exact comment and the real preparation run ID/URL in this repository. Its invocation context SHALL remain retrievable through candidate state. The descriptor SHALL NOT persist a forecast as a reserved final version.
+The candidate SHALL introduce or update `inputs/release.json` in the format consumed by A-release, with selections matching `inputs/sources.lock.json`, the exact aggregated comment and the real preparation run ID/URL in this repository. Its invocation context SHALL remain retrievable through candidate state. The descriptor SHALL NOT persist a forecast as a reserved final version.
 
 #### Scenario: Candidate descriptor is consumed
 - **WHEN** A-release reads the integrated candidate descriptor
@@ -116,7 +120,7 @@ Preparation SHALL retain available reports, logs, candidate provenance and the f
 
 #### Scenario: Traceable candidate
 - **WHEN** the maintainer inspects a successful candidate and its linked run artifacts
-- **THEN** the selected inputs, code, build and payload identities are linked to the exact dispatch comment and preparation execution
+- **THEN** the selected inputs, code, build and payload identities are linked to the exact aggregated dispatch comment and preparation execution
 
 #### Scenario: Failed preparation
 - **WHEN** preparation terminates before all controls or PR operations succeed
