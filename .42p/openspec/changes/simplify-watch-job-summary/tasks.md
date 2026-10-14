@@ -13,7 +13,7 @@
 
 ## 3. Integrated candidate checks
 
-- [ ] 3.1 Stage the implementation candidate and run `sh tools/check-repository.sh`, `sh tools/test-repository.sh`, and `openspec validate --all --strict` from `.42p`; verify all applicable commands pass and record observed results/limits without declaring post-Apply Verification or release acceptance.
+- [ ] 3.1 Stage the implementation candidate and, from the repository root, run `sh tools/check-repository.sh` and `sh tools/test-repository.sh`; then, from `.42p`, run `openspec validate --all --strict`. Verify all applicable commands pass and record observed results/limits without declaring post-Apply Verification or release acceptance.
 - [ ] 3.2 Re-read the current Allocation snapshots and re-evaluate every row in `coverage.md` against the committed candidate and artifacts; verify both directions remain 100% at documentary level, all required plan information is retained, and code/workflow changes remain within the authorized A-watch realization. Stop on required semantic revision or insufficient upstream authority.
 
 ## Workflow follow-up
