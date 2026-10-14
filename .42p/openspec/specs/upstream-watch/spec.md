@@ -130,7 +130,7 @@ The directly consultable execution summary SHALL contain every eligible pair wit
 
 #### Scenario: Pair has no existing candidate
 - **WHEN** a nonempty plan contains an eligible pair without current preparation
-- **THEN** its entry supplies exact `sqlite_version`, `sqlite_vec_version`, `release_comment` and the Updates Actions link for human initiation, with no channel/version override
+- **THEN** its entry supplies exact `sqlite_version`, `sqlite_vec_version`, empty `sqlite_comment`, `sqlite_vec_comment` and `misc_comment`, and the Updates Actions link for human initiation, with no channel/version override
 
 #### Scenario: Pair already has preparation
 - **WHEN** an eligible pair has an active run or open candidate PR
