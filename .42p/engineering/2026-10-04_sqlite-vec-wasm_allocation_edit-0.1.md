@@ -8,7 +8,9 @@ Current direct inputs. The full reconciliation of 2026-10-10 is retained; the su
 - [Site Capture](2026-10-08_sqlite-vec-wasm_site_capture_edit-0.1.md), snapshot SHA-256 `4312d2c6f83bbfaae09cc9d23322d07f3d60f1e9203bc9588c4be5b24ba7b085`.
 - [Release/Watch Capture](2026-10-09_sqlite-vec-wasm_release-watch_capture_edit-0.1.md), snapshot SHA-256 `0cfd081230e972027c18d53819203079e8267a88ae47e3fa473925b801a5f5cb`.
 
-Reference prefixes `D`, `S` and `W` identify these scopes; a handle is local to its Capture. The links above retrieve the current input files; their fingerprints identify the exact bytes examined. The immutable comparison revision below preserves the preceding state, not these refreshed editorial snapshots. Instituted sources and decisions retain authority. Captures project them; this Allocation attributes responsibility without instituting requirements or certifying realization. Explicit scoped supersessions recorded in the Captures govern the revised release/watch matter. Related sources and projections are not independent corroboration.
+- [Workflow Notifications Capture](2026-10-14_sqlite-vector-wasm_workflow-notifications_capture_edit-0.1.md), snapshot SHA-256 `dc1b4935c60df99ecb06b05b4df1afc064a9ef7a9b9a22816926629485e08102`.
+
+Reference prefixes `D`, `S`, `W` and `N` identify these scopes; a handle is local to its Capture. The links above retrieve the current input files; their fingerprints identify the exact bytes examined. The immutable comparison revision below preserves the preceding state, not these refreshed editorial snapshots. Instituted sources and decisions retain authority. Captures project them; this Allocation attributes responsibility without instituting requirements or certifying realization. Explicit scoped supersessions recorded in the Captures govern the revised release/watch matter. Related sources and projections are not independent corroboration.
 
 This full reconciliation replaces the superseded unit descriptions and correspondence in the [comparison Allocation at PR #26 revision ce6707](https://github.com/at-rama/sqlite-vector-wasm/blob/ce6707d032d2a245a81b18bf6bf6ed55f5077764/.42p/engineering/2026-10-04_sqlite-vec-wasm_allocation_edit-0.1.md). All nine unit identities remain. The review includes every Capture element, material relationships, boundary prose, provenance, and affected downstream contracts. Capture provenance preserves the preceding intervention's deferred scope; current-state passages now refer to this reconciled mapping. The status-only Capture corrections do not change attributed product obligations or responsibility boundaries.
 
@@ -21,6 +23,8 @@ The [technical architecture](2026-10-04_sqlite-vec-wasm_technical_architecture_e
 The user's subsequent `S-release-refinement` decisions, projected in Distribution `C-release`/`C-bootstrap` and Release/Watch `C-semver`/`C-publication`, refine the alpha required-base reference and bounded initial npm path. The incremental review covers `A-release` policy/publication/completion, `A-watch` and `A-updates` consumption of that common policy, and `A-bootstrap` setup/manual first-npm handoff. Their existing qualified references cover these contributions without new units or transferred duties. `A-release` owns read-only completion checking; `A-bootstrap` performs the unavoidable manual operation. Other inputs, boundaries, historical contracts and evidence are unchanged; this incremental review does not renew a global verification verdict. The active `publish-distribution` Change is reconciled against these refreshed snapshots; future watch/update/bootstrap Changes must consume the current references.
 
 The 2026-10-13 `S-watch-native` mission performs a bounded reconciliation of `A-watch` only: native notification/direct plan consultation, normal empty results and independent manual planning replace its email orientation. The refreshed Capture fingerprints above identify the examined bytes; their other allocated contributions and all other unit texts remain unchanged. The present derivation review covers this watch field in both directions and does not renew the earlier global verdict or historical realization evidence.
+
+The 2026-10-14 bounded notifications review adds input `N` and attributes its A-watch contribution below. N/S-notifications explicitly replaces the native-notification and empty-plan-notification choices still projected in D/C-watch and W/C-watch; N governs those portions, while their unaffected planning contributions remain applicable. Resend is the retained target orientation, with integration deferred until precise notification conditions are established; summary simplification comes first. This review covers only that contribution in both directions, not the full four-Capture design. The older full-review and historical evidence claims are not renewed. The synchronized upstream-watch specification still describes the earlier realized native-notification contract; a later realization contract must address that discrepancy without rewriting archived evidence. Reconciliation of the two earlier Capture projections is outside this new-document intervention.
 
 ## Allocation units
 
@@ -62,6 +66,8 @@ Produce the human-readable upstream job plan.
 
 **Qualified references:** [D/C-watch] and [W/C-watch], discovery sources/baselines, cadence, plan contents/direct consultation and native notification limits, weekly/manual planning initiation, scheduling and planning stop; [W/C-selection], pair eligibility, published references, candidate deduplication and no refusal registry; [W/C-determinism], [W/C-semver] and [W/C-channels], use of the shared calculation for forecasts; [D/C-autonomy], separation from manual candidate initiation; [D/R-updates] and [W/R-frugality], applicable automation/state constraints and rationale.
 
+**Notification refinement:** [N/C-status], technical outcome independent of notification relevance; [N/C-summary], GitHub restitution, short run-linked messages and prior summary simplification; [N/C-noise], excluded notification workarounds; [N/O-resend], target transport orientation only; [N/C-trigger] and [N/Q-trigger], useful-notification boundary, deferred integration and unresolved criteria. These references replace the native-notification portions of the D/W references above. This attribution introduces no general notification service or new unit and does not authorize integration before the captured condition is resolved.
+
 **Boundary and dependencies:** use `A-inputs`' admissibility criteria, `A-release`'s publication state/policy and `A-updates`' current candidate state. A plan does not reserve a version or initiate candidate preparation; manually invoking A-watch remains distinct from manually initiating A-updates. Forecast policy belongs to `A-release`; the common mechanism does not prescribe another unit.
 
 ### A-updates — Manual candidate preparation
@@ -98,10 +104,16 @@ Deliver the public site and its demonstration of the actually distributed runtim
 
 ## Reverse correspondence and examined limits
 
-The following correspondence accounts for all 41 non-source handles. Attribution to several units selects distinct contributions; contextual treatment is explicit. Unit references above retain the source's full obligations rather than replacing them with the table's summaries.
+The following correspondence retains the preceding mapping of 41 non-source D/S/W handles, qualified by the bounded N revision above, and adds the six N design handles below. Attribution to several units selects distinct contributions; contextual treatment is explicit. Unit references above retain the source's full obligations rather than replacing them with the table's summaries.
 
 | Capture element | Qualified contributions or contextual treatment |
 | --- | --- |
+| [N/C-status] | `A-watch`: execution status and notification relevance remain independent; no invented error-notification policy. |
+| [N/C-summary] | `A-watch`: reference restitution, short run-linked notifications and summary simplification as the first chantier; layout remains undefined. |
+| [N/C-noise] | `A-watch`: no global CI notification signal, issue/comment/mention workaround or requested account-setting change. |
+| [N/O-resend] | `A-watch`: Resend → Gmail is the retained target orientation, with the dedicated OVH subdomain an example; no SMTP or configured-delivery claim. |
+| [N/C-trigger] | `A-watch`: no empty-result or every-success notification; integration follows summary simplification and established trigger criteria, without general infrastructure. |
+| [N/Q-trigger] | `A-watch`: unresolved relevance/error criteria and explicit pre-integration condition; not a blocker for the summary work and no invented automatic nonempty-plan trigger. |
 | [D/C-purpose] | `A-inputs`: official selected inputs; `A-build`: canonical integration; `A-package`: browser consumption; `A-release`: distribution. Runtime/engine scope constrains their composition. |
 | [D/C-nonmodification] | `A-build`/`A-package`: allowable integration/glue; `A-updates`: intervention. Common distribution boundary excludes added product behavior. |
 | [D/C-inputs] | `A-inputs`: admissibility/origins/pins/digests/acquisition exceptions; `A-build`: pinned tools/options and reproduction; `A-package`: clean packaging/output exclusion; `A-acceptance`: full-path proof; `A-updates`: candidate records/composition. Channel policy is `A-release`'s W/C-channels contribution, consumed by `A-watch` and `A-inputs`. |
@@ -219,3 +231,10 @@ Material prose outside handles is also covered: scope/authority and explicit rev
 [W/S-capture-mission]: 2026-10-09_sqlite-vec-wasm_release-watch_capture_edit-0.1.md#material-sources
 [W/S-local-reconciliation]: 2026-10-09_sqlite-vec-wasm_release-watch_capture_edit-0.1.md#material-sources
 [W/S-repository-state]: 2026-10-09_sqlite-vec-wasm_release-watch_capture_edit-0.1.md#material-sources
+
+[N/C-status]: 2026-10-14_sqlite-vector-wasm_workflow-notifications_capture_edit-0.1.md#c-status--séparer-exécution-et-notification
+[N/C-summary]: 2026-10-14_sqlite-vector-wasm_workflow-notifications_capture_edit-0.1.md#c-summary--garder-la-restitution-dans-github
+[N/C-noise]: 2026-10-14_sqlite-vector-wasm_workflow-notifications_capture_edit-0.1.md#c-noise--éviter-le-bruit-des-notifications-ci
+[N/O-resend]: 2026-10-14_sqlite-vector-wasm_workflow-notifications_capture_edit-0.1.md#o-resend--canal-cible-resend-vers-gmail
+[N/C-trigger]: 2026-10-14_sqlite-vector-wasm_workflow-notifications_capture_edit-0.1.md#c-trigger--notifier-seulement-lorsquune-attention-est-utile
+[N/Q-trigger]: 2026-10-14_sqlite-vector-wasm_workflow-notifications_capture_edit-0.1.md#question-et-condition-de-passage
