@@ -27,7 +27,7 @@ export function makePlan({repository,inventory,publication,candidates}) {
     if(!progresses(selection,reference)||(channel==='next'&&!atLeast(selection,stable)))continue;
     if(excluded.has(`${channel}:${pairKey(selection)}`))continue;
     const identity=calculate({selection,snapshot:publication.snapshot,comment:''});
-    entries.push({selection,identity,parameters:{sqlite_version:sqlite,sqlite_vec_version:sqliteVec,release_comment:''},
+    entries.push({selection,identity,parameters:{sqlite_version:sqlite,sqlite_vec_version:sqliteVec,sqlite_comment:'',sqlite_vec_comment:'',misc_comment:''},
       candidates:candidates.filter(c=>pairKey(c.selection)===pairKey(selection))});
   }
   entries.sort((a,b)=>a.identity.channel.localeCompare(b.identity.channel)||compareUpstream(a.selection.sqlite,b.selection.sqlite,'sqlite')||compareUpstream(a.selection.sqliteVec,b.selection.sqliteVec,'sqliteVec'));
@@ -46,7 +46,7 @@ export function renderPlan(plan) {
     : `Complete plan: ${plan.entries.length} eligible ${plan.entries.length===1?'pair':'pairs'}.\n\n`;
   result+='Forecasts are independent and unreserved, based on the observed published state and recalculated at publication. Discovery is not build qualification or publication acceptance. Human selection and integration remain separate actions.\n\n';
   if(plan.outcome!=='empty') {
-    result+=`Choose zero, one or several jobs in ${link('Updates',workflow)}. Use each entry's exact inputs below and \`release_comment\` = \`""\` for every job; no channel or version override. Do not start duplicate preparation for entries with existing candidates.\n`;
+    result+=`Choose zero, one or several jobs in ${link('Updates',workflow)}. Use each entry's exact inputs below and leave \`sqlite_comment\`, \`sqlite_vec_comment\` and \`misc_comment\` empty unless you want release-note paragraphs; no channel or version override. Do not start duplicate preparation for entries with existing candidates.\n`;
     result+='\n## Forecast\n\n';
     for(const channel of ['latest','next']) {
       const rows=plan.entries.filter(e=>e.identity.channel===channel);if(!rows.length)continue;

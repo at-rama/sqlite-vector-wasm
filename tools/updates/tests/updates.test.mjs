@@ -10,7 +10,7 @@ import { prepareCandidate, resolveSources } from '../run.mjs';
 import { candidateServices } from '../services.mjs';
 const pair = { sqlite:'3.53.4',sqliteVec:'0.1.9' };
 const empty = () => ({schemaVersion:1,tags:[],releaseTags:[],npmVersions:[],heads:{latest:null,next:null}});
-const event = () => ({repository:{full_name:'a/b'},sender:{type:'User'},inputs:{sqlite_version:pair.sqlite,sqlite_vec_version:pair.sqliteVec,release_comment:'$(touch BAD); `echo data`\n"quoted"'}});
+const event = () => ({repository:{full_name:'a/b'},sender:{type:'User'},inputs:{sqlite_version:pair.sqlite,sqlite_vec_version:pair.sqliteVec,sqlite_comment:'  SQLite line 1\nSQLite line 2  ',sqlite_vec_comment:'$(touch BAD); `echo data`\n"quoted"',misc_comment:'  Misc note  '}});
 const environment = () => ({GITHUB_REPOSITORY:'a/b',GITHUB_ACTIONS:'true',GITHUB_EVENT_NAME:'workflow_dispatch',GITHUB_REF:'refs/heads/main',GITHUB_RUN_ID:'17',GITHUB_RUN_ATTEMPT:'2'});
 const context = () => invocation({event:event(),environment:environment()});
 const lock = selection => ({sqlite:{version:selection.sqlite},sqliteVec:{version:selection.sqliteVec}});
@@ -18,10 +18,17 @@ const published = version => {const s=empty();s.heads.latest={version,commit:'a'
 
 test('dispatch is exact, hosted, main and comments remain data', () => {
   assert.throws(()=>invocation({event:{...event(),sender:{type:'Bot'}},environment:environment()}));
-  const c=context();assert.equal(c.branch,'candidate/run-17-2');assert.equal(candidateDescriptor(c,lock(pair)).releaseComment,event().inputs.release_comment);
-  const optional=event();delete optional.inputs.release_comment;assert.equal(invocation({event:optional,environment:environment()}).comment,'');
+  const c=context();assert.equal(c.branch,'candidate/run-17-2');
+  const expected='SQLite line 1\nSQLite line 2\n\n$(touch BAD); `echo data`\n"quoted"\n\nMisc note';
+  assert.equal(c.comment,expected);assert.equal(candidateDescriptor(c,lock(pair)).releaseComment,expected);
+  for(const key of ['sqlite_comment','sqlite_vec_comment','misc_comment']) {
+    const optional=event();delete optional.inputs[key];
+    assert.ok(!invocation({event:optional,environment:environment()}).comment.includes(key==='sqlite_comment'?'SQLite line 1':key==='sqlite_vec_comment'?'$(touch BAD)':'Misc note'));
+  }
+  const empty=event();empty.inputs.sqlite_comment=' ';empty.inputs.sqlite_vec_comment='';delete empty.inputs.misc_comment;
+  assert.equal(invocation({event:empty,environment:environment()}).comment,'');
   for(const override of [{GITHUB_REF:'refs/heads/other'},{GITHUB_EVENT_NAME:'push'},{GITHUB_ACTIONS:'false'},{GITHUB_RUN_ID:'0'},{GITHUB_RUN_ID:'17x'},{GITHUB_RUN_ATTEMPT:'0'}]) assert.throws(()=>invocation({event:event(),environment:{...environment(),...override}}));
-  for(const inputs of [{...event().inputs,channel:'latest'},{...event().inputs,sqlite_version:'latest'},{...event().inputs,release_comment:null}]) assert.throws(()=>invocation({event:{...event(),inputs},environment:environment()}));
+  for(const inputs of [{...event().inputs,channel:'latest'},{...event().inputs,sqlite_version:'latest'},{...event().inputs,sqlite_comment:null},{...event().inputs,sqlite_vec_comment:null},{...event().inputs,misc_comment:null}]) assert.throws(()=>invocation({event:{...event(),inputs},environment:environment()}));
   assert.throws(()=>candidateDescriptor(c,lock({...pair,sqliteVec:'0.1.8'})));
   assert.throws(()=>candidateDescriptor({...c,preparation:{runId:18,url:c.preparation.url}},lock(pair)));
   const e=event();e.pull_request={base:{ref:'main',repo:{full_name:'a/b'}},head:{repo:{full_name:'fork/b'}}};
@@ -45,7 +52,8 @@ test('qualified committed pair precedes push/PR; diagnostics stay ignored',async
   const f=await fixture(t);const result=await f.execute();assert.equal(result.status,'candidate-ready');assert.equal(result.identity.version,'0.1.0');assert.deepEqual(f.calls,['resolve','state','tools/check-repository.sh','tools/test-repository.sh','qualify','state','push','pr']);
   assert.equal(result.preflight.name,'@at-rama/sqlite-vector-wasm');assert.equal(result.identity.name,'@at-rama/sqlite-vector-wasm');
   assert.equal(await f.git(['status','--porcelain','--untracked-files=all']),'');assert.deepEqual((await f.git(['diff-tree','--no-commit-id','--name-only','-r',result.commit])).split('\n'),['inputs/release.json']);
-  const descriptor=JSON.parse(await readFile(join(f.repository,'inputs/release.json')));assert.equal(descriptor.releaseComment,event().inputs.release_comment);
+  const descriptor=JSON.parse(await readFile(join(f.repository,'inputs/release.json')));assert.equal(descriptor.releaseComment,context().comment);
+  assert.deepEqual(Object.keys(descriptor).sort(),['preparation','releaseComment','schemaVersion','sqlite','sqliteVec']);
   assert.match(candidateBody(result),/attempt 2/);
 });
 for(const failure of ['resolve','state','tools/check-repository.sh','tools/test-repository.sh','qualify','revision','push','pr','head']) test(`mandatory ${failure} failure stops and retains truthful evidence`,async t=>{

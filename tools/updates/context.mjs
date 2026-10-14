@@ -19,15 +19,17 @@ export function invocation({ event, environment, rehearsal = false }) {
   }
   const input = event.inputs;
   assert.ok(input && typeof input === 'object' && !Array.isArray(input), 'Exact dispatch inputs required');
-  assert.deepEqual(Object.keys(input).filter(key => key !== 'release_comment').sort(), ['sqlite_vec_version', 'sqlite_version']);
+  const commentKeys = ['sqlite_comment', 'sqlite_vec_comment', 'misc_comment'];
+  assert.deepEqual(Object.keys(input).filter(key => !commentKeys.includes(key)).sort(), ['sqlite_vec_version', 'sqlite_version']);
   const selection = { sqlite: input.sqlite_version, sqliteVec: input.sqlite_vec_version };
   channelFor(selection);
-  assert.ok(input.release_comment === undefined || typeof input.release_comment === 'string');
+  for (const key of commentKeys) assert.ok(input[key] === undefined || typeof input[key] === 'string');
+  const comment = commentKeys.map(key => (input[key] ?? '').trim()).filter(Boolean).join('\n\n');
   const runId = Number(environment.GITHUB_RUN_ID), attempt = Number(environment.GITHUB_RUN_ATTEMPT);
   assert.ok(Number.isSafeInteger(runId) && runId > 0 && /^[1-9][0-9]*$/.test(environment.GITHUB_RUN_ID || ''), 'Real preparation run required');
   assert.ok(Number.isSafeInteger(attempt) && attempt > 0 && /^[1-9][0-9]*$/.test(environment.GITHUB_RUN_ATTEMPT || ''), 'Run attempt required');
   const preparation = { runId, url: `https://github.com/${repository}/actions/runs/${runId}` };
-  return { repository, selection, comment: input.release_comment ?? '', preparation, attempt,
+  return { repository, selection, comment, preparation, attempt,
     branch: `candidate/run-${runId}-${attempt}`, rehearsal };
 }
 

@@ -14,7 +14,7 @@ try {
   const event = JSON.parse(await readFile(env.GITHUB_EVENT_PATH, 'utf8'));
   if (rehearsal) {
     const lock = JSON.parse(await readFile(join(root, 'inputs/sources.lock.json'), 'utf8'));
-    event.inputs = { sqlite_version: lock.sqlite.version, sqlite_vec_version: lock.sqliteVec.version, release_comment: 'Nonpublishing preparation rehearsal' };
+    event.inputs = { sqlite_version: lock.sqlite.version, sqlite_vec_version: lock.sqliteVec.version, misc_comment: 'Nonpublishing preparation rehearsal' };
   }
   const context = invocation({ event, environment: env, rehearsal });
   const get = httpReader(env.GH_TOKEN);

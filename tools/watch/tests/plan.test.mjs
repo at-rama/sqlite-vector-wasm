@@ -49,7 +49,8 @@ test('complete summary is deterministic, actionable and preserves candidate link
   const rendered=renderPlan(makePlan(c));
   assert.match(rendered,/3.54.1 × sqlite-vec 0.1.9/);assert.match(rendered,/- latest: 0.1.1 · PATCH/);
   assert.match(rendered,/Existing preparation; do not launch a duplicate/);assert.match(rendered,/actions\/runs\/17/);
-  assert.match(rendered,/`sqlite_vec_version`: `0.1.10-alpha.2`/);assert.match(rendered,/`release_comment` = `""` for every job/);
+  assert.match(rendered,/`sqlite_vec_version`: `0.1.10-alpha.2`/);
+  for(const key of ['sqlite_comment','sqlite_vec_comment','misc_comment'])assert.ok(rendered.includes(`\`${key}\``));
   assert.match(rendered,/actions\/workflows\/updates.yml/);assert.doesNotMatch(rendered,/Preparation: none/);
   for(const k of ['sqlite','sqliteVec'])c.inventory[k].reverse();assert.equal(renderPlan(makePlan(c)),rendered);
 });
@@ -65,7 +66,7 @@ test('compact entries preserve every plan fact while sharing instructions and re
   const plan=makePlan(c),before=JSON.stringify(plan),rendered=renderPlan(plan);
   assert.match(rendered,/Complete plan: 5 eligible pairs/);
   assert.equal((rendered.match(/actions\/workflows\/updates.yml/g)||[]).length,1);
-  assert.equal((rendered.match(/`release_comment`/g)||[]).length,1);
+  for(const key of ['sqlite_comment','sqlite_vec_comment','misc_comment'])assert.equal(rendered.split(`\`${key}\``).length-1,1);
   assert.match(rendered,/no channel or version override/);
   assert.equal((rendered.match(/^### SQLite /gm)||[]).length,plan.entries.length);
   for(const e of plan.entries) {
@@ -75,7 +76,7 @@ test('compact entries preserve every plan fact while sharing instructions and re
     assert.ok(block.includes(`\`sqlite_vec_version\`: \`${e.parameters.sqlite_vec_version}\``));
     assert.doesNotMatch(block,/Forecast:/);
     assert.ok(rendered.split("## Forecast\n")[1].split("\n## latest")[0].includes(`${e.identity.version} · ${e.identity.signal}`));
-    assert.equal(e.parameters.release_comment,'');
+    assert.equal(e.parameters.sqlite_comment,'');assert.equal(e.parameters.sqlite_vec_comment,'');assert.equal(e.parameters.misc_comment,'');
     for(const candidate of e.candidates)assert.ok(block.includes(candidate.url));
   }
   assert.match(rendered,/Preparation 17, attempt 2.*\(queued\)/);
