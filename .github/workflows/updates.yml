@@ -12,8 +12,16 @@ on:
         description: Exact sqlite-vec version
         required: true
         type: string
-      release_comment:
-        description: Release comment (required for rollback)
+      sqlite_comment:
+        description: SQLite release comment
+        default: ''
+        type: string
+      sqlite_vec_comment:
+        description: sqlite-vec release comment
+        default: ''
+        type: string
+      misc_comment:
+        description: Miscellaneous release comment
         default: ''
         type: string
   pull_request:
