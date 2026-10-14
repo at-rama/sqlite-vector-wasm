@@ -16,6 +16,21 @@ applicable_tests: passed
 
 ## Vue pour institution
 
+### Complément de preuve live — 2026-10-14
+
+Le [run Watch manuel 38593301329, tentative 1](https://github.com/at-rama/sqlite-vector-wasm/actions/runs/38593301329) a exécuté `workflow_dispatch` sur `feat/watch-plan-notifications`, commit `232d45b908fec3578c88dba42988f5e16f49d4a8`, à 17:53 heure de Paris. Ce commit ajoute seulement le présent rapport au candidat vérifié `785c2ff` ; la réalisation est identique.
+
+Les [logs de l'exécution réelle](https://github.com/at-rama/sqlite-vector-wasm/actions/runs/38593301329/job/115953507685) indiquent `Watch result: nonempty` puis `Watch plan email accepted by Resend; receipt is not confirmed.` Le run et les étapes de planification, conservation de l'artefact et envoi sont success. Il s'agit cette fois du sender hébergé avec sa configuration effective, et non d'un transport injecté.
+
+L'utilisateur confirme ensuite dans la conversation, le 2026-10-14 à 17:55 heure de Paris : « Mail reçu », en désignant ce run. Cette confirmation constitue la preuve humaine de réception du mail concerné ; les logs GitHub prouvent l'acceptation signalée par le sender, pas à eux seuls la réception. Le contenu de la boîte Gmail n'a pas été inspecté et aucune notification Android n'a été confirmée.
+
+Ce complément établit un parcours réel réussi jusqu'à la réception déclarée pour cette exécution manuelle. Il ne prouve pas l'unicité côté boîte de réception, une exécution cron réelle, les cas vides/échoués live ou une garantie de livraison future. Ces autres comportements conservent leurs preuves offline et limites ci-dessous. Le verdict `passed`, son candidat `checked_commit` et les trois contrôles initiaux restent inchangés ; aucune réalisation, synchronisation, Archive ou intégration n'est effectuée ici. L'exécution live a été déclenchée par l'utilisateur, pas par l'agent.
+
+Le compte rendu initial ci-dessous décrit les observations disponibles lors de la Verification précédente. Ses mentions d'absence de preuve live sont historiques et sont complétées, pour cette seule exécution, par les observations ci-dessus.
+
+
+### Compte rendu initial de la Verification
+
 **Conclusion située.** La Verification de `notify-watch-plans`, limitée à `A-notifications`, est **passed** sur le candidat propre et commité [785c2ff](https://github.com/at-rama/sqlite-vector-wasm/commit/785c2ff1e5e96ce2b9b3c411452e6985b27892e8). Les trois contrôles ont été exécutés, avec renouvellement local des suites et consultation des [résultats CI du même candidat](https://github.com/at-rama/sqlite-vector-wasm/actions/runs/38588004614/job/115935057496). Les preuves établissent le comportement du code et de l'intégration examinés avec un transport injecté ; elles n'attestent aucun envoi réel, configuration Resend effective, réception Gmail ou notification Android. Les logs CI sont accessibles ; les logs locaux sont temporaires et leur compte rendu figure ci-dessous.
 
 **Provenance de la commande.** L'[unité A-notifications examinée](https://github.com/at-rama/sqlite-vector-wasm/blob/785c2ff1e5e96ce2b9b3c411452e6985b27892e8/.42p/engineering/2026-10-04_sqlite-vec-wasm_allocation_edit-0.1.md#L70-L76) attribue conditions, message et acheminement. Ses références qualifiées ont été confrontées aux passages de la [Capture Notifications](https://github.com/at-rama/sqlite-vector-wasm/blob/785c2ff1e5e96ce2b9b3c411452e6985b27892e8/.42p/engineering/2026-10-14_sqlite-vector-wasm_workflow-notifications_capture_edit-0.1.md), sections C-status, C-summary, C-noise, O-resend et C-trigger, et aux contributions notifications D/W C-watch, D/R-updates et W/R-frugality. Les sources S-notifications, S-reconciliation, S-allocation et S-notification-rules sont identifiées par ces projections ; aucun audit indépendant de leur corpus original n'a été effectué. La couverture établit la correspondance de l'unité avec le Change, sans instituer les décisions ni prouver toute la chaîne amont.
