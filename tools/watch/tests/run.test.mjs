@@ -140,7 +140,8 @@ test('CLI invocation failure writes a summary, ignored diagnostics and a failing
 test('workflow exposes only weekly/manual read-only planning with pinned actions',async()=>{
   const workflow=await readFile(new URL('../../../.github/workflows/watch.yml',import.meta.url),'utf8');
   assert.match(workflow,/cron: '0 8 \* \* 5'\s+timezone: Europe\/Paris/);assert.match(workflow,/workflow_dispatch:/);
-  assert.doesNotMatch(workflow,/pull_request:|push:|inputs:|: write|id-token:|smtp|secrets\./i);
+  assert.doesNotMatch(workflow,/pull_request:|push:|inputs:|: write|id-token:|smtp/i);
+  assert.deepEqual([...workflow.matchAll(/secrets\.(\w+)/g)].map(m=>m[1]),['RESEND_API_KEY']);
   assert.match(workflow,/contents: read\s+pull-requests: read\s+actions: read/);
   const actions=[...workflow.matchAll(/uses: (\S+)/g)].map(m=>m[1]);assert.equal(actions.length,2);assert.ok(actions.every(a=>/@[0-9a-f]{40}$/.test(a)));
   assert.equal(new Intl.DateTimeFormat('en',{timeZone:'Europe/Paris',hour:'numeric',hourCycle:'h23'}).format(new Date('2026-01-09T07:00:00Z')),'08');
