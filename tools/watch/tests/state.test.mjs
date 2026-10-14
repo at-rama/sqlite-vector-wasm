@@ -14,7 +14,7 @@ test('Updates exposes only the exact pair for dispatches and a separate rehearsa
   const title=workflow.split('\n').find(x=>x.startsWith('run-name:'));
   assert.match(title,/github.event_name == 'workflow_dispatch'/);
   assert.match(title,/format\('candidate sqlite=\{0\} sqlite-vec=\{1\}', inputs.sqlite_version, inputs.sqlite_vec_version\)/);
-  assert.match(title,/'Updates PR rehearsal'/);assert.doesNotMatch(title,/release_comment|token|secret/i);
+  assert.match(title,/'Updates PR rehearsal'/);assert.doesNotMatch(title,/sqlite_comment|sqlite_vec_comment|misc_comment|token|secret/i);
 });
 const provenance=(version,selection=pair)=>({schemaVersion:1,name:npmPackageName,version,tag:`dist/v${version}`,
   channel:version.includes('-')?'next':'latest',commit,upstreams:selection,archive:{sha256:sha,size:bytes.length},
