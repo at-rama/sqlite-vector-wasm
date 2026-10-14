@@ -1,6 +1,6 @@
 # Tasks
 
-The 2026-10-14 authorized Update centralizes forecasts before the existing channel pair sections. Tasks 1.1–1.3, 2.2 and 3.1–3.2 are reopened for this delta; 2.1 retains its prior completion because execution outcomes and evidence writing are unchanged. Existing Apply correspondence and Verification report concern the earlier candidate and do not verify this revised presentation. Reconcile affected coverage before renewed Apply and renew 42P Verification afterwards; do not archive using the prior PASS.
+The 2026-10-14 authorized Update centralizes forecasts before the existing channel pair sections. Tasks 1.1–1.3, 2.2 and 3.1–3.2 were reopened for this delta and are now completed by renewed Apply; 2.1 retains its prior completion because execution outcomes and evidence writing are unchanged. Existing Apply correspondence and Verification report concern the earlier candidate and do not verify this revised presentation. Reconcile affected coverage before renewed Apply and renew 42P Verification afterwards; do not archive using the prior PASS.
 
 ## 1. Compact complete Summary
 
@@ -16,7 +16,7 @@ The 2026-10-14 authorized Update centralizes forecasts before the existing chann
 ## 3. Integrated candidate checks
 
 - [x] 3.1 Stage the implementation candidate and, from the repository root, run `sh tools/check-repository.sh` and `sh tools/test-repository.sh`; then, from `.42p`, run `openspec validate --all --strict`. Verify all applicable commands pass and record observed results/limits without declaring post-Apply Verification or release acceptance.
-- [ ] 3.2 Re-read the current Allocation snapshots and re-evaluate every row in `coverage.md` against the committed candidate and artifacts; verify both directions remain 100% at documentary level, all required plan information is retained, and code/workflow changes remain within the authorized A-watch realization. Stop on required semantic revision or insufficient upstream authority.
+- [x] 3.2 Re-read the current Allocation snapshots and re-evaluate every row in `coverage.md` against the committed candidate and artifacts; verify both directions remain 100% at documentary level, all required plan information is retained, and code/workflow changes remain within the authorized A-watch realization. Stop on required semantic revision or insufficient upstream authority.
 
 ## Workflow follow-up
 
