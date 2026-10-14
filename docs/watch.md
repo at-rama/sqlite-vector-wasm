@@ -36,9 +36,23 @@ GitHub requires the Watch definition on the default branch before hosted manual 
 
 Open an execution's **Summary** to read the Markdown plan without raw logs. A complete empty plan is a normal success. Discovery, publication/candidate state or calculation failures have an explicit failed-stage summary and an unsuccessful execution. Ignored `.work/watch/result.json` and the execution artifact retain available nonsecret diagnostics; neither becomes input to later selection.
 
-Completion notifications use only GitHub's native behavior and your [Actions notification preferences](https://docs.github.com/en/subscriptions-and-notifications/how-tos/managing-github-actions-notifications). Notifications for empty plans are acceptable. Delivery, mobile push and notification format depend on GitHub and the account's preferences; Watch promises none of them and configures no sender, mail secrets or substitute service.
+The current implementation configures no dedicated sender or mail service. GitHub can emit completion notifications according to your [Actions notification preferences](https://docs.github.com/en/subscriptions-and-notifications/how-tos/managing-github-actions-notifications), including for empty plans or failed runs. That account-controlled behavior is outside the project's notification target below; this repository does not suppress it or guarantee delivery, mobile push or format.
 
 GitHub can disable scheduled workflows after repository inactivity. Reactivate the workflow manually under its normal UI controls. Watch adds no keepalive, alternate scheduler or automatic reactivation. Disabling only its schedule leaves manual planning distinct; disabling the whole workflow disables both triggers.
+
+## Notification target
+
+The instituted target uses Resend → Gmail to send one short plan email for each successful planning execution with a complete nonempty plan. The message links to the run; the Summary and artifacts remain the reference for details and diagnostics.
+
+| Planning result | Project email |
+| --- | --- |
+| Successful, complete nonempty plan | One plan email, including when all entries already have preparation or a PR |
+| Successful empty plan | None |
+| Failed or incomplete planning | None |
+
+Scheduled and manual triggers use the same rule. There is no trigger-specific filter, notification deduplication or sent-plan history; recurring proposals can appear in successive plan emails. This does not change Watch's current-candidate awareness or its prevention of duplicate preparation.
+
+This target is not implemented by the present documentation update. Summary simplification comes first. A-watch retains planning and reference restitution; A-notifications owns the notification condition, message and retained transport integration. The [Notifications Capture](../.42p/engineering/2026-10-14_sqlite-vector-wasm_workflow-notifications_capture_edit-0.1.md) and [Allocation](../.42p/engineering/2026-10-04_sqlite-vec-wasm_allocation_edit-0.1.md) record the current design and responsibility split. The [upstream-watch specification](../.42p/openspec/specs/upstream-watch/spec.md) explicitly identifies its older native-notification baseline; future realization work must reconcile the affected requirements while historical archives remain unchanged.
 
 ## Development checks
 

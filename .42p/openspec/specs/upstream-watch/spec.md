@@ -4,6 +4,8 @@
 
 Realize A-watch by presenting eligible official upstream combinations and current candidate state in a deterministic weekly or manually invoked execution summary, leaving preparation and adoption under human control.
 
+**Notification baseline status.** The requirements below retain the synchronized realized baseline from the archived plan-upstream-updates Change. In the current instituted design, the “Native completion notifications” requirement and the native-notification portion of “Planning stops before preparation” are superseded: one short Resend → Gmail plan email is the target for each successful planning execution with a complete nonempty plan, including entries already in preparation, under the same rule for scheduled and manual triggers. Empty plans and errors produce no project-controlled email; account-driven GitHub notifications remain outside scope. A-watch owns planning/reference results and A-notifications owns notification eligibility/message/delivery. See the [Notifications Capture](../../../engineering/2026-10-14_sqlite-vector-wasm_workflow-notifications_capture_edit-0.1.md), [Allocation](../../../engineering/2026-10-04_sqlite-vec-wasm_allocation_edit-0.1.md) and [Watch documentation](../../../../docs/watch.md#notification-target). Summary simplification precedes sender integration. This status note makes the divergence explicit; it does not synchronize new realization requirements, claim email delivery or change historical evidence.
+
 ## Requirements
 
 ### Requirement: Official released upstream discovery
