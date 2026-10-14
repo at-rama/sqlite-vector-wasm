@@ -79,7 +79,7 @@ export function renderPlan(plan) {
           if(c.kind==='pr')result+=` ${link('Preparation',c.preparation)}; attempt ${c.attempt}; head ${escape(c.head)}.`;
           if(c.run)result+=` Active attempt ${c.run.attempt}: ${escape(c.run.status)}.`;
           result+='\n';}
-      } else result+='- Preparation: none; a separate human action can start this job.\n';
+      }
     }
   }
   result+='\n## Reference state\n\n';
