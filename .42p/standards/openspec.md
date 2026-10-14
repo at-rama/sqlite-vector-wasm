@@ -6,7 +6,16 @@ This normative canon governs OpenSpec as the repository's 42P change mechanism, 
 
 `.42p` is the OpenSpec project root; `.42p/openspec/` contains its configuration, changes and realization canon. Keep the built-in `spec-driven` schema. MUST NOT use an OpenSpec Store, `--store`, or a repository-root `openspec/`.
 
-Normal OpenSpec CLI commands MUST execute with `.42p` as working directory. From the repository root:
+OpenSpec is pinned to the exact version in [the tooling manifest](../../tools/openspec/package.json), currently `1.14.0`, with transitive versions and registry integrity in its npm lockfile. Install with `sh tools/openspec.sh install` from the repository root (Node.js >=20.19.0 and npm required). This runs `npm ci` in ignored `.work/openspec/`; it does not use a global installation or resolve a floating version.
+
+Before use, `sh tools/openspec.sh check` MUST pass. It checks manifest/lock agreement, installed records and dependency versions, the CLI version and generated skill metadata. Every command MUST use `sh tools/openspec.sh exec <arguments>`; the launcher repeats these checks and selects the local CLI. It never installs or updates implicitly. To use the bare `openspec` examples and CLI-generated skill commands below, define a shell function in the execution session, with the absolute checkout path:
+
+```sh
+repository_root=$(git rev-parse --show-toplevel)
+openspec() { sh "$repository_root/tools/openspec.sh" exec "$@"; }
+```
+
+The launcher sets `.42p` as working directory, including when invoked elsewhere. Normal OpenSpec CLI commands MUST execute with `.42p` as working directory. From the repository root:
 
 ```sh
 cd .42p
@@ -18,7 +27,7 @@ openspec instructions proposal --change <change> --json
 openspec archive <change>
 ```
 
-MUST NOT run normal commands from the repository root or rely on downward discovery of `.42p/openspec/`. Setup/update operations that accept a project path MUST target `.42p`; pathless refresh commands MUST run from `.42p`. Initial setup from the repository root is `openspec init .42p --tools agents --profile core`. Then select the core workflows plus `verify` before refreshing the generated skills as described below. Install the official CLI in the execution environment; this integration does not require a repository dependency.
+MUST NOT run normal commands from the repository root or rely on downward discovery of `.42p/openspec/`. Setup/update operations that accept a project path MUST target `.42p`; pathless refresh commands MUST run from `.42p`. This checkout already contains its OpenSpec project and generated skills; initial setup is not part of normal execution. Keep the core workflows plus `verify` when refreshing the generated skills as described below. Use the locked repository tooling above for the official CLI; it is separate from product and browser-harness dependencies.
 
 Before any workflow write, resolve the local project with `openspec list --json` or `openspec context --json` from `.42p`. The returned project root MUST be this checkout's `.42p`; generated change and spec paths MUST remain inside `.42p/openspec/`. Stop on a missing or different root. Interpret generated `openspec/...` paths relative to `.42p`; repository implementation files remain relative to the repository root, its parent.
 
@@ -26,16 +35,13 @@ Before any workflow write, resolve the local project with `openspec list --json`
 
 Shared skills live under `.42p/.agents/skills/openspec-*/`; `.42p/.agents/skills/.openspec-target` is generated target metadata. MUST read and use the appropriate generated `SKILL.md` for a workflow. MUST NOT hand-edit these files. Refresh them through the OpenSpec CLI when required.
 
-The required workflow selection is the core set (`propose`, `explore`, `apply`, `update`, `sync`, `archive`) plus `verify`. The core profile alone does not install `openspec-verify-change`. To reproduce this selection in the execution environment, then refresh from `.42p`:
+The required workflow selection is the core set (`propose`, `explore`, `apply`, `update`, `sync`, `archive`) plus `verify`. The core profile alone does not install `openspec-verify-change`. To reproduce this selection in the execution environment and refresh, run from the repository root:
 
 ```sh
-openspec config set profile custom
-openspec config set workflows '["propose","explore","apply","update","sync","archive","verify"]'
-openspec config set delivery skills
-openspec update
+sh tools/openspec.sh refresh
 ```
 
-These settings configure the execution environment; generated repository skills remain CLI-owned. Keep this workflow selection when refreshing so Verification remains available.
+The explicit `refresh` command checks the installed CLI and lock, sets this workflow selection, runs the CLI-owned `update --force` from `.42p`, then checks the resulting skill metadata. It permits old generated metadata only during this refresh; normal execution refuses it. These settings configure the execution environment; generated repository skills remain CLI-owned. Keep this workflow selection when refreshing so Verification remains available.
 
 Use the generated skills directly in ChatGPT Work by reading their files through repository access. Add an adapter only for a demonstrated Work incompatibility; MUST NOT duplicate workflow logic in advance. Repository 42P rules override generic OpenSpec assumptions where they differ, including fluid Apply and archive suggestions. The repository-owned [42p-verify-change composition skill](../.agents/skills/42p-verify-change/SKILL.md) orchestrates the three Verification controls and delegates to the current generated verify skill. MUST NOT copy or modify an OpenSpec skill to encode repository policy; keep composition skills separate from CLI-owned `openspec-*` skills.
 
@@ -62,3 +68,7 @@ Allocation → `propose` → allocation/change coverage gate → `apply` → 42P
 `openspec-sync-specs` is optional after implementation and before archive, not a mandatory 42P stage. Sync is an agent workflow, not an assumed `openspec sync` CLI command. Strict validation MUST pass; synchronization does not claim implementation exists.
 
 The other generated core workflows (`openspec-explore` and `openspec-update-change`) are supporting operations, not extra 42P lifecycle stages. MUST NOT use them to bypass Capture, Allocation, coverage or Verification. Any semantic update invalidates affected coverage and verification evidence until reconciled through the same gates.
+
+## Explicit version updates
+
+Change the exact dependency in `tools/openspec/package.json` and regenerate `tools/openspec/package-lock.json` with `npm install --package-lock-only --ignore-scripts --no-audit --no-fund --prefix tools/openspec`. Review the resolved versions and integrity changes. Reinstall with `sh tools/openspec.sh install`, then use `sh tools/openspec.sh refresh` to regenerate CLI-owned skills when required. Do not hand-edit their metadata. Review the generated diff, update this canon’s current version and its manifest digest, run the preflight, project resolution and strict validation, and run the canonical repository check and registered tests. Repeat installation and validation in an isolated checkout with empty npm/tool state. Submit the complete update in a PR; no implicit upgrade, floating install or `npx` fallback is permitted.
