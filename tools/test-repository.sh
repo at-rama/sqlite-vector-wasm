@@ -65,3 +65,12 @@ if [ -f tools/openspec/tooling.mjs ]; then
     test -f tools/openspec/tests/test_tooling.py
     PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tools/openspec/tests
 fi
+
+# Shell controls remain offline; real VitePress/browser exercises run separately.
+if [ -f tools/site/build.mjs ]; then
+    test -f tools/site/tests/site.test.mjs
+    test -f tools/site/tests/runtime.test.mjs
+    test -f tools/site/tests/workflow.test.mjs
+    test -f tools/site/tests/publication.test.mjs
+    node --test tools/site/tests/*.test.mjs
+fi
