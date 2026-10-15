@@ -46,7 +46,11 @@ export async function prepareDocs(root, source, base) {
       const attr = token.type === 'link_open' ? 'href' : token.type === 'image' ? 'src' : null;
       if (attr && !token.meta?.isPermalink) pending.push((async () => {
         const value = await target(token.attrGet(attr), name, attr === 'src');
-        token.attrSet(attr, value);
+        // Public assets enter Vite with a source-root URL; Vite adds the
+        // deployment base. The manifest records the final browser destination.
+        const sourceValue = attr === 'src' && value.startsWith(base)
+          ? '/' + value.slice(base.length) : value;
+        token.attrSet(attr, sourceValue);
         page[attr === 'src' ? 'images' : 'links'].push(value);
       })());
     });

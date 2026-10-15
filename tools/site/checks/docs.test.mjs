@@ -23,7 +23,8 @@ for (const preview of [undefined, { branch: 'docs-test', commit: 'a'.repeat(40) 
     const first = await prepare(root, undefined, { preview });
     const html = await readFile(join(first.source, 'index.md'), 'utf8');
     assert.ok(html.includes(`${first.base}usage/?q=1#start`));
-    assert.ok(html.includes(`${first.base}docs-assets/docs/a.svg`));
+    assert.ok(html.includes('/docs-assets/docs/a.svg'));
+    assert.ok(!html.includes(`${first.base}docs-assets/docs/a.svg`), 'Vite applies the deployment base during compilation');
     assert.ok(html.includes('absent.md'));
     assert.ok(html.includes('{{ x }}'));
     assert.ok(html.includes('id="same-1"'));

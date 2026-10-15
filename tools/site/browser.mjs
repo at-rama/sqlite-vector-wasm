@@ -21,8 +21,8 @@ export async function checkBrowser(url, { screenshot, requireWideCode = false, d
       const normalize = value => value.replace(/\s+/g, ' ').trim();
       const text = normalize(await page.locator('.vp-doc').innerText());
       for (const expectedText of expected.texts ?? []) assert.ok(text.includes(normalize(expectedText)), `Missing documentation text ${expectedText}`);
-      const actualImages = await page.locator('.vp-doc img').evaluateAll(nodes => nodes.map(node => node.getAttribute('src')));
-      for (const src of expected.images) assert.ok(actualImages.includes(src), `Missing documentation image ${src}`);
+      const actualImages = await page.locator('.vp-doc img').evaluateAll(nodes => nodes.map(node => node.src));
+      for (const src of expected.images) assert.ok(actualImages.includes(new URL(src, page.url()).href), `Missing documentation image ${src}`);
       const code = await page.locator('.vp-doc pre code').allTextContents();
       assert.deepEqual(code.map(value => value.trimEnd()), expected.code);
       const links = await page.locator('.vp-doc a').evaluateAll(nodes => nodes.map(node => node.getAttribute('href')));
