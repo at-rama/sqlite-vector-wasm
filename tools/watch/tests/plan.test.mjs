@@ -52,6 +52,8 @@ test('complete summary is deterministic, actionable and preserves candidate link
   assert.match(rendered,/`sqlite_vec_version`: `0.1.10-alpha.2`/);
   for(const key of ['sqlite_comment','sqlite_vec_comment','misc_comment'])assert.ok(rendered.includes(`\`${key}\``));
   assert.match(rendered,/actions\/workflows\/updates.yml/);assert.doesNotMatch(rendered,/Preparation: none/);
+  assert.match(rendered,/invoke `\/release-comments` with the selected pair/);
+  assert.ok(rendered.includes(`https://github.com/${repository}/blob/main/.42p/.agents/skills/release-comments/SKILL.md`));
   for(const k of ['sqlite','sqliteVec'])c.inventory[k].reverse();assert.equal(renderPlan(makePlan(c)),rendered);
 });
 test('compact entries preserve every plan fact while sharing instructions and retaining all candidates',()=>{

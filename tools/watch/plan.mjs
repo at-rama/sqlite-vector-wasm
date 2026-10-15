@@ -47,6 +47,7 @@ export function renderPlan(plan) {
   result+='Forecasts are independent and unreserved, based on the observed published state and recalculated at publication. Discovery is not build qualification or publication acceptance. Human selection and integration remain separate actions.\n\n';
   if(plan.outcome!=='empty') {
     result+=`Choose zero, one or several jobs in ${link('Updates',workflow)}. Use each entry's exact inputs below and leave \`sqlite_comment\`, \`sqlite_vec_comment\` and \`misc_comment\` empty unless you want release-note paragraphs; no channel or version override. Do not start duplicate preparation for entries with existing candidates.\n`;
+    result+=`\nTo draft optional release comments from official upstream sources, invoke \`/release-comments\` with the selected pair using the ${link('release-comments skill',`https://github.com/${repositoryName(plan.repository)}/blob/main/.42p/.agents/skills/release-comments/SKILL.md`)}.\n`;
     result+='\n## Forecast\n\n';
     for(const channel of ['latest','next']) {
       const rows=plan.entries.filter(e=>e.identity.channel===channel);if(!rows.length)continue;
