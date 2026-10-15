@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, writeFile, rm, readFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, rm, readFile, cp } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { join } from 'node:path';
 import { repository, build } from './build.mjs';
 import { checkBrowser } from './browser.mjs';
 import { serveSite } from './server.mjs';
+import { assemble } from './publication.mjs';
 
 // Real compiler/browser checks with synthetic, explicitly non-product inputs.
 export async function exercise() {
@@ -13,8 +14,8 @@ export async function exercise() {
   const temporary = await mkdtemp(join(repository, '.work/site-exercise-'));
   const results = [];
   async function observe(name, prepared, options) {
-    const result = await build({ prepared });
-    const server = await serveSite(result.output);
+    const result = await build({ prepared, preview: options?.preview });
+    const server = await serveSite(result.output, result.base);
     try { results.push({ name, ...await checkBrowser(server.url, options), runtime: result.runtime }); }
     finally { await server.close(); }
     return result;
@@ -63,6 +64,49 @@ This is an integration fixture, not the emoji demo.
     assert.deepEqual(second.runtime, first.runtime);
     assert.equal(second.runtime['demo-runtime.json'], hash(selection));
     assert.equal(second.runtime['public/demo-runtime/fixture.mjs'], hash(asset));
+
+    // Preserve the separately built stable side before constructing a different
+    // candidate. No candidate source, selection or asset can replace this root.
+    const stableRoot = join(temporary, 'stable');
+    await cp(second.source, join(stableRoot, 'site'), { recursive: true });
+    await mkdir(join(stableRoot, 'tools/site'), { recursive: true });
+    for (const path of ['tools/site.sh', 'tools/site/package-lock.json']) {
+      await cp(join(repository, path), join(stableRoot, path));
+    }
+    await mkdir(join(stableRoot, '.work/site'), { recursive: true });
+    await cp(second.output, join(stableRoot, '.work/site/dist'), { recursive: true });
+    await cp(join(repository, '.work/site/build.json'), join(stableRoot, '.work/site/build.json'));
+
+    const preview = { branch: 'feature/preview<&', commit: '1234567890abcdef1234567890abcdef12345678' };
+    const nextSelection = JSON.stringify({ productVersion: 'fixture-2', archive: 'synthetic-only-2' }) + '\n';
+    const nextAsset = "export const identity = 'fixture-runtime-2';\n";
+    await writeFile(join(demo, 'demo-runtime.json'), nextSelection);
+    await writeFile(join(demo, 'public/demo-runtime/fixture.mjs'), nextAsset);
+    await writeFile(join(demo, 'demo-runtime.sha256'),
+      `${hash(nextSelection)}  demo-runtime.json\n${hash(nextAsset)}  public/demo-runtime/fixture.mjs\n`);
+    const candidate = await observe('preview-demo', demo, { preview, demoFixture: 'fixture-runtime-2', requireWideCode: true,
+      screenshot: join(repository, '.work/site/preview-mobile.png') });
+    assert.notDeepEqual(candidate.runtime, second.runtime);
+    const output = join(temporary, 'pages');
+    const context = { mode: 'preview', repository: 'at-rama/sqlite-vector-wasm', mainCommit: 'a'.repeat(40), pullRequest: 57, preview };
+    await assemble({ stableRoot, candidateRoot: repository, output, context });
+    let server = await serveSite(output);
+    try {
+      results.push({ name: 'assembled-stable', ...await checkBrowser(server.url, { demoFixture: true }) });
+      results.push({ name: 'assembled-preview', ...await checkBrowser(server.url + 'preview/', { preview, demoFixture: 'fixture-runtime-2' }) });
+    } finally { await server.close(); }
+    await assemble({ stableRoot: join(temporary, 'absent'), candidateRoot: repository, output, context });
+    server = await serveSite(output);
+    try {
+      assert.equal((await fetch(server.url)).status, 404);
+      results.push({ name: 'bootstrap-preview', ...await checkBrowser(server.url + 'preview/', { preview, demoFixture: 'fixture-runtime-2' }) });
+    } finally { await server.close(); }
+    await assemble({ stableRoot, output, context: { ...context, mode: 'stable', preview: null } });
+    server = await serveSite(output);
+    try {
+      assert.equal((await fetch(server.url + 'preview/')).status, 404);
+      results.push({ name: 'stable-only-removes-preview', ...await checkBrowser(server.url, { demoFixture: true }) });
+    } finally { await server.close(); }
 
     await writeFile(join(demo, 'public/demo-runtime/fixture.mjs'), 'corrupt fixture');
     await assert.rejects(build({ prepared: demo }), /checksum mismatch/);

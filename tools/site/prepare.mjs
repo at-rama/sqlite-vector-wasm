@@ -1,6 +1,7 @@
 import { cp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { join, resolve, sep } from 'node:path';
+import { buildOptions } from './options.mjs';
 
 export const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 
@@ -40,7 +41,7 @@ export async function runtimeInventory(source) {
   return result;
 }
 
-export async function prepare(root, prepared) {
+export async function prepare(root, prepared, { preview } = {}) {
   const work = join(root, '.work/site');
   const source = join(work, 'src');
   const output = join(work, 'dist');
@@ -55,15 +56,22 @@ export async function prepare(root, prepared) {
     await files(resolve(prepared));
     await cp(resolve(prepared), source, { recursive: true });
   }
+  const configuration = buildOptions(preview);
+  await mkdir(join(source, '.vitepress'), { recursive: true });
+  await writeFile(join(source, '.vitepress/site-build.json'), JSON.stringify(configuration) + '\n');
+  if (configuration.preview) {
+    await mkdir(join(source, 'public'), { recursive: true });
+    await writeFile(join(source, 'public/site-revision.json'), JSON.stringify(configuration.preview) + '\n');
+  }
   const runtime = await runtimeInventory(source);
   if (runtime) {
     await mkdir(join(source, 'public'), { recursive: true });
     await cp(join(source, 'demo-runtime.json'), join(source, 'public/demo-runtime.json'));
   }
-  return { source, output, runtime };
+  return { source, output, runtime, ...configuration };
 }
 
-export async function checkOutput({ source, output, runtime }) {
+export async function checkOutput({ source, output, runtime, base, preview }) {
   for (const name of ['index.html', 'usage/index.html', 'demo/index.html']) await readFile(join(output, name));
   if (runtime) {
     for (const [path, hash] of Object.entries(runtime)) {
@@ -72,7 +80,7 @@ export async function checkOutput({ source, output, runtime }) {
       }
     }
   }
-  const result = { source, output, runtime };
+  const result = { source, output, runtime, base, preview };
   await writeFile(join(output, '../build.json'), JSON.stringify(result, null, 2) + '\n');
   return result;
 }

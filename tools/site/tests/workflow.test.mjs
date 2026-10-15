@@ -2,37 +2,44 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-test('Pages deploy and artifact upload are guarded; PRs use read-only checks', async () => {
-  const workflow = await readFile(new URL('../../../.github/workflows/site.yml', import.meta.url), 'utf8');
-  const deploy = workflow.slice(workflow.indexOf('\n  deploy:'));
-  const build = workflow.slice(workflow.indexOf('\n  build:'), workflow.indexOf('\n  deploy:'));
-  assert.match(workflow, /permissions:\n  contents: read/);
-  const guard = "if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'";
-  assert.ok(deploy.includes(guard));
-  assert.match(deploy, /needs: build/);
+const source = () => readFile(new URL('../../../.github/workflows/site.yml', import.meta.url), 'utf8');
+
+test('the complete publication sequence shares concurrency; builds and observers receive no Pages credentials', async () => {
+  const workflow = await source();
+  const build = workflow.split('\n  build:')[1].split('\n  deploy:')[0];
+  const deploy = workflow.split('\n  deploy:')[1].split('\n  observe:')[0];
+  const observe = workflow.split('\n  observe:')[1];
+  assert.match(workflow.split('\njobs:')[0], /group: github-pages\n  cancel-in-progress: false/);
+  assert.doesNotMatch(build + observe, /pages: write|id-token: write|contents: write|secrets\./);
   assert.match(deploy, /pages: write\n      id-token: write/);
-  assert.match(deploy, /name: github-pages/);
-  assert.match(deploy, /group: github-pages\n      cancel-in-progress: false/);
-  assert.doesNotMatch(build, /pages: write|id-token: write|contents: write|secrets\./);
-  assert.ok(build.slice(build.indexOf('Upload the validated site')).includes(guard));
-  assert.match(build, /path: \.work\/site\/dist/);
-  assert.match(build, /include-hidden-files: true/);
-  assert.match(build, /sh tools\/site\.sh install/);
-  assert.match(build, /node --test tools\/site\/tests\/\*\.test\.mjs/);
-  assert.match(build, /sh tools\/site\.sh exercise/);
-  assert.match(build, /node-version: '24\.19\.0'/);
-  // runner context exists at step env, not at job env.
+  assert.match(deploy, /needs.build.outputs.publish == 'true'/);
+  assert.match(deploy, /publication.mjs guard evidence\/pages\/site-publication.json/);
+  assert.ok(deploy.indexOf('publication.mjs guard') < deploy.indexOf('uses: actions/deploy-pages@'));
+  assert.match(build, /head.repo.full_name == github.repository/);
+  assert.match(build, /github.actor != 'dependabot\[bot\]'/);
+  assert.match(build, /github.ref == 'refs\/heads\/main'/);
+  assert.match(build, /publication.mjs assemble/);
+  assert.match(build, /publication.mjs guard \.work\/pages\/site-publication.json/);
+  assert.match(build, /steps.assemble.outcome == 'success'/);
+  assert.match(build, /ref: main\n          path: stable\n          persist-credentials: false/);
+  assert.match(build, /cd \.\.\/stable && sh tools\/site.sh install && sh tools\/site.sh build/);
+  assert.match(build, /sh tools\/site.sh build --preview "\$PREVIEW_BRANCH" "\$PREVIEW_COMMIT"/);
+  assert.match(build, /path: candidate\/\.work\/pages/);
+  assert.match(observe, /tools\/site\/observe.mjs "\$SITE_URL"/);
+  assert.match(observe, /path: live-pages.json/);
+  assert.match(workflow, /node-version: '24\.19\.0'/);
   assert.doesNotMatch(build.slice(0, build.indexOf('    steps:')), /runner\./);
   assert.match(build, /Check real builds and browser integration\n        env:\n          HARNESS_STATE: \$\{\{ runner\.temp \}\}/);
-  assert.doesNotMatch(workflow, /pull_request_target:|\n  release:|tools\/release\.sh|npm publish|latest|refresh/);
+  assert.doesNotMatch(workflow, /pull_request_target:|\n  release:|tools\/release\.sh|npm publish|gh-pages|latest/);
   for (const action of workflow.matchAll(/uses: ([^\s#]+)/g)) assert.match(action[1], /@[0-9a-f]{40}$/);
 });
 
-test('both PR and main inputs include the actual documentation and tooling sources', async () => {
-  const workflow = await readFile(new URL('../../../.github/workflows/site.yml', import.meta.url), 'utf8');
+test('automatic publication is input scoped and unmerged closure has no trigger', async () => {
+  const workflow = await source();
   assert.match(workflow, /pull_request:\n    paths: &site-inputs/);
   assert.match(workflow, /push:\n    branches: \[main\]\n    paths: \*site-inputs/);
   assert.match(workflow, /workflow_dispatch:/);
+  assert.doesNotMatch(workflow, /types:.*closed/);
   for (const path of ['README.md', 'docs/usage.md', 'site/**', 'tools/site/**', 'tools/site.sh',
     'tools/harness/**', 'tools/harness.sh', '.github/workflows/site.yml']) assert.ok(workflow.includes(`'${path}'`));
 });
