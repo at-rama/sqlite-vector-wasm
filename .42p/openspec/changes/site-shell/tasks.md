@@ -21,6 +21,6 @@
 - [x] 3.1 Re-examine every revised `coverage.md` row against the implementation, retain 100% in both directions and stop for required semantic revisions; rerun the repository gateway, registered suites, scoped dual-build/browser/publication checks and strict OpenSpec validation, distinguishing historical results from current evidence.
 - [x] 3.2 Check candidate navigation/common integration on actual GitHub Pages at its preview prefix; record the visible exact PR commit, URL and outcomes, and stable-main separation when a stable root exists. Record preview-only bootstrap or missing setup explicitly; local hosting does not pass this check. Keep docs rendering/example checks, real WASM/vector checks and distribution acceptance with their owners.
 
-## Update disposition
+## Historical update disposition
 
-The 2026-10-15 authorized preview revision retains completed tasks 1.1–1.5 for unchanged behavior, adds 1.6/2.3/2.4, and reopens 2.1/2.2/3.1 because their earlier evidence covers the superseded main-only deployment plan. Task 3.2 remains pending. Planning completion is not implementation completion; the revised work continues through Apply, with separate post-Apply Verification afterward.
+At the 2026-10-15 authorized preview revision, completed tasks 1.1–1.5 were retained for unchanged behavior, 1.6/2.3/2.4 were added, and 2.1/2.2/3.1 were reopened because their earlier evidence covered the superseded main-only deployment plan. Task 3.2 was pending at that point. All tasks have since been completed through Apply, including the actual Pages check recorded in [coverage.md](coverage.md); the separate post-Apply [Verification](verification.md) passed.
