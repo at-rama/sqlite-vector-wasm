@@ -60,24 +60,48 @@ Documentation-only site updates SHALL preserve the demo's selected published rel
 
 ### Requirement: Bounded Pages deployment
 
-The site SHALL have a dedicated GitHub Pages deployment path for relevant integrated main-branch changes and explicit manual redeployment. Pull requests SHALL validate the proposed site without publishing it. Site deployment SHALL NOT trigger distribution publication or an implicit demo refresh.
+Relevant internal PRs SHALL deploy one shared preview beside a stable root rebuilt from `main`. Relevant main-branch pushes and manual main-branch redeployments SHALL publish only the stable site. Fork PRs SHALL build and check without deployment. Publication SHALL prevent obsolete runs from restoring an older stable root and SHALL NOT publish distributions or implicitly refresh the demo.
 
-#### Scenario: Pull request validation
-- **WHEN** a pull request changes the site or its integration inputs
-- **THEN** the proposed construction and applicable shell checks run without deploying public Pages content
+#### Scenario: Internal pull request preview
+- **WHEN** an internal pull request changes the site or its integration inputs and `main` contains the site
+- **THEN** the proposed construction and applicable shell checks run, a separate checkout of `main` builds the stable root, and one complete Pages artifact publishes that root beside the candidate at `/preview/` relative to the project prefix
+
+#### Scenario: Preview identity and navigation
+- **WHEN** a visitor opens a preview destination
+- **THEN** the candidate branch and exact commit are visible, that page declares robots `noindex`, and its common navigation and assets resolve within the preview prefix without applying preview identity or `noindex` to the stable root
+
+#### Scenario: Fork validation
+- **WHEN** a pull request comes from a fork
+- **THEN** its proposed build and applicable shell checks run without deploying Pages or receiving publication credentials
+
+#### Scenario: Preview-only bootstrap
+- **WHEN** a relevant internal PR introduces the site's first implementation and `main` does not yet contain the site
+- **THEN** the artifact publishes only the candidate under `/preview/`, without inventing a stable root or treating an existing stable site's build failure as absence
 
 #### Scenario: Integrated or manual deployment
 - **WHEN** a relevant integrated main-branch change or manual main-branch redeployment is processed
-- **THEN** the dedicated workflow builds and validates the site before deploying the resulting Pages artifact with the supplied demo selection preserved
+- **THEN** the dedicated workflow builds and validates `main` before deploying a complete stable-only Pages artifact with its supplied demo selection preserved and no preview
+
+#### Scenario: Shared preview replacement and unmerged closure
+- **WHEN** another eligible candidate is deployed or an internal PR closes without merging
+- **THEN** a new candidate replaces the single shared preview, while closure alone performs no cleanup or deployment and leaves existing content until the next deployment
+
+#### Scenario: Concurrent publication
+- **WHEN** eligible main and PR executions overlap or a prepared artifact's stable revision becomes obsolete
+- **THEN** publication is serialized, an obsolete artifact cannot restore an older stable root, and the published stable and candidate revisions can be identified
+
+#### Scenario: Relevant input filtering
+- **WHEN** site sources, site tooling/dependency records, the site workflow, README, Usage or integrated demo preparation inputs change
+- **THEN** the site workflow is triggered, while unrelated source edits alone do not trigger automatic site deployment
 
 ### Requirement: Scoped shell verification
 
-Shell checks SHALL cover common construction/navigation, mobile presentation, project-prefix hosting, independent integration and documentation-only runtime preservation. Navigation and common integration SHALL also be checked on GitHub Pages. These checks SHALL complement rather than replace documentation checks, vector-demo checks or distribution acceptance.
+Shell checks SHALL cover construction/navigation, mobile presentation, stable/preview prefixes, independent integration, runtime preservation and bounded deployment scenarios. Navigation and common integration SHALL also be checked on GitHub Pages against the identified candidate. These checks SHALL complement rather than replace documentation checks, vector-demo checks or distribution acceptance.
 
 #### Scenario: Before a real demo exists
 - **WHEN** shell verification uses representative documentation and demo fixtures
 - **THEN** it exercises both independent integration paths and compares release identity and runtime asset digests across a documentation-only rebuild, without claiming real published-WASM or vector execution evidence
 
 #### Scenario: Deployed integration check
-- **WHEN** the shell is deployed on GitHub Pages
-- **THEN** the public destinations, common assets and navigation are checked at their actual prefix, with observed outcomes and any missing deployment prerequisites reported explicitly
+- **WHEN** a candidate preview of the shell is deployed on GitHub Pages
+- **THEN** the candidate's destinations, common assets and navigation are checked at their actual preview prefix and identified commit, with stable-root separation checked when present and observed outcomes and missing deployment prerequisites reported explicitly
