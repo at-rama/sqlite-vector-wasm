@@ -26,4 +26,4 @@ All design decisions and tasks serve these same requirements: locked-renderer in
 
 ## Planning gate
 
-Allocation unit → Change: **100%**. Change → allocation unit: **100%**. These percentages record the examined semantic planning correspondence for A-site_docs only. They do not claim implementation, published-runtime execution, deployed documentation success, full source-chain fidelity or post-Apply Verification. No unresolved semantic requirement change was found. Tasks remain open; Apply must record concrete evidence and repeat correspondence if affected inputs change.
+Allocation unit → Change: **100%**. Change → allocation unit: **100%**. These percentages record the examined semantic planning correspondence for A-site_docs only. They do not claim implementation, published-runtime execution, deployed documentation success, full source-chain fidelity or post-Apply Verification. No unresolved semantic requirement change was found. This planning gate preceded implementation. The [Apply evidence](apply-evidence.md) records the subsequent independent re-examination, realization results and limits; affected input changes still require renewed correspondence.
