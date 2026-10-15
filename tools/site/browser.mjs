@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { launchBrowser } from '../harness/browser.mjs';
 
-export async function checkBrowser(url, { screenshot, requireWideCode = false, demoFixture = false, preview = null, requireDocs = false } = {}) {
+export async function checkBrowser(url, { screenshot, requireWideCode = false, demoFixture = false, preview = null, requireDocs = false, requireNpm = true } = {}) {
   const base = new URL(url);
   assert.ok(base.pathname.endsWith('/'), 'Site URL must end in /');
   const browser = await launchBrowser();
@@ -84,6 +84,14 @@ export async function checkBrowser(url, { screenshot, requireWideCode = false, d
         }
         assert.equal(await page.locator(menu).getByRole('link', { name: /GitHub/ }).getAttribute('href'),
           'https://github.com/at-rama/sqlite-vector-wasm');
+        if (requireNpm) {
+          const npm = page.locator(menu).getByRole('link', { name: 'npm', exact: true });
+          assert.ok(await npm.isVisible(), 'npm must be visible in the opened navigation');
+          assert.equal(await npm.getAttribute('href'), 'https://www.npmjs.com/package/@at-rama/sqlite-vector-wasm');
+          const links = await page.locator(menu).getByRole('link').evaluateAll(nodes => nodes.map(node => node.href));
+          assert.equal(links.indexOf('https://www.npmjs.com/package/@at-rama/sqlite-vector-wasm'),
+            links.indexOf('https://github.com/at-rama/sqlite-vector-wasm') + 1, 'npm must immediately follow GitHub');
+        }
         // A sentinel survives a client-side route transition, but not a document reload.
         await page.evaluate(() => { window.__shellNavigation = true; });
         const next = path === 'usage/' ? 'Demo' : 'Usage';
@@ -108,7 +116,7 @@ export async function checkBrowser(url, { screenshot, requireWideCode = false, d
     if (requireWideCode) assert.ok(wideCodeObserved, 'The fixture must exercise a wide code block');
     assert.deepEqual(errors, [], 'Browser resource or JavaScript errors');
     return { url: base.href, preview, browser: browser.version(), viewports: [1280, 390],
-      documentation: docs?.pages.map(({ source, sha256 }) => ({ source, sha256 })) ?? null, destinations: 3, directVisits: 6, clientTransitions: 6 };
+      documentation: docs?.pages.map(({ source, sha256 }) => ({ source, sha256 })) ?? null, npmNavigationChecked: requireNpm, destinations: 3, directVisits: 6, clientTransitions: 6 };
   } finally {
     await browser.close();
   }

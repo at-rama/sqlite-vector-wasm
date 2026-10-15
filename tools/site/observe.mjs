@@ -17,7 +17,9 @@ try {
   }
   await sameDeployment();
   const results = [];
-  if (record.stablePresent) results.push(await checkBrowser(base.href, { requireDocs: !record.preview }));
+  // A preview's stable root is independently built from main, whose navigation
+  // may predate this candidate; the candidate always checks the new npm link.
+  if (record.stablePresent) results.push(await checkBrowser(base.href, { requireDocs: !record.preview, requireNpm: !record.preview }));
   else assert.equal((await fetch(base)).status, 404, 'Bootstrap must not invent a stable root');
   if (record.preview) results.push(await checkBrowser(new URL('preview/', base).href, { preview: record.preview, requireDocs: true }));
   else assert.equal((await fetch(new URL('preview/', base))).status, 404, 'Main artifact must remove preview');

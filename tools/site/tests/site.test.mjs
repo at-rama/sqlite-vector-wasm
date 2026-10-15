@@ -24,10 +24,11 @@ test('Pages-like prefix server has real 404s, directory entries and no isolation
   assert.equal((await fetch(new URL('/', server.url))).status, 404);
 });
 
-test('standard theme configuration retains the three destinations and direct GitHub access', async () => {
+test('standard theme retains three destinations and adjacent GitHub/npm access', async () => {
   const config = await readFile(new URL('../../../site/.vitepress/config.mts', import.meta.url), 'utf8');
   assert.match(config, /base: configuration.base/);
   for (const label of ['Presentation', 'Usage', 'Demo', 'GitHub']) assert.ok(config.includes(label));
+  assert.match(config, /\{ text: 'GitHub', link: 'https:\/\/github\.com\/at-rama\/sqlite-vector-wasm' \},\s*\{ text: 'npm', link: 'https:\/\/www\.npmjs\.com\/package\/@at-rama\/sqlite-vector-wasm' \}/);
   assert.match(config, /sidebar: false/);
   assert.doesNotMatch(config, /search:|theme:\s*\{/);
 });
