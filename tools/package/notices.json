@@ -4,17 +4,38 @@
     {
       "name": "SQLite-LICENSE.txt",
       "project": "sqlite",
-      "version": "3.53.4",
-      "origin": "LICENSE.md",
+      "version": "3.54.0",
+      "origin": "https://sqlite.org/2026/sqlite-src-3540000.zip#sqlite-src-3540000/LICENSE.md",
       "sha256": "9f2f6a13fc880c9ae10cb3a67f028a5e76d028759dc41eee593165400bfd1661",
+      "source": {
+        "kind": "archive",
+        "archiveUrl": "https://sqlite.org/2026/sqlite-src-3540000.zip",
+        "archiveDigest": {
+          "algorithm": "sha3-256",
+          "value": "a5c29342ca185abcda332448fbb27c536661245be27e20199b46c49099b0e15e"
+        },
+        "path": "sqlite-src-3540000/LICENSE.md",
+        "sha256": "ee6af51062b30d532991face5164136ae6f84e265ecf8abe89dc69dac45ca1e7"
+      },
       "normalization": "Trailing horizontal whitespace and blank EOF lines removed; notice wording preserved."
     },
     {
       "name": "SQLite-WASM-NOTICE.txt",
       "project": "sqlite",
-      "version": "3.53.4",
-      "origin": "ext/wasm/api/sqlite3-license-version-header.js",
-      "sha256": "5cd1320b663c1b10e635f19c8c397488d5b48b85460177b575ac5d1b4d7ce88a"
+      "version": "3.54.0",
+      "origin": "https://sqlite.org/2026/sqlite-src-3540000.zip#sqlite-src-3540000/ext/wasm/api/sqlite3-license-version-header.js",
+      "sha256": "5cd1320b663c1b10e635f19c8c397488d5b48b85460177b575ac5d1b4d7ce88a",
+      "source": {
+        "kind": "archive",
+        "archiveUrl": "https://sqlite.org/2026/sqlite-src-3540000.zip",
+        "archiveDigest": {
+          "algorithm": "sha3-256",
+          "value": "a5c29342ca185abcda332448fbb27c536661245be27e20199b46c49099b0e15e"
+        },
+        "path": "sqlite-src-3540000/ext/wasm/api/sqlite3-license-version-header.js",
+        "sha256": "5cd1320b663c1b10e635f19c8c397488d5b48b85460177b575ac5d1b4d7ce88a"
+      },
+      "extraction": "Initial /* @preserve license block through first */; subsequent version/template code excluded."
     },
     {
       "name": "sqlite-vec-MIT.txt",
