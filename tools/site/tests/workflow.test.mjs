@@ -20,6 +20,9 @@ test('Pages deploy and artifact upload are guarded; PRs use read-only checks', a
   assert.match(build, /node --test tools\/site\/tests\/\*\.test\.mjs/);
   assert.match(build, /sh tools\/site\.sh exercise/);
   assert.match(build, /node-version: '24\.19\.0'/);
+  // runner context exists at step env, not at job env.
+  assert.doesNotMatch(build.slice(0, build.indexOf('    steps:')), /runner\./);
+  assert.match(build, /Check real builds and browser integration\n        env:\n          HARNESS_STATE: \$\{\{ runner\.temp \}\}/);
   assert.doesNotMatch(workflow, /pull_request_target:|\n  release:|tools\/release\.sh|npm publish|latest|refresh/);
   for (const action of workflow.matchAll(/uses: ([^\s#]+)/g)) assert.match(action[1], /@[0-9a-f]{40}$/);
 });
