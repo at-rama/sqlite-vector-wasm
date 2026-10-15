@@ -73,12 +73,22 @@ available records with failed/not-executed stages and no successful handoff.
 Generated material stays outside Git. Clean up the exact recorded invocation and
 tool directories only after downstream use and diagnostic retention are complete.
 
-The `Acceptance` workflow evaluates PR checkouts, authoritative `main` commits
-and explicitly selected manual revisions from fresh state. PR checkout identity
+The `Acceptance` workflow keeps its required job on every PR and push to `main`.
+For automatic runs, it reports package acceptance as not applicable only when
+all changed paths are under `site/`. It compares the PR base to the evaluated
+merge checkout, or the before/after revisions of a push, with rename detection
+disabled so moves across the boundary count on both sides. Mixed changes, empty
+diffs and unavailable comparison revisions run complete acceptance. Site-only
+runs perform no package production or browser qualification and upload no
+acceptance bundle; the site's own checks remain separate.
+
+Manual runs always execute complete acceptance, including for site-only revisions.
+Applicable PR checkouts, authoritative `main` commits and explicitly selected
+manual revisions are evaluated from fresh state. PR checkout identity
 may be GitHub's synthetic merge commit; the report records the actual commit/tree
 without relabeling it as the PR head. A PR pass is not transferred through merge.
-After human merge, `main` acceptance renews the evidence for that authoritative
-revision. It never merges, tags, publishes or configures npm.
+When applicable after human merge, `main` acceptance renews the evidence for that
+authoritative revision. It never merges, tags, publishes or configures npm.
 
 GitHub retains each uploaded evidence bundle for 30 days. A later A-release
 consumer must retrieve the successful run's bundle, verify its actual archive
