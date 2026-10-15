@@ -19,7 +19,7 @@
 ## 3. Integrated correspondence and evidence
 
 - [x] 3.1 Re-examine every revised `coverage.md` row against the implementation, retain 100% in both directions and stop for required semantic revisions; rerun the repository gateway, registered suites, scoped dual-build/browser/publication checks and strict OpenSpec validation, distinguishing historical results from current evidence.
-- [ ] 3.2 Check candidate navigation/common integration on actual GitHub Pages at its preview prefix; record the visible exact PR commit, URL and outcomes, and stable-main separation when a stable root exists. Record preview-only bootstrap or missing setup explicitly; local hosting does not pass this check. Keep docs rendering/example checks, real WASM/vector checks and distribution acceptance with their owners.
+- [x] 3.2 Check candidate navigation/common integration on actual GitHub Pages at its preview prefix; record the visible exact PR commit, URL and outcomes, and stable-main separation when a stable root exists. Record preview-only bootstrap or missing setup explicitly; local hosting does not pass this check. Keep docs rendering/example checks, real WASM/vector checks and distribution acceptance with their owners.
 
 ## Update disposition
 
