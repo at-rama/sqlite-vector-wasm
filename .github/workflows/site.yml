@@ -66,6 +66,7 @@ jobs:
             .work/site/mobile.png
           retention-days: 30
           if-no-files-found: error
+          include-hidden-files: true
       - name: Upload the validated site for Pages
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3

@@ -16,6 +16,7 @@ test('Pages deploy and artifact upload are guarded; PRs use read-only checks', a
   assert.doesNotMatch(build, /pages: write|id-token: write|contents: write|secrets\./);
   assert.ok(build.slice(build.indexOf('Upload the validated site')).includes(guard));
   assert.match(build, /path: \.work\/site\/dist/);
+  assert.match(build, /include-hidden-files: true/);
   assert.match(build, /sh tools\/site\.sh install/);
   assert.match(build, /node --test tools\/site\/tests\/\*\.test\.mjs/);
   assert.match(build, /sh tools\/site\.sh exercise/);
