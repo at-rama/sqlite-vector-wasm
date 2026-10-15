@@ -27,3 +27,8 @@ All design decisions and tasks serve these same requirements: locked-renderer in
 ## Planning gate
 
 Allocation unit → Change: **100%**. Change → allocation unit: **100%**. These percentages record the examined semantic planning correspondence for A-site_docs only. They do not claim implementation, published-runtime execution, deployed documentation success, full source-chain fidelity or post-Apply Verification. No unresolved semantic requirement change was found. This planning gate preceded implementation. The [Apply evidence](apply-evidence.md) records the subsequent independent re-examination, realization results and limits; affected input changes still require renewed correspondence.
+
+
+## Corrective Apply completion receipt
+
+The final corrective Apply continuation re-examined all seven forward contribution groups and the reverse justification of all five requirements, thirteen scenarios, design choices and tasks against the unchanged complete `A-site_docs` unit and relevant Site Capture passages. Both directions remain 100%; copied-image emission and cleanup introduce no new contractual obligation. The [Apply receipt](apply-evidence.md), sections “Corrective Apply completion — task 3.2” and “Corrective Apply completion — task 3.3 and final state”, identifies the successful exact-candidate hosted results, reused local executions, renewed checks and material limits. This is completed Apply correspondence/evidence recording, not a new post-Apply Verification verdict or full upstream fidelity claim.
