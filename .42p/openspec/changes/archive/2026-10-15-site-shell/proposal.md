@@ -29,7 +29,7 @@ Future implementation concerns `site/`, `tools/site/`, a dedicated locked npm to
 
 ## Allocation and adopted realization choices
 
-This Change realizes exactly `A-site_shell` from [the Allocation](../../../engineering/2026-10-04_sqlite-vec-wasm_allocation_edit-0.1.md), SHA-256 `6c590de92b1eb9cab123081ddf7b35fd6cb44521a053d79dac6ba42adf3e358a`, at base commit `f59a1ddd083641ec7471e4fa89f48455dcedaf2c`. Its complete qualified references are Site `C-site`, scoped `C-readme`, `C-demo-release`, `C-demo-checks` and `Q-realization` in [the Site Capture](../../../engineering/2026-10-08_sqlite-vec-wasm_site_capture_edit-0.1.md), SHA-256 `27740a7cad7bca33e9ba48d8d54fc6a688a8b15321cf450c4e47f0ed15deb10f`.
+This Change realizes exactly `A-site_shell` from [the Allocation](../../../../engineering/2026-10-04_sqlite-vec-wasm_allocation_edit-0.1.md), SHA-256 `6c590de92b1eb9cab123081ddf7b35fd6cb44521a053d79dac6ba42adf3e358a`, at base commit `f59a1ddd083641ec7471e4fa89f48455dcedaf2c`. Its complete qualified references are Site `C-site`, scoped `C-readme`, `C-demo-release`, `C-demo-checks` and `Q-realization` in [the Site Capture](../../../../engineering/2026-10-08_sqlite-vec-wasm_site_capture_edit-0.1.md), SHA-256 `27740a7cad7bca33e9ba48d8d54fc6a688a8b15321cf450c4e47f0ed15deb10f`.
 
 On 2026-10-15 the user explicitly validated VitePress's standard theme, English for the first site and explicit demo refresh selecting the latest stable, preserved across documentation updates. These select realization options left open by Q-realization; they do not transfer demo release selection to the shell. No bilingual site, theme redesign, search plugin or automatic distribution-to-site publication coupling is introduced. The full pre-Apply mapping is recorded in `coverage.md`.
 
