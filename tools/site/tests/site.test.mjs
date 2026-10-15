@@ -27,7 +27,7 @@ test('Pages-like prefix server has real 404s, directory entries and no isolation
 test('standard theme configuration retains the three destinations and direct GitHub access', async () => {
   const config = await readFile(new URL('../../../site/.vitepress/config.mts', import.meta.url), 'utf8');
   assert.match(config, /base: configuration.base/);
-  for (const label of ['Presentation', 'Usage', 'Demo', 'GitHub ↗']) assert.ok(config.includes(label));
+  for (const label of ['Presentation', 'Usage', 'Demo', 'GitHub']) assert.ok(config.includes(label));
   assert.match(config, /sidebar: false/);
   assert.doesNotMatch(config, /search:|theme:\s*\{/);
 });

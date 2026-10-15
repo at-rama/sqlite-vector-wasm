@@ -24,7 +24,7 @@ export default defineConfig({
       { text: 'Presentation', link: '/' },
       { text: 'Usage', link: '/usage/' },
       { text: 'Demo', link: '/demo/' },
-      { text: 'GitHub ↗', link: 'https://github.com/at-rama/sqlite-vector-wasm' },
+      { text: 'GitHub', link: 'https://github.com/at-rama/sqlite-vector-wasm' },
     ],
   },
 });
