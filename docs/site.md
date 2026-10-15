@@ -14,11 +14,11 @@ sh tools/site.sh build
 
 Installation copies the tracked private manifest/lockfile to `.work/site/` and runs `npm ci`. Construction starts with a clean `.work/site/src/` and emits `.work/site/dist/`; `.work/site/build.json` records the runtime asset inventory, or `null` when no demo is integrated. Generated content, dependencies and runtime files are not committed. Do not run concurrent installs/builds in one checkout.
 
-The initial three destinations contain concise unavailable notices. The common navigation and responsive theme are functional; these notices do not claim that the presentation, Usage content or browser demonstration has been integrated.
+Presentation is generated from the README and Usage from `docs/usage.md` on every build. Demo remains unavailable until its own implementation is supplied. No second documentation copy is maintained.
 
 ## Integrating documentation and the demo
 
-Authored shell sources live in `site/`. The documentation work supplies `index.md` and `usage/index.md` from the README and the existing `docs/usage.md`; it owns rendering, relative-link rewriting and example checks. Do not maintain a second copy of their content. The demo work supplies `demo/index.md`, any Vue components and its prepared public assets. Initialize browser-only code locally in the demo, using `onMounted` or `ClientOnly`, rather than in the global theme.
+Authored shell sources live in `site/`. `tools/site/docs.mjs` renders README and `docs/usage.md` with the locked VitePress Markdown renderer into temporary `index.md` and `usage/index.md`. Rendered HTML is marked `v-pre` so Vue cannot interpret literal documentation content. Do not maintain a second copy of their content. The demo work supplies `demo/index.md`, any Vue components and its prepared public assets. Initialize browser-only code locally in the demo, using `onMounted` or `ClientOnly`, rather than in the global theme.
 
 The shell accepts an ordinary prepared directory overlaid onto its temporary source tree:
 
@@ -26,7 +26,7 @@ The shell accepts an ordinary prepared directory overlaid onto its temporary sou
 sh tools/site.sh build --prepared .work/site-input
 ```
 
-Prepare that directory before invoking the command, outside `.work/site/`. Its paths are relative to the site root, such as `usage/index.md` or `public/demo-runtime/`. Either documentation or demo inputs can be supplied without the other. Symlinks and nonregular input files are rejected. Downstream Changes will connect their own preparation to the production build; there is no plugin registry or downstream implementation in the shell.
+Prepare that directory before invoking the command, outside `.work/site/`. Its paths are relative to the site root, such as `usage/index.md` or `public/demo-runtime/`. Either documentation or demo inputs can be supplied without the other. Symlinks and nonregular input files are rejected. Normal builds always prepare the two real documentation sources after this overlay, preserving supplied demo content and runtime files. Shell fixture tests explicitly use synthetic documentation instead.
 
 An integrated demo supplies its opaque `demo-runtime.json`, unchanged runtime files under `public/demo-runtime/`, and a standard SHA-256 sidecar `demo-runtime.sha256` covering the selection file and every runtime file. The sidecar uses lowercase digest, two spaces, then the site-relative filename, one entry per line. This transport check does not define the demo's selection/acquisition JSON schema. Missing, altered, duplicate or unlisted assets fail construction and clear previous generated output. The selection is copied to the public `demo-runtime.json`; runtime files bypass Vite rebundling, and emitted digests are compared with the supplied inventory.
 
@@ -46,7 +46,7 @@ bash tools/harness.sh exec sh tools/site.sh exercise
 
 `check` serves the built output at the real project prefix on loopback, without COOP/COEP headers. Chrome checks all three destinations directly and through client-side transitions at 1280px and 390px, the responsive menu and GitHub link, asset errors and page overflow. `exercise` builds docs-only, demo-only and documentation-update fixtures, checks wide-code scrolling, compares fixed selection/runtime digests despite a distinct newer candidate, and rejects a corrupted asset. It finishes by rebuilding the real repository site. Results and a mobile screenshot remain in `.work/site/`.
 
-The fixtures use a synthetic JavaScript module, not a published engine, emoji corpus or vector oracle. These checks do not establish real WASM execution, demo correctness, README/Usage fidelity or distribution acceptance.
+The fixtures use a synthetic JavaScript module, not a published engine, emoji corpus or vector oracle. The exercise additionally checks real README/Usage content, code, links, anchors and mobile layout at stable/preview prefixes and preserves synthetic demo digests across an actual README edit. External image destinations are retained; third-party image availability is not an internal-link check. These checks do not establish demo correctness or distribution acceptance.
 
 ## GitHub Pages
 
@@ -109,3 +109,18 @@ bash tools/harness.sh exec node tools/site/observe.mjs \
 Record the URL, selected revisions and actual outcomes. Local serving, successful compiler tests and passing configuration checks do not establish actual Pages success. If Pages setup, environment permission or the deployment is unavailable, the actual-Pages task stays open. Do not merge merely to obtain evidence.
 
 For redeployment, manually run Site on `main`; it retains that checkout's selected demo runtime. For rollback, restore reviewed site sources/configuration and the corresponding explicit demo selection through the repository integration path, then redeploy. Do not compile or republish the package to roll back the site.
+
+## Documentation links and example
+
+README and Usage links to each other use the canonical stable site URLs, so GitHub and installed-package readers reach the public pages. During construction, own-site URLs and relative links to these two documents stay under the current stable/preview prefix. Repository-only relative files point to the exact build commit on GitHub. Relative images become source-relative copied assets. Missing local files or anchors fail construction with the authored source and destination; external URLs and literal code are preserved. `site-docs.json` records source hashes and expected rendered text, headings, code, images and links for the browser checks. No runtime is acquired by a normal documentation build.
+
+The browser example has its own explicit dependency record, `tools/site/docs-example.json`, initially published version 0.2.0. It is separate from demo selection. To check the renderer fixtures and execute the actual guide initialization and Float32 SQL snippets:
+
+```sh
+node --test tools/site/checks/*.test.mjs
+bash tools/harness.sh exec sh tools/site.sh example
+```
+
+`example` downloads the pinned publication record and archive, verifies their SHA-256 values and identities, extracts only the eleven declared regular runtime members, checks their hashes, and serves them unchanged on loopback. Chrome executes the snippets extracted from Usage, checks the two expected neighbors/distances and SQLite/sqlite-vec versions, then rechecks runtime hashes. `.work/docs-example/result.json` records the selected archive, guide/snippet hashes and observed results. A download, integrity or execution failure fails the command. This scoped example establishes no OPFS, Worker, complete API or emoji-demo acceptance.
+
+Refreshing the documented version is an explicit source revision: verify the chosen published release, update the dependency record and README/Usage version/install instructions together, then rerun renderer, browser and example checks. A newer release alone does not change it. The Site workflow retains example results separately from deployed-documentation observations.

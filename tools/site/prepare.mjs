@@ -2,6 +2,7 @@ import { cp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { join, resolve, sep } from 'node:path';
 import { buildOptions } from './options.mjs';
+import { prepareDocs } from './docs.mjs';
 
 export const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 
@@ -41,7 +42,7 @@ export async function runtimeInventory(source) {
   return result;
 }
 
-export async function prepare(root, prepared, { preview } = {}) {
+export async function prepare(root, prepared, { preview, docs = true } = {}) {
   const work = join(root, '.work/site');
   const source = join(work, 'src');
   const output = join(work, 'dist');
@@ -63,6 +64,7 @@ export async function prepare(root, prepared, { preview } = {}) {
     await mkdir(join(source, 'public'), { recursive: true });
     await writeFile(join(source, 'public/site-revision.json'), JSON.stringify(configuration.preview) + '\n');
   }
+  if (docs) await prepareDocs(root, source, configuration.base);
   const runtime = await runtimeInventory(source);
   if (runtime) {
     await mkdir(join(source, 'public'), { recursive: true });

@@ -14,7 +14,7 @@ export async function exercise() {
   const temporary = await mkdtemp(join(repository, '.work/site-exercise-'));
   const results = [];
   async function observe(name, prepared, options) {
-    const result = await build({ prepared, preview: options?.preview });
+    const result = await build({ prepared, preview: options?.preview, docs: options?.docs ?? !prepared });
     const server = await serveSite(result.output, result.base);
     try { results.push({ name, ...await checkBrowser(server.url, options), runtime: result.runtime }); }
     finally { await server.close(); }
@@ -107,6 +107,18 @@ This is an integration fixture, not the emoji demo.
       assert.equal((await fetch(server.url + 'preview/')).status, 404);
       results.push({ name: 'stable-only-removes-preview', ...await checkBrowser(server.url, { demoFixture: true }) });
     } finally { await server.close(); }
+
+    const readmePath = join(repository, 'README.md');
+    const readme = await readFile(readmePath, 'utf8');
+    try {
+      const realBefore = await observe('real-documentation-with-demo', demo, { docs: true, demoFixture: 'fixture-runtime-2' });
+      await writeFile(readmePath, readme + '\nDocumentation edit exercise marker.\n');
+      const realAfter = await observe('real-documentation-update', demo, { docs: true, demoFixture: 'fixture-runtime-2' });
+      assert.deepEqual(realAfter.runtime, realBefore.runtime);
+      assert.match(await readFile(join(realAfter.source, 'index.md'), 'utf8'), /Documentation edit exercise marker/);
+      await observe('real-documentation-preview', demo, { docs: true, preview, demoFixture: 'fixture-runtime-2',
+        screenshot: join(repository, '.work/site/docs-mobile.png') });
+    } finally { await writeFile(readmePath, readme); }
 
     await writeFile(join(demo, 'public/demo-runtime/fixture.mjs'), 'corrupt fixture');
     await assert.rejects(build({ prepared: demo }), /checksum mismatch/);

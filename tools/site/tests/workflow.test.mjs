@@ -43,3 +43,11 @@ test('automatic publication is input scoped and unmerged closure has no trigger'
   for (const path of ['README.md', 'docs/usage.md', 'site/**', 'tools/site/**', 'tools/site.sh',
     'tools/harness/**', 'tools/harness.sh', '.github/workflows/site.yml']) assert.ok(workflow.includes(`'${path}'`));
 });
+
+
+test('documentation checks run separately from example execution and retain its evidence', async () => {
+  const workflow = await source();
+  assert.match(workflow, /node --test tools\/site\/checks\/\*.test.mjs/);
+  assert.match(workflow, /bash tools\/harness.sh exec sh tools\/site.sh example/);
+  assert.match(workflow, /candidate\/\.work\/docs-example\/result.json/);
+});
