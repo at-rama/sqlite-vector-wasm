@@ -1,0 +1,9 @@
+.vp-doc p > a:has(> img) {
+  display: inline-block;
+  padding: 3px 6px 3px 0;
+  vertical-align: middle;
+}
+
+.vp-doc p > a > img {
+  display: block;
+}

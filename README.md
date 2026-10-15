@@ -4,6 +4,7 @@
 [![SQLite](https://img.shields.io/badge/SQLite-WASM-003B57?logo=sqlite&logoColor=white)](https://sqlite.org/wasm)
 [![sqlite-vec](https://img.shields.io/badge/sqlite--vec-integrated-00897B)](https://github.com/asg017/sqlite-vec)
 [![CI](https://github.com/at-rama/sqlite-vector-wasm/actions/workflows/repository.yml/badge.svg)](https://github.com/at-rama/sqlite-vector-wasm/actions/workflows/repository.yml)
+[![Site](https://img.shields.io/badge/Site-Documentation-3451B2)](https://at-rama.github.io/sqlite-vector-wasm/)
 
 **SQLite for the browser, with vector search built in.**
 
