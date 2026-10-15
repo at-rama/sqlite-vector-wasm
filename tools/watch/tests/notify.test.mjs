@@ -27,7 +27,8 @@ test('one short Resend request per execution under either trigger, including par
     assert.equal(body.from,environment.RESEND_FROM);assert.deepEqual(body.to,[environment.RESEND_TO]);
     assert.equal(body.subject,'sqlite-vector-wasm: upstream plan available');
     assert.match(body.text,/3 eligible pairs/);assert.match(body.text,/https:\/\/github.com\/at-rama\/sqlite-vector-wasm\/actions\/runs\/123/);
-    assert.ok(body.text.length<300);assert.doesNotMatch(body.text,/3\.54\.0|0\.1\.9|candidate|queued|synthetic-private-key/);
+    assert.match(body.text,/invoke \/release-comments with the selected pair; skill linked in the Summary/);
+    assert.ok(body.text.length<400);assert.doesNotMatch(body.text,/3\.54\.0|0\.1\.9|candidate|queued|synthetic-private-key/);
     assert.equal(options.headers['Idempotency-Key'],undefined);
   }
 });

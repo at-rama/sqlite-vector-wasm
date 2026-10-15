@@ -32,7 +32,7 @@ export async function notifyPlan(record, environment, request=globalThis.fetch) 
   const url=`${environment.GITHUB_SERVER_URL}/${repository}/actions/runs/${environment.GITHUB_RUN_ID}`;
   const message={from:environment.RESEND_FROM,to:[environment.RESEND_TO],
     subject:'sqlite-vector-wasm: upstream plan available',
-    text:`A new upstream plan is available (${plan.entries.length} eligible ${plan.entries.length===1?'pair':'pairs'}).\n\nRead the plan and diagnostics in the GitHub run:\n${url}\n`};
+    text:`A new upstream plan is available (${plan.entries.length} eligible ${plan.entries.length===1?'pair':'pairs'}).\n\nRead the plan and diagnostics in the GitHub run:\n${url}\n\nOptional release comments: invoke /release-comments with the selected pair; skill linked in the Summary.\n`};
   let response;
   try {
     response=await request('https://api.resend.com/emails',{
