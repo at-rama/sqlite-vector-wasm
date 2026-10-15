@@ -5,7 +5,7 @@
 Current direct inputs. Earlier full-design and release refinements remain historical comparison context; the current bounded reconciliation separates notification responsibility from planning/result presentation and re-examines the affected contributions and handoffs:
 
 - [Distribution Capture](2026-10-04_sqlite-vec-wasm_capture_edit-0.1.md), snapshot SHA-256 `e1a3d3beb5e025630a6dc5d5d26ce3f3cb08e7da0858a115d3584eaa1476f718`.
-- [Site Capture](2026-10-08_sqlite-vec-wasm_site_capture_edit-0.1.md), snapshot SHA-256 `4312d2c6f83bbfaae09cc9d23322d07f3d60f1e9203bc9588c4be5b24ba7b085`.
+- [Site Capture](2026-10-08_sqlite-vec-wasm_site_capture_edit-0.1.md), snapshot SHA-256 `88dc178133d142c1f89afa733413990c8215f5c686a336235ade1e5e85d9224b`.
 - [Release/Watch Capture](2026-10-09_sqlite-vec-wasm_release-watch_capture_edit-0.1.md), snapshot SHA-256 `1b4f23f3df25f73ec7d8da9ca5ad3015dfd9a23b154424878b80eeb0bb64ce94`.
 - [Workflow Notifications Capture](2026-10-14_sqlite-vector-wasm_workflow-notifications_capture_edit-0.1.md), snapshot SHA-256 `a2b1fe9cd3ae4c0df5ef884b1829ca86705f63d7a12868bd5cd65bc4a6439668`.
 
@@ -24,6 +24,8 @@ The user's subsequent `S-release-refinement` decisions, projected in Distributio
 The 2026-10-13 `S-watch-native` mission previously reconciled `A-watch` to native notifications, normal empty results and independent manual planning. The notification choices are superseded by the bounded 2026-10-14 reconciliation below; direct-summary and independent-manual-planning contributions remain applicable. Historical realization evidence retains its original snapshot and scope.
 
 The 2026-10-14 notifications decisions and clarification remain projected in N/S-notifications and N/S-reconciliation and D/W S-notifications-reconciliation. The subsequent [N/S-allocation] mission separates planning/result production from notification eligibility, message and delivery. `A-watch` owns discovery, planning, actual technical outcomes and the reference GitHub restitution, including summary simplification. `A-notifications` consumes those results and applies only established notification criteria; it neither determines upstream eligibility nor redefines technical outcomes. [N/S-notification-rules] now resolves eligibility as successful planning with a complete nonempty plan, including existing-candidate entries, and requires one plan mail per eligible execution regardless of scheduled/manual trigger. Empty/error exclusions, out-of-scope GitHub account notifications and intentional repetition remain intact; summary simplification still precedes Resend integration. The current concrete notification case is A-watch; no release/candidate/site notification policy or generic framework is inferred from the new unit's name. The affected field is reviewed in both directions; other unit texts and responsibilities are preserved. This is not a renewed global-design or implementation verdict.
+
+The 2026-10-15 [S/S-site-usage] decision adds Usage within the existing `A-site` boundary. This incremental reconciliation examines the complete Site Capture and its A-site correspondence, including the revised surface, documentation sources and checks. Other Capture inputs and unit responsibilities remain unchanged; this is not a renewed global Allocation or implementation verdict. No active or synchronized A-site realization contract exists in this snapshot; the future Change must consume these revised references. Historical contracts and evidence retain their recorded snapshots.
 
 ## Allocation units
 
@@ -101,11 +103,11 @@ Establish the minimum initial setup for the normal publication path.
 
 ### A-site — Public presentation and demonstration
 
-Deliver the public site and its demonstration of the actually distributed runtime.
+Deliver the public presentation, Usage page and demonstration of the actually distributed runtime.
 
-**Qualified references:** [S/C-site], surface/navigation; [S/C-readme], presentation source/deployment links; [S/C-demo-release], published stable runtime consumption and fixed deployment identity; [S/C-emoji], corpus/data identity, licensing and limits; [S/C-vector-modes], representations/loading/selection; [S/C-interaction], exploration behavior; [S/C-search], textual start and actual vector execution; [S/C-memory], connection lifetime; [S/C-demo-checks], full scoped checks; [S/R-demo], rationale/observations and their limits; [S/Q-volume] and [S/Q-realization], retained open choices; [W/C-version-identity] and [W/C-channels], stable-publication identity consumed by the demo.
+**Qualified references:** [S/C-site], surface/navigation; [S/C-readme], README presentation and dedicated Markdown usage source, getting-started instructions/minimal example and usable deployment links; [S/C-demo-release], published stable runtime consumption and fixed deployment identity; [S/C-emoji], corpus/data identity, licensing and limits; [S/C-vector-modes], representations/loading/selection; [S/C-interaction], exploration behavior; [S/C-search], textual start and actual vector execution; [S/C-memory], connection lifetime; [S/C-demo-checks], full scoped checks; [S/R-demo], rationale/observations and their limits; [S/Q-volume] and [S/Q-realization], retained open choices; [W/C-version-identity] and [W/C-channels], stable-publication identity consumed by the demo.
 
-**Boundary and dependencies:** consume the public README and `A-release`'s published stable archive. Site data/UI/deployment stay within this one unit; they do not rebuild the engine, create a third distribution channel or replace `A-acceptance`. `next` does not trigger experimental demo deployment. [S/O-corpus] remains an unselected alternative; open choices create no additional readiness gate.
+**Boundary and dependencies:** consume the public README and `A-release`'s published stable archive. Site documentation/data/UI/deployment stay within this one unit; they do not rebuild the engine, create a third distribution channel or replace `A-acceptance`. `next` does not trigger experimental demo deployment. [S/O-corpus] remains an unselected alternative; open choices create no additional readiness gate.
 
 ## Reverse correspondence and examined limits
 
@@ -134,15 +136,15 @@ The following correspondence retains the preceding mapping of 41 non-source D/S/
 | [D/C-bootstrap] | `A-bootstrap`: initial setup/exception; `A-release`: normal mechanisms, authentication, attestation/provenance and their supported exceptions. |
 | [D/C-obsolescence] | Conditional end-of-responsibility/reconsideration context shared by the Allocation. No automatic implementation or retirement is allocated. |
 | [D/R-engine] | Selected-engine rationale, unselected alternatives and human reconsideration context for the runtime boundary. No replacement, abstraction or versioning responsibility is invented. |
-| [S/C-site] | `A-site`: public surface/navigation; no independently allocated framework or deployment unit. |
-| [S/C-readme] | `A-site`: single presentation source and usable deployed links; documentation updates remain separable from fixed demo runtime. |
+| [S/C-site] | `A-site`: three-page public surface and four-entry navigation, including Usage; no independently allocated framework or deployment unit. |
+| [S/C-readme] | `A-site`: README-only presentation, one dedicated Markdown usage source rendered on the site and consultable in GitHub, getting-started instructions/minimal example and usable deployed links; documentation updates remain separable from fixed demo runtime. |
 | [S/C-demo-release] | `A-site`: actual published stable archive, fixed demo identity and displayed composition; `A-release` supplies the publication through the dependency. |
 | [S/C-emoji] | `A-site`: full selected corpus, embeddings/names, upstream limits, pinned data and attribution/license. |
 | [S/C-vector-modes] | `A-site`: both representations, dimensions/padding, distances, initial/optional loading and common selection behavior. |
 | [S/C-interaction] | `A-site`: all exploratory interaction behavior. |
 | [S/C-search] | `A-site`: textual starting point and real SQLite/sqlite-vec vector execution, with model/service exclusions. |
 | [S/C-memory] | `A-site`: transient connection closure; no invented authentication/persistence cleanup. |
-| [S/C-demo-checks] | `A-site`: independent deterministic checks for both modes on published WASM and navigation; complement `A-acceptance`. |
+| [S/C-demo-checks] | `A-site`: independent deterministic checks for both modes on published WASM, navigation, README/Usage rendering and links, and Usage example execution against its announced published version; complement `A-acceptance`. |
 | [S/R-demo] | `A-site`: rationale/quality orientation and reported-size limits; observations are neither renewed evidence nor thresholds. |
 | [S/O-corpus] | Unselected earlier alternative contextualizes `A-site`; no second dataset obligation. |
 | [S/Q-volume] | `A-site`: open final-volume measurement; no instituted size gate. |
@@ -165,7 +167,7 @@ The source handles have the following provenance treatment. Their decisions/rela
 | Scope | Source handles and treatment |
 | --- | --- |
 | Distribution | [D/S-notifications-reconciliation]: notification revision and inter-Capture reconciliation; [D/S-notification-rules]: resolved eligibility/trigger rule; [D/S-watch-native]: historical notification choice and retained direct-summary/manual-planning contribution; [D/S-release-watch-design] and [D/S-local-reconciliation]: scoped supersessions; [D/S-capture-reconciliation]: adopted Capture-level reconciliation; [D/S-release-refinement]: alpha required-base calculation and bounded initial npm-publication/completion refinement; [D/S-product-design]: identity/engine decision; [D/S-spec]: immutable historical contract; [D/S-release-model], [D/S-doc-model] and [D/S-watch-model]: retained lifecycle/documentation/watch provenance with recorded revision limits. |
-| Site | [S/S-capture-reconciliation] and [S/S-product-design]: bounded provenance/identity consequences; [S/S-site-design] and [S/S-site-exploration]: behavior, observations and alternatives; [S/S-site-mission]: representation migration and one instituted site unit. |
+| Site | [S/S-site-usage]: bounded Usage addition and adopted source/check model within A-site; [S/S-capture-reconciliation] and [S/S-product-design]: bounded provenance/identity consequences; [S/S-site-design] and [S/S-site-exploration]: behavior, observations and alternatives; [S/S-site-mission]: representation migration and one instituted site unit. |
 | Release/Watch | [W/S-notifications-reconciliation]: the same notification revision; [W/S-notification-rules]: resolved eligibility/trigger rule and authorized status cleanup; [W/S-watch-native]: the earlier notification choice and retained planning revision, not independent corroboration; [W/S-capture-reconciliation]: earlier bounded reconciliation scope; [W/S-release-refinement]: the same alpha/bootstrap refinement, not independent corroboration; [W/S-release-watch-design] and [W/S-local-reconciliation]: design and explicit scoped revisions; [W/S-capture-mission]: dedicated Capture identity; [W/S-repository-state]: retrievable comparison/provenance state, not decision authority or implementation evidence. |
 | Notifications | [N/S-notifications]: initial channel, relevance and sequencing decisions; [N/S-reconciliation]: empty/error exclusion, out-of-scope account notifications, intentional weekly repetition and authorized reconciliation; [N/S-allocation]: responsibility separation/reconciliation; [N/S-notification-rules]: instituted eligibility, trigger invariance and documentary cleanup; [N/S-repository]: comparison/provenance state only. |
 
@@ -259,3 +261,5 @@ Material prose outside handles is also covered: scope/authority and explicit rev
 
 [D/S-release-refinement]: 2026-10-04_sqlite-vec-wasm_capture_edit-0.1.md#material-sources
 [W/S-release-refinement]: 2026-10-09_sqlite-vec-wasm_release-watch_capture_edit-0.1.md#material-sources
+
+[S/S-site-usage]: 2026-10-08_sqlite-vec-wasm_site_capture_edit-0.1.md#material-sources
