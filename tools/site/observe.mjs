@@ -17,9 +17,9 @@ try {
   }
   await sameDeployment();
   const results = [];
-  if (record.stablePresent) results.push(await checkBrowser(base.href));
+  if (record.stablePresent) results.push(await checkBrowser(base.href, { requireDocs: !record.preview }));
   else assert.equal((await fetch(base)).status, 404, 'Bootstrap must not invent a stable root');
-  if (record.preview) results.push(await checkBrowser(new URL('preview/', base).href, { preview: record.preview }));
+  if (record.preview) results.push(await checkBrowser(new URL('preview/', base).href, { preview: record.preview, requireDocs: true }));
   else assert.equal((await fetch(new URL('preview/', base))).status, 404, 'Main artifact must remove preview');
   await sameDeployment();
   await writeFile(resultPath, JSON.stringify({ publication: record, results }, null, 2) + '\n');

@@ -4,6 +4,7 @@
 [![SQLite](https://img.shields.io/badge/SQLite-WASM-003B57?logo=sqlite&logoColor=white)](https://sqlite.org/wasm)
 [![sqlite-vec](https://img.shields.io/badge/sqlite--vec-integrated-00897B)](https://github.com/asg017/sqlite-vec)
 [![CI](https://github.com/at-rama/sqlite-vector-wasm/actions/workflows/repository.yml/badge.svg)](https://github.com/at-rama/sqlite-vector-wasm/actions/workflows/repository.yml)
+[![Site](https://img.shields.io/badge/Site-Documentation-3451B2)](https://at-rama.github.io/sqlite-vector-wasm/)
 
 **SQLite for the browser, with vector search built in.**
 
@@ -14,7 +15,7 @@ sqlite-vector-wasm distributes SQLite's browser WebAssembly runtime with [sqlite
 Install the browser assets:
 
 ```sh
-npm install @at-rama/sqlite-vector-wasm
+npm install @at-rama/sqlite-vector-wasm@0.2.0
 ```
 
 Serve **all eleven runtime files** from the package at a common URL prefix, for example `/sqlite/`. npm installs the assets but does not configure a browser server or expose a root initialization API. Serve `.js` and `.mjs` as JavaScript, and `.wasm` as `application/wasm`.
@@ -33,7 +34,7 @@ try {
 }
 ```
 
-The package also includes conventional script and Worker loaders, Worker1/promiser entries and supplied bundler-friendly variants. See the [short usage guide](https://github.com/at-rama/sqlite-vector-wasm/blob/main/docs/usage.md) for practical SQL, vector, Worker and persistence examples.
+The package also includes conventional script and Worker loaders, Worker1/promiser entries and supplied bundler-friendly variants. See the [short usage guide](https://at-rama.github.io/sqlite-vector-wasm/usage/) for practical SQL, vector, Worker and persistence examples.
 
 ## Features
 
@@ -49,7 +50,7 @@ The package also includes conventional script and Worker loaders, Worker1/promis
 
 Target modern browsers with the required WebAssembly and JavaScript support. Keep all WASM, Worker, promiser and OPFS companion assets together when deploying the runtime. OPFS requires a secure context and Workers; some persistent VFS modes additionally require cross-origin isolation. An unavailable requested persistent VFS does not silently fall back to in-memory storage.
 
-The package preserves upstream SQLite/sqlite-vec behavior. It does **not** provide a Node.js, native or WASI runtime, a root JavaScript wrapper, or guaranteed compatibility with every bundler. Consult the [usage guide](https://github.com/at-rama/sqlite-vector-wasm/blob/main/docs/usage.md) and [SQLite browser documentation](https://sqlite.org/wasm/doc/trunk/api-index.md) for details.
+The package preserves upstream SQLite/sqlite-vec behavior. It does **not** provide a Node.js, native or WASI runtime, a root JavaScript wrapper, or guaranteed compatibility with every bundler. Consult the [usage guide](https://at-rama.github.io/sqlite-vector-wasm/usage/) and [SQLite browser documentation](https://sqlite.org/wasm/doc/trunk/api-index.md) for details.
 
 ## Distribution and source
 

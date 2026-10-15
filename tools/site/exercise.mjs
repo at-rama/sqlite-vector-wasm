@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, writeFile, rm, readFile, cp } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, rm, readFile, cp, symlink } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { join } from 'node:path';
 import { repository, build } from './build.mjs';
@@ -14,13 +14,14 @@ export async function exercise() {
   const temporary = await mkdtemp(join(repository, '.work/site-exercise-'));
   const results = [];
   async function observe(name, prepared, options) {
-    const result = await build({ prepared, preview: options?.preview });
+    const result = await build({ prepared, preview: options?.preview, docs: options?.docs ?? !prepared });
     const server = await serveSite(result.output, result.base);
     try { results.push({ name, ...await checkBrowser(server.url, options), runtime: result.runtime }); }
     finally { await server.close(); }
     return result;
   }
   try {
+    results.push(...await exerciseRelativeImages());
     const docs = join(temporary, 'docs');
     await mkdir(join(docs, 'usage'), { recursive: true });
     await writeFile(join(docs, 'index.md'), '# Presentation\n\nDocumentation integration fixture.\n');
@@ -108,6 +109,18 @@ This is an integration fixture, not the emoji demo.
       results.push({ name: 'stable-only-removes-preview', ...await checkBrowser(server.url, { demoFixture: true }) });
     } finally { await server.close(); }
 
+    const readmePath = join(repository, 'README.md');
+    const readme = await readFile(readmePath, 'utf8');
+    try {
+      const realBefore = await observe('real-documentation-with-demo', demo, { docs: true, demoFixture: 'fixture-runtime-2' });
+      await writeFile(readmePath, readme + '\nDocumentation edit exercise marker.\n');
+      const realAfter = await observe('real-documentation-update', demo, { docs: true, demoFixture: 'fixture-runtime-2' });
+      assert.deepEqual(realAfter.runtime, realBefore.runtime);
+      assert.match(await readFile(join(realAfter.source, 'index.md'), 'utf8'), /Documentation edit exercise marker/);
+      await observe('real-documentation-preview', demo, { docs: true, preview, demoFixture: 'fixture-runtime-2',
+        screenshot: join(repository, '.work/site/docs-mobile.png') });
+    } finally { await writeFile(readmePath, readme); }
+
     await writeFile(join(demo, 'public/demo-runtime/fixture.mjs'), 'corrupt fixture');
     await assert.rejects(build({ prepared: demo }), /checksum mismatch/);
     await assert.rejects(readFile(join(repository, '.work/site/dist/index.html')), { code: 'ENOENT' });
@@ -119,4 +132,37 @@ This is an integration fixture, not the emoji demo.
   } finally {
     await rm(temporary, { recursive: true, force: true });
   }
+}
+
+
+// Compile and load copied images, rather than accepting prepared URL strings.
+export async function exerciseRelativeImages() {
+  const root = await mkdtemp(join(repository, '.work/site-images-'));
+  const results = [];
+  const image = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"><rect id="shape" width="20" height="20" fill="blue"/></svg>';
+  try {
+    await cp(join(repository, 'site'), join(root, 'site'), { recursive: true });
+    await mkdir(join(root, '.work/site'), { recursive: true });
+    await symlink(join(repository, '.work/site/node_modules'), join(root, '.work/site/node_modules'));
+    await symlink(join(repository, '.git'), join(root, '.git'));
+    await mkdir(join(root, 'docs/nested'), { recursive: true });
+    await writeFile(join(root, 'README.md'), '# Presentation\n\n![Simple](docs/picture.svg)\n\n![Spaced][image]\n\n[image]: <docs/picture%20name.svg?rev=1#shape>\n');
+    await writeFile(join(root, 'docs/usage.md'), '# Usage\n\n[![Nested](nested/picture.svg)](../README.md)\n');
+    const imagePaths = ['docs/picture.svg', 'docs/picture name.svg', 'docs/nested/picture.svg'];
+    for (const path of imagePaths) await writeFile(join(root, path), image);
+    for (const preview of [undefined, { branch: 'relative-images', commit: '1234567890abcdef1234567890abcdef12345678' }]) {
+      const result = await build({ root, preview });
+      for (const path of imagePaths) assert.equal(await readFile(join(result.output, 'docs-assets', path), 'utf8'), image);
+      const server = await serveSite(result.output, result.base);
+      try {
+        results.push({ name: preview ? 'relative-images-preview' : 'relative-images-stable',
+          ...await checkBrowser(server.url, { preview, requireDocs: true }), copiedImages: imagePaths });
+      } finally { await server.close(); }
+    }
+    await rm(join(root, 'docs/picture.svg'));
+    await assert.rejects(build({ root }), /README.md: missing target docs\/picture.svg/);
+    await assert.rejects(readFile(join(root, '.work/site/dist/index.html')), { code: 'ENOENT' });
+    results.push({ name: 'missing-relative-image', result: 'rejected; stale output removed' });
+    return results;
+  } finally { await rm(root, { recursive: true, force: true }); }
 }

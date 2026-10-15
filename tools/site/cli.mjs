@@ -24,11 +24,13 @@ try {
     const { checkBrowser } = await import('./browser.mjs');
     const { serveSite } = await import('./server.mjs');
     const server = options.url ? null : await serveSite(join(repository, '.work/site/dist'), options.preview ? previewBase : undefined);
-    try { console.log(JSON.stringify(await checkBrowser(options.url ?? server.url, options))); }
+    try { console.log(JSON.stringify(await checkBrowser(options.url ?? server.url, { ...options, requireDocs: true }))); }
     finally { await server?.close(); }
+  } else if (command === 'example' && args.length === 0) {
+    await (await import('./example.mjs')).example();
   } else if (command === 'exercise' && args.length === 0) {
     await (await import('./exercise.mjs')).exercise();
-  } else throw Error('Usage: sh tools/site.sh install | build [--prepared DIRECTORY] [--preview BRANCH SHA] | check [--url URL/] [--preview BRANCH SHA] | exercise');
+  } else throw Error('Usage: sh tools/site.sh install | build [--prepared DIRECTORY] [--preview BRANCH SHA] | check [--url URL/] [--preview BRANCH SHA] | exercise | example');
 } catch (error) {
   console.error(`Site: ${error.message}`);
   process.exitCode = 1;

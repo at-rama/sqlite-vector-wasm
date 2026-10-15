@@ -2,10 +2,12 @@
 
 A short guide to using the distributed browser runtime. The package exposes SQLite's own JavaScript/WASM APIs, with sqlite-vec already available in each new connection; it does not add a new JavaScript wrapper.
 
+This guide’s minimal browser example is checked against published version **0.2.0**.
+
 ## Host and initialize
 
 ```sh
-npm install @at-rama/sqlite-vector-wasm
+npm install @at-rama/sqlite-vector-wasm@0.2.0
 ```
 
 Copy **all eleven** files from the installed package to the same public URL directory, here `/sqlite/`. Keep the `.wasm` file, Worker entries, promisers and OPFS proxy with the loaders. Serve `.js`/`.mjs` as JavaScript and `.wasm` as `application/wasm`. npm installation alone does not serve these assets.
@@ -99,4 +101,4 @@ See [SQLite's persistence prerequisites](https://sqlite.org/wasm/doc/trunk/persi
 
 ## Package provenance and licensing
 
-`runtime.json` records source versions, digests, assets and build settings. The distribution's `LICENSE` covers project-authored Apache-2.0 material; `NOTICE` and `licenses/` preserve the upstream licensing terms. See the [project README](https://github.com/at-rama/sqlite-vector-wasm#readme) for release channels and source-build documentation.
+`runtime.json` records source versions, digests, assets and build settings. The distribution's `LICENSE` covers project-authored Apache-2.0 material; `NOTICE` and `licenses/` preserve the upstream licensing terms. See the [project README](https://at-rama.github.io/sqlite-vector-wasm/) for release channels and source-build documentation.

@@ -49,7 +49,9 @@ jobs:
       - name: Install locked site dependencies
         run: sh tools/site.sh install
       - name: Run offline shell tests
-        run: node --test tools/site/tests/*.test.mjs
+        run: |
+          node --test tools/site/tests/*.test.mjs
+          node --test tools/site/checks/*.test.mjs
       - name: Install browser system prerequisites
         run: |
           sudo apt-get update
@@ -64,6 +66,7 @@ jobs:
           bash tools/harness.sh install
           bash tools/harness.sh deps
           bash tools/harness.sh exec sh tools/site.sh exercise
+          bash tools/harness.sh exec sh tools/site.sh example
       - name: Build exact PR preview
         if: github.event_name == 'pull_request'
         env:
@@ -121,6 +124,8 @@ jobs:
             candidate/.work/site/mobile.png
             candidate/.work/site/preview-mobile.png
             candidate/.work/site/assembled.json
+            candidate/.work/site/docs-mobile.png
+            candidate/.work/docs-example/result.json
             candidate/.work/pages/site-publication.json
           retention-days: 30
           overwrite: true

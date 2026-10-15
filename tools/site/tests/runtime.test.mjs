@@ -4,8 +4,9 @@ import { mkdtemp, mkdir, writeFile, readFile, cp, rm, symlink, access } from 'no
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
-import { prepare, checkOutput } from '../prepare.mjs';
+import { prepare as prepareSite, checkOutput } from '../prepare.mjs';
 
+const prepare = (root, prepared) => prepareSite(root, prepared, { docs: false });
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 const site = new URL('../../../site/', import.meta.url);
 
