@@ -54,7 +54,10 @@ export async function prepareDocs(root, source, base) {
         page[attr === 'src' ? 'images' : 'links'].push(value);
       })());
     });
-    await Promise.all(pending);
+    // Finish outstanding copies before a failed preparation can be cleaned up.
+    const resolved = await Promise.allSettled(pending);
+    const failure = resolved.find(result => result.status === 'rejected');
+    if (failure) throw failure.reason;
     const original = md.renderer.rules.link_open;
     md.renderer.rules.link_open = (tokens, idx, options, env, self) => self.renderToken(tokens, idx, options);
     let html;
