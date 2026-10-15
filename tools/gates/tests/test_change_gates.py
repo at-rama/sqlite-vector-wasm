@@ -95,6 +95,22 @@ Coverage, OpenSpec findings and executable checks are recorded here.
         self.run_gate()
         self.run_gate('archive', passed=False, message='still active')
 
+    def test_site_units_with_underscores_require_exact_allocated_handle(self):
+        units = ('A-site_shell', 'A-site_docs', 'A-site_demo')
+        self.write('.42p/engineering/2026-10-06_example_allocation_edit-0.1.md',
+                   '# Allocation\n\n' + ''.join(f'### {unit} — Site\n\n' for unit in units))
+        path = self.add_change()
+        for unit in units:
+            with self.subTest(unit=unit):
+                self.write(path + '/verification.md', self.report().replace('A-inputs', unit))
+                self.commit()
+                self.run_gate(message='passed for acquire-inputs')
+        for unit in ('A-site', 'A-site_unknown'):
+            with self.subTest(unit=unit):
+                self.write(path + '/verification.md', self.report().replace('A-inputs', unit))
+                self.commit()
+                self.run_gate(passed=False, message='must identify a unit')
+
     def test_active_change_without_report_fails(self):
         self.add_change(archived=False, report=False)
         self.commit()
