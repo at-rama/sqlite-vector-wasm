@@ -187,7 +187,7 @@ def allocation_units(head):
             if re.search(r'_allocation_edit-[^/]+\.md\Z', path):
                 mode, kind, oid = info.decode().split()
                 content = read_file({path: (mode, kind, oid)}, path)
-                handles.update(re.findall(r'^### (A-[A-Za-z0-9-]+)\s', content, re.M))
+                handles.update(re.findall(r'^### (A-[A-Za-z0-9_-]+)\s', content, re.M))
     return handles
 
 
