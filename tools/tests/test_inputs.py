@@ -5,6 +5,7 @@ import importlib.util
 import hashlib
 import io
 import json
+import os
 import subprocess
 import tarfile
 import zipfile
@@ -420,6 +421,76 @@ class CommandTests(unittest.TestCase):
             result=subprocess.run(['bash',str(inputs.ROOT/'tools/inputs.sh'),'_fetch',
                 'https://sqlite.org/2026/sqlite-src-3530400.zip',str(root/'download')],env=env,capture_output=True)
             self.assertEqual(result.returncode,22);self.assertEqual(result.stdout,b'')
+
+class TransportTests(unittest.TestCase):
+    def fetch(self, url, token='fixture-token', status=0):
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        root = Path(directory.name)
+        fake = root / 'curl'
+        fake.write_text('''#!/usr/bin/env python3
+import json, os, sys
+from pathlib import Path
+args = sys.argv[1:]
+Path(os.environ['CURL_ARGUMENTS']).write_text(json.dumps(args))
+Path(args[args.index('--output') + 1]).write_text('{"message":"API rate limit exceeded"}')
+Path(args[args.index('--dump-header') + 1]).write_text(
+    'HTTP/2 403\\nX-RateLimit-Remaining: 0\\nX-RateLimit-Reset: 1792015200\\n'
+    'Retry-After: 60\\nX-GitHub-Request-Id: fixture-request\\nSet-Cookie: private-response\\n')
+sys.exit(int(os.environ['CURL_STATUS']))
+''')
+        fake.chmod(0o755)
+        destination = root / 'metadata.txt'
+        env = dict(os.environ, PATH=str(root) + ':/usr/bin:/bin',
+                   CURL_ARGUMENTS=str(root / 'arguments.json'), CURL_STATUS=str(status))
+        env.pop('GH_TOKEN', None)
+        if token is not None:
+            env['GH_TOKEN'] = token
+        result = subprocess.run(['bash', str(inputs.ROOT / 'tools/inputs.sh'),
+                                 '_fetch', url, str(destination)], env=env, capture_output=True)
+        arguments = json.loads((root / 'arguments.json').read_text())
+        return result, arguments, destination
+
+    def test_token_is_scoped_to_github_api(self):
+        for url, authenticated in [
+            (inputs.VEC_API + '/tags/v0.1.9', True),
+            ('https://sqlite.org/download.html', False),
+            ('https://github.com/asg017/sqlite-vec/releases/download/v0.1.9/asset', False),
+            ('https://api.github.com.example.org/releases', False),
+            ('https://api.github.com@elsewhere.example/releases', False),
+        ]:
+            with self.subTest(url=url):
+                result, arguments, destination = self.fetch(url)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual('Authorization: Bearer fixture-token' in arguments, authenticated)
+                self.assertEqual(result.stdout, b'')
+                self.assertNotIn(b'fixture-token', result.stderr)
+                self.assertNotIn('--location-trusted', arguments)
+                self.assertTrue(destination.is_file())
+                self.assertFalse(Path(str(destination) + '.http-headers').exists())
+
+    def test_public_api_still_works_without_token(self):
+        for token in (None, ''):
+            with self.subTest(token=token):
+                result, arguments, _ = self.fetch(inputs.VEC_API, token=token)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertFalse(any('Authorization:' in argument for argument in arguments))
+
+    def test_http_failure_preserves_evidence_and_safe_diagnostic(self):
+        result, arguments, destination = self.fetch(inputs.VEC_API, status=22)
+        self.assertEqual(result.returncode, 22)
+        self.assertEqual(result.stdout, b'')
+        self.assertIn('--fail-with-body', arguments)
+        self.assertIn('API rate limit exceeded', destination.read_text())
+        self.assertIn('HTTP/2 403', result.stderr.decode())
+        self.assertIn('X-RateLimit-Remaining: 0', result.stderr.decode())
+        self.assertIn('X-RateLimit-Reset: 1792015200', result.stderr.decode())
+        self.assertIn('Retry-After: 60', result.stderr.decode())
+        self.assertIn('X-GitHub-Request-Id: fixture-request', result.stderr.decode())
+        self.assertTrue(Path(str(destination) + '.http-headers').is_file())
+        self.assertNotIn(b'private-response', result.stderr)
+        self.assertNotIn(b'fixture-token', result.stderr)
+
 
 if __name__ == '__main__':
     unittest.main()
