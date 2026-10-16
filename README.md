@@ -48,8 +48,6 @@ Next, [create a vector table and find its nearest neighbors](https://at-rama.git
 - Browser persistence through OPFS when supported and correctly hosted.
 - Static sqlite-vec integration: no runtime extension loading.
 
-Download size: approximately 674 kB gzipped (1.78 MB uncompressed) for the JavaScript loader and SQLite/sqlite-vec WASM binary combined, measured with release 0.2.0 served by GitHub Pages. Application data is additional; transfer size depends on your server’s compression settings.
-
 ## Browser requirements and boundaries
 
 Target modern browsers with the required WebAssembly and JavaScript support. Keep all WASM, Worker, promiser and OPFS companion assets together when deploying the runtime. OPFS requires a secure context and Workers; some persistent VFS modes additionally require cross-origin isolation. An unavailable requested persistent VFS does not silently fall back to in-memory storage.
@@ -57,6 +55,8 @@ Target modern browsers with the required WebAssembly and JavaScript support. Kee
 The package preserves upstream SQLite/sqlite-vec behavior. It does **not** provide a Node.js, native or WASI runtime, a root JavaScript wrapper, or guaranteed compatibility with every bundler. Consult the [usage guide](https://at-rama.github.io/sqlite-vector-wasm/usage/) and [SQLite browser documentation](https://sqlite.org/wasm/doc/trunk/api-index.md) for details.
 
 ## Distribution and source
+
+Download size: approximately 674 kB gzipped (1.78 MB uncompressed) for the JavaScript loader and SQLite/sqlite-vec WASM binary combined, measured with release 0.2.0 served by GitHub Pages. Application data is additional; transfer size depends on your server’s compression settings.
 
 - [npm package](https://www.npmjs.com/package/@at-rama/sqlite-vector-wasm)
 - [GitHub Releases](https://github.com/at-rama/sqlite-vector-wasm/releases)
