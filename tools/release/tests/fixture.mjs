@@ -15,7 +15,18 @@ export async function releaseFixture(t, { version = '0.1.0', name = '@at-rama/sq
   const runtimeDirectory = join(repository,'runtime'); await mkdir(runtimeDirectory);
   const runtimeFiles = [];
   for (const name of runtimeNames) { const bytes = Buffer.from(`fixture ${name}`); await writeFile(join(runtimeDirectory,name),bytes); runtimeFiles.push({name,size:bytes.length,sha256:hash(bytes)}); }
-  const lockBytes = await readFile(join(repository,'inputs/sources.lock.json')); const lock = JSON.parse(lockBytes);
+  // Keep initial stable-publication fixtures independent of an Updates prerelease lock.
+  const sourceLockPath = join(repository,'inputs/sources.lock.json');
+  const lock = JSON.parse(await readFile(sourceLockPath));
+  lock.sqliteVec = {
+    version: '0.1.9',
+    archiveUrl: 'https://github.com/asg017/sqlite-vec/releases/download/v0.1.9/sqlite-vec-0.1.9-amalgamation.tar.gz',
+    digest: {algorithm:'sha256',value:'3acd67cb4aff080c7050926fd3cf8227905fe5b7ee3829d8ee5024ab1283cf61'},
+    releaseUrl: 'https://github.com/asg017/sqlite-vec/releases/tag/v0.1.9',
+    digestUrl: 'https://api.github.com/repos/asg017/sqlite-vec/releases/303570081'
+  };
+  const lockBytes = Buffer.from(JSON.stringify(lock,null,2)+'\n');
+  await writeFile(sourceLockPath,lockBytes);
   const inputs = {lockDigest:{algorithm:'sha256',value:hash(lockBytes)}};
   for (const key of ['sqlite','sqliteVec']) inputs[key]={version:lock[key].version,digest:lock[key].digest};
   const build = {tools:Object.fromEntries(['cc','make','emcc','wasm-strip','wasm-opt','node','npm'].map(key=>[key,`${key} fixture 4.0.23`])),platform:'fixture Linux x86_64',amalgamation:['make'],configure:['configure'],wasm:['make']};
