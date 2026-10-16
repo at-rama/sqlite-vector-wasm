@@ -31,3 +31,9 @@ Tasks 1.1–1.3 implement and check Usage within the single source and versioned
 ## Planning gate
 
 Allocation unit → Change: **100%**. Change → allocation unit: **100%**. These are semantic planning-coverage conclusions for the complete A-site_docs unit, using the retained specification plus these corrective artifacts. They establish neither implementation completeness nor browser/Pages success nor full source-chain fidelity. All implementation tasks remain open. Re-examine correspondence before Apply and after any material artifact/input change; a required upstream semantic revision must be escalated. Post-Apply Verification and archive have not been invoked.
+
+## Apply continuity — 2026-10-16
+
+The complete A-site_docs unit, all seven forward obligation groups and the reverse grounding of proposal/design/tasks were re-examined before implementation and again after the documentation/check edits. Allocation and Site Capture bytes still match the fingerprints above. All five synchronized site-docs requirements and their scenarios remain applicable without a delta; source fidelity, published-version execution, link resolution, independent integration and qualified actual-Pages evidence retain their original scope and conditions. Both semantic coverage directions remain **100%**.
+
+The copy recipe and dedicated-Worker execution check refine the existing getting-started/example duty. Updating `docs/site.md` keeps the existing example-check instructions accurate. No shell/demo requirement, product API or authority rule is added. The [Apply receipt](apply-evidence.md) records renewed local and hosted execution, executable candidate identity, public deployment/source hashes, the failed local DNS attempt and evidence availability limits. This continuity receipt does not invoke post-Apply Verification or authorize archive, merge or publication.
