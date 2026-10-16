@@ -24,6 +24,8 @@ export async function exercise() {
     results.push(...await exerciseRelativeImages());
     const docs = join(temporary, 'docs');
     await mkdir(join(docs, 'usage'), { recursive: true });
+    await mkdir(join(docs, 'demo'), { recursive: true });
+    await writeFile(join(docs, 'demo/index.md'), '# Demo\n\nThe browser demo is not available yet.\n');
     await writeFile(join(docs, 'index.md'), '# Presentation\n\nDocumentation integration fixture.\n');
     await writeFile(join(docs, 'usage/index.md'), '# Usage\n\n```js\n' + 'example'.repeat(100) + '\n```\n');
     await observe('docs-only', docs, { requireWideCode: true });
@@ -142,6 +144,7 @@ export async function exerciseRelativeImages() {
   const image = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"><rect id="shape" width="20" height="20" fill="blue"/></svg>';
   try {
     await cp(join(repository, 'site'), join(root, 'site'), { recursive: true });
+    await writeFile(join(root, 'site/demo/index.md'), '# Demo\n\nThe browser demo is not available yet.\n');
     await mkdir(join(root, '.work/site'), { recursive: true });
     await symlink(join(repository, '.work/site/node_modules'), join(root, '.work/site/node_modules'));
     await symlink(join(repository, '.git'), join(root, '.git'));

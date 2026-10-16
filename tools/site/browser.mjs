@@ -13,7 +13,9 @@ export async function checkBrowser(url, { screenshot, requireWideCode = false, d
     if (requireDocs) assert.equal(docsResponse.status(), 200, 'Integrated documentation manifest is required');
     const docs = docsResponse.ok() ? await docsResponse.json() : null;
     if (docs) assert.deepEqual(docs.pages.map(page => page.source), ['README.md', 'docs/usage.md']);
-    const heading = label => label === 'Presentation' && docs ? docs.pages[0].headings[0] : label === 'Usage' && docs ? docs.pages[1].headings[0] : label;
+    const demoResponse = await page.request.get(new URL('demo-runtime.json', base).href);
+    const actualDemo = demoResponse.ok() && Boolean((await demoResponse.json()).version);
+    const heading = label => label === 'Demo' && actualDemo ? 'Emoji vector explorer' : label === 'Presentation' && docs ? docs.pages[0].headings[0] : label === 'Usage' && docs ? docs.pages[1].headings[0] : label;
     async function documentation(path) {
       const expected = docs?.pages.find(entry => entry.path === path);
       if (!expected) return;

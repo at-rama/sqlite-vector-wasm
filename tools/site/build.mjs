@@ -3,6 +3,7 @@ import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { prepare, checkOutput } from './prepare.mjs';
+import { prepareDemo } from './demo-runtime.mjs';
 
 export const repository = fileURLToPath(new URL('../../', import.meta.url));
 
@@ -25,6 +26,19 @@ export async function build({ root = repository, prepared, preview, docs = true 
   const work = join(root, '.work/site');
   const installed = JSON.parse(await readFile(join(work, 'node_modules/vitepress/package.json'), 'utf8'));
   if (installed.version !== '1.6.4') throw Error('Run sh tools/site.sh install for locked VitePress 1.6.4.');
+  if (!prepared && docs) {
+    let integrated = false;
+    try { await readFile(join(root, 'tools/site/demo-runtime.json')); integrated = true; }
+    catch (error) { if (error.code !== 'ENOENT') throw error; }
+    if (integrated) {
+      prepared = join(root, '.work/demo-prepared');
+      try { await prepareDemo(root, prepared); }
+      catch (error) {
+        for (const path of [join(work, 'src'), join(work, 'dist'), join(work, 'build.json')]) await rm(path, { recursive: true, force: true });
+        throw error;
+      }
+    }
+  }
   const result = await prepare(root, prepared, { preview, docs });
   try {
     run(process.execPath, [join(work, 'node_modules/vitepress/bin/vitepress.js'), 'build', result.source, '--outDir', result.output], root);
