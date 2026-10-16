@@ -1,0 +1,11 @@
+{
+  "repository": "uclnlp/emoji2vec",
+  "revision": "3f91c339df13b2a511d9e3a9f73efa7b61c54707",
+  "count": 1661,
+  "dimensions": 300,
+  "files": {
+    "emoji2vec.bin": { "path": "pre-trained/emoji2vec.bin", "sha256": "ca13da2b9a5329ee346d75f49a821e56c990373f637086a7e70cbc96c2fda11c" },
+    "emoji_joined.txt": { "path": "data/raw_training_data/emoji_joined.txt", "sha256": "f451f05aa03c6b599d07db7b6e3bf08c2aa0a75e41652b9e9b1eaf62f73636c4" },
+    "LICENSE": { "path": "LICENSE", "sha256": "fdf01044e930d7a666ab2b9525f8e3aa62f9d0456f505c612580580c8d424ef6" }
+  }
+}

@@ -26,7 +26,7 @@ test('the complete publication sequence shares concurrency; builds and observers
   assert.match(build, /sh tools\/site.sh build --preview "\$PREVIEW_BRANCH" "\$PREVIEW_COMMIT"/);
   assert.match(build, /path: candidate\/\.work\/pages/);
   assert.match(observe, /tools\/site\/observe.mjs "\$SITE_URL"/);
-  assert.match(observe, /path: live-pages.json/);
+  assert.match(observe, /path:\s*(?:\|\s*)?live-pages.json/);
   assert.match(workflow, /node-version: '24\.19\.0'/);
   assert.doesNotMatch(build.slice(0, build.indexOf('    steps:')), /runner\./);
   assert.match(build, /Check real builds and browser integration\n        env:\n          HARNESS_STATE: \$\{\{ runner\.temp \}\}/);
@@ -50,4 +50,11 @@ test('documentation checks run separately from example execution and retain its 
   assert.match(workflow, /node --test tools\/site\/checks\/\*.test.mjs/);
   assert.match(workflow, /bash tools\/harness.sh exec sh tools\/site.sh example/);
   assert.match(workflow, /candidate\/\.work\/docs-example\/result.json/);
+});
+
+
+test('the real demo exercise and hosted mobile evidence remain in the existing publication path', async () => {
+  const workflow = await source();
+  assert.match(workflow, /bash tools\/harness.sh exec sh tools\/site.sh demo/);
+  for (const file of ['demo-results.json', 'demo-stable-mobile.png', 'demo-preview-mobile.png', 'live-pages-demo-mobile.png']) assert.ok(workflow.includes(file));
 });

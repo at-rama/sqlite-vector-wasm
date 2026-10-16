@@ -14,6 +14,8 @@ async function fixture(t, demo = false) {
   const root = await mkdtemp(join(tmpdir(), 'site-input-'));
   t.after(() => rm(root, { recursive: true, force: true }));
   await cp(site, join(root, 'site'), { recursive: true });
+  // This fixture deliberately models a shell without downstream demo integration.
+  await writeFile(join(root, 'site/demo/index.md'), '# Demo\n\nThe browser demo is not available yet.\n');
   const selected = { productVersion: 'fixture-1', archive: 'fixture-only-not-a-release' };
   const selection = JSON.stringify(selected) + '\n';
   const asset = 'export const fixture = 1;\n';

@@ -2,10 +2,14 @@
 layout: page
 ---
 
-<div class="vp-doc" style="max-width: 1152px; margin: 0 auto; padding: 32px 24px">
+<script setup>
+import EmojiDemo from './EmojiDemo.vue';
+</script>
 
-# Demo
+<div class="vp-doc" style="max-width: 1000px; margin: 0 auto; padding: 32px 24px">
 
-The browser demo is not available yet.
+# Emoji vector explorer {#demo}
+
+<EmojiDemo />
 
 </div>

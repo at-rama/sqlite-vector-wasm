@@ -1,0 +1,10 @@
+{
+  "version": "0.2.0",
+  "releaseId": 413460274,
+  "commit": "a92667ad43fbcc0a1aa12431f44a7a82ea44a725",
+  "releaseUrl": "https://github.com/at-rama/sqlite-vector-wasm/releases/tag/dist/v0.2.0",
+  "archiveUrl": "https://github.com/at-rama/sqlite-vector-wasm/releases/download/dist/v0.2.0/payload.tgz",
+  "archiveSha256": "5074eb9462ea4cf9eb92a198ed184e1d0949e3a1c7694eb72f40669a4efda775",
+  "publicationUrl": "https://github.com/at-rama/sqlite-vector-wasm/releases/download/dist/v0.2.0/publication.json",
+  "publicationSha256": "6cb17fa09a8472c5ff9adcb2b8ed7f82b53e3f68e4ec17c6ff041c508fbf4d8c"
+}

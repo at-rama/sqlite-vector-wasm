@@ -67,6 +67,7 @@ jobs:
           bash tools/harness.sh deps
           bash tools/harness.sh exec sh tools/site.sh exercise
           bash tools/harness.sh exec sh tools/site.sh example
+          bash tools/harness.sh exec sh tools/site.sh demo
       - name: Build exact PR preview
         if: github.event_name == 'pull_request'
         env:
@@ -125,6 +126,10 @@ jobs:
             candidate/.work/site/preview-mobile.png
             candidate/.work/site/assembled.json
             candidate/.work/site/docs-mobile.png
+            candidate/.work/site/demo-results.json
+            candidate/.work/site/demo-stable-mobile.png
+            candidate/.work/site/demo-preview-mobile.png
+            candidate/.work/site/assembled-demo-mobile.png
             candidate/.work/docs-example/result.json
             candidate/.work/pages/site-publication.json
           retention-days: 30
@@ -208,6 +213,8 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: site-live-${{ github.run_id }}
-          path: live-pages.json
+          path: |
+            live-pages.json
+            live-pages-demo-mobile.png
           retention-days: 30
           if-no-files-found: error
