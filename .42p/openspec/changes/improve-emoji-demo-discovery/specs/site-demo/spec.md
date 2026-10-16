@@ -4,7 +4,7 @@
 
 ### Requirement: Textual discovery and vector exploration
 
-The demo SHALL offer text search over English names and associated words, a matching emoji grid, six vector neighbors excluding the selected emoji, clickable neighbors, an emoji-copy control and Binary/Float32 selection. Data SHALL be imported into SQLite and neighbor searches SHALL actually execute through sqlite-vec using the selected emoji's existing embedding, without free-text embedding inference or an external embedding service. Text discovery SHALL match whole words without case sensitivity, require every query word regardless of order and preserve the complete catalogue for an empty query. A new demo session SHALL explicitly select 🐱 and show its six binary-mode vector neighbors after initialization.
+The demo SHALL offer text search over English names and associated words, a matching emoji grid, six vector neighbors excluding the selected emoji, clickable neighbors, an emoji-copy control and Binary/Float32 selection. Data SHALL be imported into SQLite and neighbor searches SHALL actually execute through sqlite-vec using the selected emoji's existing embedding, without free-text embedding inference or an external embedding service. Text discovery SHALL match each query term at the beginning of a word across all descriptions and associated words without case sensitivity, require every term regardless of order and preserve the complete catalogue for an empty query. A new demo session SHALL explicitly select 🐱 and show its six binary-mode vector neighbors after initialization.
 
 #### Scenario: Find a starting emoji
 - **WHEN** a visitor enters a name or associated word
@@ -18,13 +18,17 @@ The demo SHALL offer text search over English names and associated words, a matc
 - **WHEN** candidates have equal distance, including at the sixth-neighbor boundary
 - **THEN** any valid six-neighbor result respecting closer distances is acceptable, without a special relevance order among ties
 
-#### Scenario: Match words rather than internal substrings
+#### Scenario: Match word beginnings rather than internal substrings
 - **WHEN** a visitor searches for `cat` or `CAT`
-- **THEN** descriptions containing the whole word `cat`, including 🐱, match equally, while `indicator` or `cats` alone does not match merely because it contains those letters
+- **THEN** descriptions or associated words beginning with `cat`, including `cat` and `cats`, match equally regardless of case, 🐱 is included, and `indicator` alone does not match because its occurrence is internal to the word
+
+#### Scenario: Discover while typing across descriptions
+- **WHEN** a visitor enters `mus` before completing `music`
+- **THEN** emojis with `music` or `musical` among any of their descriptions or associated words are discoverable even if their displayed title does not match, while an internal substring such as `sic` does not match `music` alone
 
 #### Scenario: Combine words and separators
-- **WHEN** a visitor searches for `cat face`, `face cat` or `  CAT, face!  `
-- **THEN** the same emojis containing both whole words match regardless of their order, repeated words or case, with spaces and punctuation separating words
+- **WHEN** a visitor searches for `cat fac`, `fac cat` or `  CAT, fac!  `
+- **THEN** the same emojis containing word beginnings for both terms across their descriptions match regardless of term order, repetition or case, with spaces and punctuation separating query terms
 
 #### Scenario: Empty and literal special-character queries
 - **WHEN** a visitor submits an empty or whitespace-only query, an unknown word, or a nonempty query consisting only of punctuation such as `%`, `_` or a backslash

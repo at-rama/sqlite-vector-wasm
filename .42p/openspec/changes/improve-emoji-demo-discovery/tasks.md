@@ -1,8 +1,8 @@
 # Tasks
 
-## 1. Whole-word discovery
+## 1. Word-prefix discovery
 
-- [ ] 1.1 Implement the bounded text policy and parameterized whole-word SQLite filtering in the existing demo Worker; verify literal-membership offline fixtures for `cat` versus `indicator`/`cats`, case, multiword AND/order, punctuation/repetition, whitespace, punctuation-only and injection-like inputs with `node --test tools/site/tests/demo-*.test.mjs`.
+- [ ] 1.1 Implement the bounded text policy and parameterized word-prefix SQLite filtering over all descriptions/keywords, not only the displayed title in the existing demo Worker; verify literal-membership offline fixtures for `cat` matching `cat`/`cats` but not `indicator`, `mus` matching `music`/`musical` even with a different title, case, multiword AND/order, punctuation/repetition, whitespace, punctuation-only and injection-like inputs with `node --test tools/site/tests/demo-*.test.mjs`.
 - [ ] 1.2 Extend the shared real-browser checker with actual catalogue/SQLite search assertions for those behaviors and update the demo text-search guidance in `docs/site.md`; verify them with `bash tools/harness.sh exec sh tools/site.sh demo` without changing vector SQL, corpus or runtime selection.
 
 ## 2. Explicit initial selection
