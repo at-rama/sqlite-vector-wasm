@@ -48,6 +48,8 @@ Next, [create a vector table and find its nearest neighbors](https://at-rama.git
 - Browser persistence through OPFS when supported and correctly hosted.
 - Static sqlite-vec integration: no runtime extension loading.
 
+Download size: approximately 674 kB gzipped (1.78 MB uncompressed) for the JavaScript loader and SQLite/sqlite-vec WASM binary combined, measured with release 0.2.0 served by GitHub Pages. Application data is additional; transfer size depends on your server’s compression settings.
+
 ## Browser requirements and boundaries
 
 Target modern browsers with the required WebAssembly and JavaScript support. Keep all WASM, Worker, promiser and OPFS companion assets together when deploying the runtime. OPFS requires a secure context and Workers; some persistent VFS modes additionally require cross-origin isolation. An unavailable requested persistent VFS does not silently fall back to in-memory storage.
