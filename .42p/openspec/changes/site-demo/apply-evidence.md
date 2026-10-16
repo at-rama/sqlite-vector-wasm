@@ -2,7 +2,7 @@
 
 ## Scope and candidate
 
-This is the Apply receipt for **A-site_demo**, not post-Apply 42P Verification, archive, complete distribution acceptance or integration authorization. The executable candidate is commit `5f9c847fcebbc4fab5623728c08f5b6790281346`, tree `06d501cf20e73ca5587aa41a3df57426c9a338f1`. The local staged tree was independently compared with that GitHub tree and matched exactly before the final documentation/test checks. Subsequent task/receipt changes do not alter runtime, UI, preparation or site workflow inputs.
+This is the Apply receipt for **A-site_demo**, not post-Apply 42P Verification, archive, complete distribution acceptance or integration authorization. The initial executable candidate is commit `5f9c847fcebbc4fab5623728c08f5b6790281346`, tree `06d501cf20e73ca5587aa41a3df57426c9a338f1`. The local staged tree was independently compared with that GitHub tree and matched exactly before the final documentation/test checks. Its immediate completion commit changed only task/receipt files. The editorial continuation below identifies the later UI changes and renewed evidence separately.
 
 The [planning correspondence](coverage.md) was re-examined against the complete allocated unit and qualified Capture passages at the same Allocation SHA-256 `c607b1e9b1903249b644a8d818d176ce82918c73eac760b244bf1b7d5129c74b`. All eight delta requirements remain within that unit: published stable consumption/identity, complete attributed corpus, both modes, actual exploration, actual-operation inspection, transient usable session and scoped checks. Both semantic correspondence directions remain 100%; no upstream semantic revision or unrelated realization was introduced. This does not establish fidelity to unexamined historical originals.
 
@@ -52,3 +52,12 @@ The Repository check and rerun automated tests for the executable candidate also
 ## Remaining lifecycle
 
 Post-Apply `42p-verify-change`, native archive and human integration remain subsequent operations. Their merge gates are expected to remain unsatisfied while this Change is active and has no post-Apply Verification report. No OPFS, persistence, full package API/capability or semantic-quality acceptance is claimed.
+
+
+## Editorial continuation — 2026-10-16
+
+The user approved a bounded editorial revision after exercising the demo: identify SQLite/sqlite-vec and local execution in the introduction; explain compact binary versus original Float32 values with a vector-only approximate size ratio; show a human-readable representation/metric/timing summary, six distances and actual SQL before optional raw diagnostics; shorten the initial grid to 24 emojis while keeping every match reachable; move versions and execution details into the technical panel and keep the attributed footer brief.
+
+These changes realize the existing interaction/inspection/mobile obligations and permitted presentation choices. The complete corpus, both representations, search/lifetime behavior, independent checks and package/runtime boundaries remain unchanged. The existing Allocation snapshot and bidirectional planning correspondence remain applicable; no new product requirement or separate allocation unit is introduced. Historical initial-Apply results above retain their original candidate identity. Renewed evidence for this continuation is recorded below rather than carrying earlier UI results forward.
+
+Renewed checks: the 37 site/renderer tests and repository gateway passed. Browser and identified preview results are pending while the updated UI is prepared. The browser check now verifies the readable six-row distance table, actual SQL, raw diagnostics collapsed by default, 24-to-48 grid expansion and layout containment with the technical panel open at desktop/mobile widths.

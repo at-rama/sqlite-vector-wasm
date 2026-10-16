@@ -81,14 +81,16 @@ export async function checkDemo(url, { root, screenshot, expectedSelection, fail
     await page.locator('#emoji-search').fill('zz-no-such-emoji'); await page.getByText('No matching emojis.', { exact: false }).waitFor();
     await page.locator('#emoji-search').fill('%'); await page.getByText('No matching emojis.', { exact: false }).waitFor();
     await page.locator('#emoji-search').fill(''); await page.getByText('1661 matching emojis', { exact: false }).waitFor();
-    await page.getByRole('button', { name: /Show more/ }).click(); assert.equal(await page.locator('.emoji-grid button').count(), 120);
+    await page.getByRole('button', { name: /Show more/ }).click(); assert.equal(await page.locator('.emoji-grid button').count(), 48);
     // Race two selections and mode changes without waiting for earlier responses.
     await page.locator('.emoji-grid [data-emoji-id="1"]').click();
     await page.locator('.emoji-grid [data-emoji-id="40"]').click();
     await page.locator('input[value="binary"]').check(); await wait('binary', 40);
-    await page.locator('.demo-technical summary').click();
+    await page.locator('.demo-technical > summary').click();
     assert.match(await page.locator('.demo-diagnostics').textContent(), /SELECT rowid/);
-    await page.locator('.demo-technical summary').click();
+    assert.equal(await page.locator('.demo-distances tbody tr').count(), 6);
+    assert.match(await page.locator('.demo-sql').textContent(), /SELECT rowid/);
+    assert.equal(await page.locator('.demo-raw').getAttribute('open'), null);
     for (const width of [1280, 390]) {
       await page.setViewportSize({ width, height: 900 });
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'Demo overflows viewport');
