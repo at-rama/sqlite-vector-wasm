@@ -27,6 +27,15 @@ export async function releaseFixture(t, { version = '0.1.0', name = '@at-rama/sq
   };
   const lockBytes = Buffer.from(JSON.stringify(lock,null,2)+'\n');
   await writeFile(sourceLockPath,lockBytes);
+  // Match copied notice metadata to the stable fixture selection while keeping
+  // the real notice hashes and byte-integrity checks intact.
+  const noticesPath = join(repository,'tools/package/notices.json');
+  const notices = JSON.parse(await readFile(noticesPath));
+  for (const notice of notices.notices.filter(item => item.project === 'sqliteVec')) {
+    notice.version = lock.sqliteVec.version;
+    notice.origin = notice.origin.replace(/\/blob\/v[^/]+\//, '/blob/v0.1.9/');
+  }
+  await writeFile(noticesPath,JSON.stringify(notices,null,2)+'\n');
   const inputs = {lockDigest:{algorithm:'sha256',value:hash(lockBytes)}};
   for (const key of ['sqlite','sqliteVec']) inputs[key]={version:lock[key].version,digest:lock[key].digest};
   const build = {tools:Object.fromEntries(['cc','make','emcc','wasm-strip','wasm-opt','node','npm'].map(key=>[key,`${key} fixture 4.0.23`])),platform:'fixture Linux x86_64',amalgamation:['make'],configure:['configure'],wasm:['make']};

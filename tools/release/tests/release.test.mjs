@@ -32,6 +32,14 @@ test('exact upstreams, four channels, numerical signals and suffix ordering', ()
   assert.throws(() => channelFor({ ...pair(), channel: 'next' }));
 });
 
+test('experimental upstream cannot be represented as latest publication', () => {
+  const experimental = pair('0.1.10-alpha.3', '3.54.0');
+  assert.equal(channelFor(experimental), 'next');
+  assert.throws(() => calc(experimental), /Initial experimental publication is not authorized/);
+  const invalid = state('0.2.1', null, experimental);
+  assert.throws(() => calc(pair(), invalid), /Wrong published composition\/channel/);
+});
+
 test('stable initial, default patch, simultaneous signals and maturity', () => {
   assert.equal(calc(pair()).name, '@at-rama/sqlite-vector-wasm');
   assert.equal(calc(pair(), state()).name, '@at-rama/sqlite-vector-wasm');
