@@ -2,9 +2,9 @@
   "schemaVersion": 1,
   "sqlite": "3.54.0",
   "sqliteVec": "0.1.9",
-  "releaseComment": "Query planner optimizations, JSON formatting conversions and date/time enhancements; ALTER TABLE now rejects adding, dropping or renaming ROWID alias columns.\n\nStill using sqlite-vec 0.1.9, which fixes erroneous SQLITE_DONE errors when deleting rows from vec0 tables with text metadata values longer than 12 characters.",
+  "releaseComment": "Documentation alignment release; no upstream version change or runtime feature change.",
   "preparation": {
-    "runId": 38685200189,
-    "url": "https://github.com/at-rama/sqlite-vector-wasm/actions/runs/38685200189"
+    "runId": 38948384861,
+    "url": "https://github.com/at-rama/sqlite-vector-wasm/actions/runs/38948384861"
   }
 }
