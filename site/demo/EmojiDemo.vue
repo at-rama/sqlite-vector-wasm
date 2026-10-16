@@ -156,7 +156,7 @@ onBeforeUnmount(() => { disposed = true; requestVersion++; textVersion++; void d
 .demo-modes small { color: var(--vp-c-text-2); }
 .demo-modes input { appearance: auto; margin-right: .3rem; }
 .neighbor-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .6rem; }
-.neighbor-grid button { display: flex; align-items: center; flex-direction: column; gap: .5rem; min-height: 100px; overflow-wrap: anywhere; font-size: .9rem; }
+.neighbor-grid button { display: flex; align-items: center; justify-content: center; text-align: center; flex-direction: column; gap: .5rem; min-height: 100px; overflow-wrap: anywhere; font-size: .9rem; }
 .neighbor-grid button > span:first-child { font-size: 2.1rem; }
 .demo-technical { margin: 1.5rem 0; padding: .8rem 1rem; border: 1px solid var(--vp-c-divider); border-radius: 8px; }
 .demo-technical summary { cursor: pointer; font-weight: 600; }
