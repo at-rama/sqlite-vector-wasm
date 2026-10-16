@@ -2,18 +2,18 @@
 
 ## 1. Word-prefix discovery
 
-- [ ] 1.1 Implement the bounded text policy and parameterized word-prefix SQLite filtering over all descriptions/keywords, not only the displayed title in the existing demo Worker; verify literal-membership offline fixtures for `cat` matching `cat`/`cats` but not `indicator`, `mus` matching `music`/`musical` even with a different title, case, multiword AND/order, punctuation/repetition, whitespace, punctuation-only and injection-like inputs with `node --test tools/site/tests/demo-*.test.mjs`.
-- [ ] 1.2 Extend the shared real-browser checker with actual catalogue/SQLite search assertions for those behaviors and update the demo text-search guidance in `docs/site.md`; verify them with `bash tools/harness.sh exec sh tools/site.sh demo` without changing vector SQL, corpus or runtime selection.
+- [x] 1.1 Implement the bounded text policy and parameterized word-prefix SQLite filtering over all descriptions/keywords, not only the displayed title in the existing demo Worker; verify literal-membership offline fixtures for `cat` matching `cat`/`cats` but not `indicator`, `mus` matching `music`/`musical` even with a different title, case, multiword AND/order, punctuation/repetition, whitespace, punctuation-only and injection-like inputs with `node --test tools/site/tests/demo-*.test.mjs`.
+- [x] 1.2 Extend the shared real-browser checker with actual catalogue/SQLite search assertions for those behaviors and update the demo text-search guidance in `docs/site.md`; verify them with `bash tools/harness.sh exec sh tools/site.sh demo` without changing vector SQL, corpus or runtime selection.
 
 ## 2. Explicit initial selection
 
-- [ ] 2.1 Resolve 🐱 by its literal Unicode identity, reset fresh-session search/batch state, and reject missing/duplicate defaults through the existing initialization-error path; verify reordered/missing/duplicate catalogue fixtures and keep the empty-query full catalogue reachable.
-- [ ] 2.2 Replace entry/retry/re-entry ID-zero assumptions in the browser checker, assert visible 🐱 selection with six real binary neighbors and no initial Float32 request, and add its query to the independent scalar-reference checks; verify fresh entry, retry and re-entry in `sh tools/site.sh demo` through the qualified harness, retaining the existing fixed-ID and boundary-tie queries.
+- [x] 2.1 Resolve 🐱 by its literal Unicode identity, reset fresh-session search/batch state, and reject missing/duplicate defaults through the existing initialization-error path; verify reordered/missing/duplicate catalogue fixtures and keep the empty-query full catalogue reachable.
+- [x] 2.2 Replace entry/retry/re-entry ID-zero assumptions in the browser checker, assert visible 🐱 selection with six real binary neighbors and no initial Float32 request, and add its query to the independent scalar-reference checks; verify fresh entry, retry and re-entry in `sh tools/site.sh demo` through the qualified harness, retaining the existing fixed-ID and boundary-tie queries.
 
 ## 3. Local interaction hierarchy
 
-- [ ] 3.1 Refine `EmojiDemo.vue` grouping and concise English guidance so search, selection, nearby representation controls and six neighbors are clear; keep technical/raw details initially closed and runtime/corpus links discoverable. Update applicable demo guidance and verify desktop/mobile screenshots, all-match Show more access, actual keyboard traversal and visible focus in the existing browser exercise.
-- [ ] 3.2 Adapt the existing interaction checks to the reviewed layout while preserving copy success/failure, mode selection retention, one-time Float32 loading, optional-load recovery, latest-request behavior, connection/Worker disposal, accessible labels and no page overflow; verify both site prefixes and keep measurements, metrics and provenance truthful without changes to global navigation/theme.
+- [x] 3.1 Refine `EmojiDemo.vue` grouping and concise English guidance so search, selection, nearby representation controls and six neighbors are clear; keep technical/raw details initially closed and runtime/corpus links discoverable. Update applicable demo guidance and verify desktop/mobile screenshots, all-match Show more access, actual keyboard traversal and visible focus in the existing browser exercise.
+- [x] 3.2 Adapt the existing interaction checks to the reviewed layout while preserving copy success/failure, mode selection retention, one-time Float32 loading, optional-load recovery, latest-request behavior, connection/Worker disposal, accessible labels and no page overflow; verify both site prefixes and keep measurements, metrics and provenance truthful without changes to global navigation/theme.
 
 ## 4. Complete demo integration evidence
 
