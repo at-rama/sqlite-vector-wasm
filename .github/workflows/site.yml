@@ -129,6 +129,7 @@ jobs:
             candidate/.work/site/demo-results.json
             candidate/.work/site/demo-stable-mobile.png
             candidate/.work/site/demo-preview-mobile.png
+            candidate/.work/site/*-initial-*.png
             candidate/.work/site/assembled-demo-mobile.png
             candidate/.work/docs-example/result.json
             candidate/.work/pages/site-publication.json
@@ -216,5 +217,6 @@ jobs:
           path: |
             live-pages.json
             live-pages-demo-mobile.png
+            live-pages-demo-initial-*.png
           retention-days: 30
           if-no-files-found: error

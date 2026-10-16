@@ -1,3 +1,5 @@
+import { descriptionWords, textSearch } from './discovery.mjs';
+
 let db, catalogue, binary, floats, manifest, runtime, base, floatReady = false;
 let queue = Promise.resolve(), controller = new AbortController();
 const stages = [];
@@ -45,7 +47,7 @@ async function init(args) {
     db.exec('CREATE TABLE emojis(id INTEGER PRIMARY KEY, words TEXT NOT NULL)');
     db.exec('CREATE VIRTUAL TABLE binary_vectors USING vec0(embedding bit[304])');
     const statement = db.prepare('INSERT INTO emojis VALUES (?, ?)');
-    try { for (const row of catalogue) statement.bind([row.id, row.words.join(' ').toLowerCase()]).stepReset(); }
+    try { for (const row of catalogue) statement.bind([row.id, descriptionWords(row.words)]).stepReset(); }
     finally { statement.finalize(); }
     insert('binary_vectors', binary, 38, true);
   });
@@ -64,8 +66,8 @@ async function execute(type, args) {
   if (type === 'close') { db?.close(); db = undefined; return { closed: true }; }
   if (!db) throw Error('Demo is not initialized');
   if (type === 'text') {
-    const text = args.text.toLowerCase().replace(/[\\%_]/g, '\\$&');
-    return db.selectArrays("SELECT id FROM emojis WHERE words LIKE ? ESCAPE '\\' ORDER BY id", ['%' + text + '%']).map(r => r[0]);
+    const query = textSearch(args.text);
+    return db.selectArrays(query.sql, query.parameters).map(r => r[0]);
   }
   if (type !== 'neighbors') throw Error('Unknown operation');
   if (!Number.isInteger(args.id) || !catalogue[args.id]) throw Error('Invalid emoji');

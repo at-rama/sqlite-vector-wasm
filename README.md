@@ -56,6 +56,8 @@ The package preserves upstream SQLite/sqlite-vec behavior. It does **not** provi
 
 ## Distribution and source
 
+Download size: approximately 674 kB gzipped (1.78 MB uncompressed) for the JavaScript loader and SQLite/sqlite-vec WASM binary combined, measured with release 0.2.0 served by GitHub Pages. Application data is additional; transfer size depends on your server’s compression settings.
+
 - [npm package](https://www.npmjs.com/package/@at-rama/sqlite-vector-wasm)
 - [GitHub Releases](https://github.com/at-rama/sqlite-vector-wasm/releases)
 
