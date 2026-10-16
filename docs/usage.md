@@ -1,6 +1,6 @@
 # Using sqlite-vector-wasm
 
-A short guide to using the distributed browser runtime. The package exposes SQLite's own JavaScript/WASM APIs, with sqlite-vec already available in each new connection; it does not add a new JavaScript wrapper.
+A short guide to SQLite's browser JavaScript/WASM APIs, with sqlite-vec available in each new connection.
 
 This guide’s minimal browser example is checked against published version **0.2.0**.
 
@@ -10,7 +10,18 @@ This guide’s minimal browser example is checked against published version **0.
 npm install @at-rama/sqlite-vector-wasm@0.2.0
 ```
 
-Copy **all eleven** files from the installed package to the same public URL directory, here `/sqlite/`. Keep the `.wasm` file, Worker entries, promisers and OPFS proxy with the loaders. Serve `.js`/`.mjs` as JavaScript and `.wasm` as `application/wasm`. npm installation alone does not serve these assets.
+From your project's root, copy **all eleven runtime files** into one public asset directory. For example, with a POSIX shell:
+
+```sh
+mkdir -p public/sqlite
+cp node_modules/@at-rama/sqlite-vector-wasm/*.js \
+   node_modules/@at-rama/sqlite-vector-wasm/*.mjs \
+   node_modules/@at-rama/sqlite-vector-wasm/*.wasm public/sqlite/
+```
+
+Configure your application server to serve `public/sqlite/` at `/sqlite/`; this mapping is a hosting choice, not something npm sets up. Another static host can use an equivalent directory and URL. Keep the loaders, WASM, Worker entries, promisers and OPFS proxy together. Serve `.js`/`.mjs` as JavaScript and `.wasm` as `application/wasm`.
+
+In a browser module, initialize the in-memory database:
 
 ```js
 import sqlite3InitModule from '/sqlite/sqlite3.mjs';
@@ -63,9 +74,15 @@ console.log(db.selectArrays("SELECT rowid FROM texts WHERE texts MATCH 'vector'"
 
 ## Scripts and Workers
 
-For a classic script, load `/sqlite/sqlite3.js` and call `globalThis.sqlite3InitModule()`. In a classic Worker, `importScripts('/sqlite/sqlite3.js')` precedes the same initializer. The package includes `sqlite3-worker1.js` and `sqlite3-worker1.mjs`, plus the corresponding `sqlite3-worker1-promiser` entry points. Worker companions must resolve from the same asset directory; when a Worker entry is hosted elsewhere, the upstream `sqlite3.dir=/sqlite` URL parameter can locate the assets.
+For new applications, run the initialization and SQL examples above inside your own **dedicated module Worker**, importing `/sqlite/sqlite3.mjs` there and using SQLite's API directly. Exchange application messages with the page through `postMessage()`. This keeps synchronous database work off the UI thread. See [SQLite's JavaScript API documentation](https://sqlite.org/wasm/doc/trunk/api-index.md).
 
-For the promise-based Worker1 interface, with the runtime files at /sqlite/:
+For a classic script, load `/sqlite/sqlite3.js` and call `globalThis.sqlite3InitModule()`. In a classic Worker, first call `importScripts('/sqlite/sqlite3.js')`, then the same initializer.
+
+### Worker1 compatibility
+
+SQLite [deprecates Worker1 and its promiser interface](https://sqlite.org/wasm/doc/trunk/api-worker1.md) and discourages their use for new applications. The package continues to include their upstream `.js`, `.mjs` and promiser entry points for compatibility.
+
+For an existing application using the promise-based Worker1 interface, with the runtime files at `/sqlite/`:
 
 ```js
 import createPromiser from '/sqlite/sqlite3-worker1-promiser.mjs';
@@ -79,7 +96,7 @@ console.log(response.result.resultRows);
 await promiser({ type: 'close', dbId });
 ```
 
-Bundler-friendly variants are supplied for tools that support the upstream asset-URL handling. There is no guarantee that every bundler can consume them. Follow [SQLite's Worker1 documentation](https://sqlite.org/wasm/doc/trunk/api-worker1.md) for message and promiser API details.
+Worker companions must resolve from the same asset directory; when a Worker entry is hosted elsewhere, the upstream `sqlite3.dir=/sqlite` URL parameter can locate the assets. Supplied bundler-friendly variants rely on the bundler's support for upstream asset-URL handling; compatibility with every bundler is not guaranteed. The Worker1 documentation describes its message and promiser APIs.
 
 ## Browser persistence
 

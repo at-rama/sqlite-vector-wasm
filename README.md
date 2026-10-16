@@ -8,7 +8,9 @@
 
 **SQLite for the browser, with vector search built in.**
 
-sqlite-vector-wasm distributes SQLite's browser WebAssembly runtime with [sqlite-vec](https://github.com/asg017/sqlite-vec) statically integrated. Vector search is available in every new connection, without compilation or extension registration by consumers. It retains SQLite's upstream browser APIs rather than introducing a new database wrapper.
+sqlite-vector-wasm distributes SQLite's browser WebAssembly runtime with [sqlite-vec](https://github.com/asg017/sqlite-vec) statically integrated. Use SQLite's own browser APIs, with vector search available in every new connection. No compilation or extension registration is needed.
+
+[Try the demo](https://at-rama.github.io/sqlite-vector-wasm/demo/) · [Get started](https://at-rama.github.io/sqlite-vector-wasm/usage/)
 
 ## Quick start
 
@@ -18,7 +20,7 @@ Install the browser assets:
 npm install @at-rama/sqlite-vector-wasm@0.2.0
 ```
 
-Serve **all eleven runtime files** from the package at a common URL prefix, for example `/sqlite/`. npm installs the assets but does not configure a browser server or expose a root initialization API. Serve `.js` and `.mjs` as JavaScript, and `.wasm` as `application/wasm`.
+Serve **all eleven runtime files** together, for example under `/sqlite/`. The [usage guide](https://at-rama.github.io/sqlite-vector-wasm/usage/#host-and-initialize) provides the copy commands and hosting setup. npm installs the assets; your server must expose their URLs with JavaScript MIME types for `.js`/`.mjs` and `application/wasm` for `.wasm`.
 
 With those files available under `/sqlite/`, load the upstream ES module:
 
@@ -34,7 +36,7 @@ try {
 }
 ```
 
-The package also includes conventional script and Worker loaders, Worker1/promiser entries and supplied bundler-friendly variants. See the [short usage guide](https://at-rama.github.io/sqlite-vector-wasm/usage/) for practical SQL, vector, Worker and persistence examples.
+Next, [create a vector table and find its nearest neighbors](https://at-rama.github.io/sqlite-vector-wasm/usage/#float32-nearest-neighbors). The guide also covers binary vectors, FTS5, Workers and persistence.
 
 ## Features
 
@@ -42,7 +44,7 @@ The package also includes conventional script and Worker loaders, Worker1/promis
 - Float32 vector similarity search with sqlite-vec (`vec0`).
 - Binary vectors and Hamming-distance search.
 - Full-text search through SQLite FTS5.
-- Web Worker support, including Worker1 and its promise interface.
+- Web Worker support through SQLite's direct APIs; upstream Worker1/promiser entries remain available for compatibility.
 - Browser persistence through OPFS when supported and correctly hosted.
 - Static sqlite-vec integration: no runtime extension loading.
 
@@ -67,6 +69,6 @@ This repository uses agent-assisted development, automated verification and huma
 
 ## License
 
-Project-authored code and documentation are licensed under [Apache-2.0](https://github.com/at-rama/sqlite-vector-wasm/blob/main/LICENSE). The distribution also includes upstream code under its own terms. **See [NOTICE](https://github.com/at-rama/sqlite-vector-wasm/blob/main/tools/package/NOTICE.txt) for bundled-component licensing**, with the full third-party texts in the package's `licenses/` directory. The npm `license` field identifies the project's Apache-2.0 license; it does not replace those upstream licenses.
+Project-authored code and documentation use [Apache-2.0](https://github.com/at-rama/sqlite-vector-wasm/blob/main/LICENSE), also identified by the npm `license` field. Bundled upstream components retain their own terms: see [NOTICE](https://github.com/at-rama/sqlite-vector-wasm/blob/main/tools/package/NOTICE.txt) and the full texts in the package's `licenses/` directory.
 
 Built on [SQLite](https://sqlite.org/) and [sqlite-vec](https://github.com/asg017/sqlite-vec).
