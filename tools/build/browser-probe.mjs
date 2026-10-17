@@ -1,19 +1,41 @@
 // Executed inside the browser, using upstream APIs without runtime glue.
+// Fixed native smoke queries for the two concrete build compositions.
+export function nativeProbeSql(vector) {
+  const key = typeof vector === 'string' ? 'sqliteVec' : vector?.key;
+  if (key === 'sqliteVec') return {
+    versionSql: "select sqlite_version(), vec_version(), (select count(*) from pragma_function_list where name='vector_version')",
+    expectedVersion: `v${typeof vector === 'string' ? vector : vector.version}`,
+    setup: "create virtual table v using vec0(embedding float[2]); insert into v(rowid,embedding) values(1,'[1,0]'),(2,'[0,1]');",
+    query: "select rowid,distance from v where embedding match '[1,0]' and k=2 order by distance",
+    otherVersion: 'vector_version',
+  };
+  if (key === 'sqliteVector') return {
+    versionSql: "select sqlite_version(), vector_version(), (select count(*) from pragma_function_list where name='vec_version')", expectedVersion: vector.version,
+    setup: "create table v(embedding blob); insert into v(rowid,embedding) values(1,vector_as_f32('[1,0]')),(2,vector_as_f32('[0,1]')); select vector_init('v','embedding','type=FLOAT32,dimension=2,distance=L2');",
+    query: "select rowid,distance from vector_full_scan('v','embedding','[1,0]',2) order by distance",
+    otherVersion: 'vec_version',
+  };
+  if (vector) throw Error('Unsupported vector probe identity');
+  return { versionSql: 'select sqlite_version()' };
+}
+
 export async function probe(sqlite3, vector, worker) {
   const check = (value, label) => { if (!value) throw Error(label); };
   const { capi: c, wasm: w, oo1 } = sqlite3;
   const db = new oo1.DB(':memory:', 'c');
+  const sql = nativeProbeSql(vector);
   try {
     const version = db.selectValue('select sqlite_version()');
-    const vecVersion = vector ? db.selectValue('select vec_version()') : null;
+    const vecVersion = vector ? db.selectArray(sql.versionSql)[1] : null;
     check(db.selectValue('select 9007199254740993') === 9007199254740993n, 'BigInt');
     db.exec("create virtual table f using fts5(text); insert into f values('browser vector'),('other');");
     check(db.selectValue("select count(*) from f where f match 'browser'") === 1, 'FTS5');
     if (vector) {
-      check(db.selectValue('select vec_version()') === `v${vector}`, 'vec version/automatic OO1 initialization');
-      db.exec("create virtual table v using vec0(embedding float[2]); insert into v(rowid,embedding) values(1,'[1,0]'),(2,'[0,1]');");
-      const rows = db.selectArrays("select rowid,distance from v where embedding match '[1,0]' and k=2 order by distance");
-      check(rows[0][0] === 1 && rows[0][1] === 0 && rows[1][0] === 2 && Math.abs(rows[1][1]-Math.SQRT2)<0.00001, 'vec0 deterministic nearest neighbors');
+      check(vecVersion === sql.expectedVersion, 'engine version/automatic OO1 initialization');
+      check(db.selectValue(`select count(*) from pragma_function_list where name='${sql.otherVersion}'`) === 0, 'only selected engine registered');
+      db.exec(sql.setup);
+      const rows = db.selectArrays(sql.query);
+      check(rows.length === 2 && rows[0][0] === 1 && rows[0][1] === 0 && rows[1][0] === 2 && Math.abs(rows[1][1]-Math.SQRT2)<0.00001, 'native deterministic nearest neighbors');
     }
     const pointer = w.allocPtr();
     let native;
@@ -25,13 +47,24 @@ export async function probe(sqlite3, vector, worker) {
       const statementPointer = w.allocPtr();
       let statement;
       try {
-        check(c.sqlite3_prepare_v2(native, vector ? 'select sqlite_version(), vec_version()' : 'select sqlite_version()', -1, statementPointer, 0) === 0, 'C prepare versions');
+        check(c.sqlite3_prepare_v2(native, sql.versionSql, -1, statementPointer, 0) === 0, 'C prepare versions');
         statement = w.peekPtr(statementPointer);
         check(c.sqlite3_step(statement) === c.SQLITE_ROW, 'C version row');
         check(c.sqlite3_column_text(statement, 0) === version, 'independent C SQLite version');
-        if (vector) check(c.sqlite3_column_text(statement, 1) === `v${vector}`, 'independent C vec version');
+        if (vector) {
+          check(c.sqlite3_column_text(statement, 1) === sql.expectedVersion, 'independent C engine version');
+          check(c.sqlite3_column_int(statement, 2) === 0, 'only selected engine on C connection');
+        }
       } finally { if (statement) c.sqlite3_finalize(statement); w.dealloc(statementPointer); }
-      if (vector) check(c.sqlite3_exec(native, 'select vec_version(); create virtual table cv using vec0(x float[2])', 0, 0, 0) === 0, 'automatic C initialization');
+      if (vector) {
+        check(c.sqlite3_exec(native, sql.setup, 0, 0, 0) === 0, 'automatic C initialization');
+        const queryPointer = w.allocPtr(); let statement;
+        try {
+          check(c.sqlite3_prepare_v2(native, sql.query, -1, queryPointer, 0) === 0, 'C native query prepare');
+          statement = w.peekPtr(queryPointer);
+          check(c.sqlite3_step(statement) === c.SQLITE_ROW && c.sqlite3_column_int(statement, 0) === 1 && c.sqlite3_column_double(statement, 1) === 0, 'C native nearest neighbor');
+        } finally { if (statement) c.sqlite3_finalize(statement); w.dealloc(queryPointer); }
+      }
       check(db.selectValue("select count(*) from sqlite_schema where name='independent'") === 0, 'connection separation');
     } finally { if (native) check(c.sqlite3_close_v2(native) === 0, 'C close'); w.dealloc(pointer); }
     const vfs = c.sqlite3_js_vfs_list().sort();
