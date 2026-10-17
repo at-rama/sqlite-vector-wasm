@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 2,
+  "sqlite": {
+    "version": "3.54.0",
+    "archiveUrl": "https://sqlite.org/2026/sqlite-src-3540000.zip",
+    "digest": {
+      "algorithm": "sha3-256",
+      "value": "a5c29342ca185abcda332448fbb27c536661245be27e20199b46c49099b0e15e"
+    },
+    "releaseUrl": "https://sqlite.org/releaselog/3_54_0.html",
+    "digestUrl": "https://sqlite.org/download.html"
+  },
+  "sqliteVector": {
+    "version": "1.1.2",
+    "releaseId": 387102049,
+    "tag": "1.1.2",
+    "commit": "0c2223ada9dce1fa33248c8835a15f51d9a0f655",
+    "archiveUrl": "https://codeload.github.com/sqliteai/sqlite-vector/tar.gz/0c2223ada9dce1fa33248c8835a15f51d9a0f655",
+    "releaseUrl": "https://github.com/sqliteai/sqlite-vector/releases/tag/1.1.2",
+    "digestUrl": "https://api.github.com/repos/sqliteai/sqlite-vector/releases/387102049",
+    "tagUrl": "https://api.github.com/repos/sqliteai/sqlite-vector/git/ref/tags/1.1.2",
+    "commitUrl": "https://api.github.com/repos/sqliteai/sqlite-vector/git/commits/0c2223ada9dce1fa33248c8835a15f51d9a0f655",
+    "digest": {
+      "algorithm": "sha256",
+      "value": "b44a759233bdc9a502bf2407972608d13dd6e60a31b4b03c2d4ae4b6b04f03c7"
+    }
+  }
+}
