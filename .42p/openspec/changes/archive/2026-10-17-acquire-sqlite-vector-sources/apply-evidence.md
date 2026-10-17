@@ -18,7 +18,7 @@ git add inputs/sqlite-vector.sources.lock.json
 bash tools/inputs.sh acquire --lock inputs/sqlite-vector.sources.lock.json
 ```
 
-Reviewed the candidate, verified the SQLite pin equals the unchanged default pin, then recorded the candidate bytes in the separate lock before acquisition. Official release metadata identifies release `387102049`, published `2026-09-11T14:27:22Z`, stable/non-draft; tag `1.1.2` binds to commit `0c2223ada9dce1fa33248c8835a15f51d9a0f655`, also confirmed through the official commit endpoint. Origin metadata locators are retained in the [recorded candidate lock](../../../../inputs/sqlite-vector.sources.lock.json).
+Reviewed the candidate, verified the SQLite pin equals the unchanged default pin, then recorded the candidate bytes in the separate lock before acquisition. Official release metadata identifies release `387102049`, published `2026-09-11T14:27:22Z`, stable/non-draft; tag `1.1.2` binds to commit `0c2223ada9dce1fa33248c8835a15f51d9a0f655`, also confirmed through the official commit endpoint. Origin metadata locators are retained in the [recorded candidate lock](../../../../../inputs/sqlite-vector.sources.lock.json).
 
 Fresh candidate preparation and the subsequent acquisition each downloaded the commit-addressed archive. The independently repeated SHA-256 is `b44a759233bdc9a502bf2407972608d13dd6e60a31b4b03c2d4ae4b6b04f03c7`, 2,772,458 bytes, matching the planning observation. This is locally measured integrity, not an upstream-published source checksum or signature. The consumed lock SHA-256 is `f8d1fd0bd8660eb69f964101a5ca0a650ac297cfc222494b4acc777116dbd779`.
 
