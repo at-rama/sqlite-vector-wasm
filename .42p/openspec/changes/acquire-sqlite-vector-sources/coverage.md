@@ -6,6 +6,10 @@ Planning contract at baseline `12370ee6093cf931771ecaa4ab4e217f45466fbf`; unit *
 
 Read the complete selected passages, including conditions outside handles, then compare each source portion with the full proposal, delta scenarios, design decisions and tasks. Read every target requirement independently in reverse. References and row counts are navigation, not evidence by themselves. This review establishes the proposed realization contract only; it does not verify code or re-audit the historical sources.
 
+## Current applicability
+
+After PR #66 was merged, PR #67 was updated to revision `1741f2563c3ecef17240bf100a1d144d7783459c`. The Allocation in that revision is byte-identical to the recorded `12370ee` snapshot and to main at `2faca1144757a18955abf4d8db54e842c6d492df`, with the same SHA-256 above. The historical derivation baseline is retained; its applicability to the integrated design is established. This status refresh changes neither the proposed obligations nor the planning coverage verdict, and supplies no implementation evidence.
+
 ## Forward dispositions
 
 Requirement names below refer to `specs/upstream-inputs/spec.md`.
@@ -45,4 +49,4 @@ Proposal and design select one concrete upstream/release-bound source format ins
 
 Allocation-unit → proposed Change: **100%**. Proposed Change → allocation unit: **100%**. No missing source obligation or ungrounded target requirement identified in this semantic planning review. This is correspondence of the entire A-inputs contract, not task completion, archive readiness, source acquisition success or product acceptance.
 
-Known downstream limits are explicit: production still uses sqlite-vec, A-build does not yet consume schema 2, final notice qualification including bundled FP16 provenance belongs to A-package, and full browser/OPFS evidence belongs to A-acceptance. PR #66 is the unmerged upstream design dependency. Historical archived input Changes retain their own snapshots and are not rewritten.
+Known downstream limits are explicit: production still uses sqlite-vec, A-build does not yet consume schema 2, final notice qualification including bundled FP16 provenance belongs to A-package, and full browser/OPFS evidence belongs to A-acceptance. PR #66 has been merged into main at `2faca1144757a18955abf4d8db54e842c6d492df`; that design prerequisite is satisfied. Historical archived input Changes retain their own snapshots and are not rewritten.
