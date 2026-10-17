@@ -49,9 +49,9 @@ Use the generated skills directly in ChatGPT Work by reading their files through
 
 The authority chain is:
 
-Instituted sources → distinct reconciled Captures → global Allocation → OpenSpec realization canon → Proposition → implementation → Verification.
+Human institution → distinct reconciled Captures as current design reference → global Allocation → OpenSpec realization canon → Proposition → implementation → Verification.
 
-Decisions and instituted sources retain design authority under AGENTS.md. The [current Captures and global Allocation](../engineering/) preserve reconciled working projections and responsibility coverage; they do not institute decisions or supply independent corroboration. The historic Distribution contract remains retrievable through its immutable S-spec provenance. The README is public product documentation. Neither OpenSpec artifacts nor task completion can change upstream authority or establish implementation acceptance. A-site consumes the published canonical distribution; it neither extends the package API nor introduces another canonical runtime distribution.
+Under AGENTS.md, the maintainer has instituted the [current Captures](../engineering/) as the authoritative design reference; the global Allocation derives responsibility coverage from them. Earlier sources, including the immutable historic Distribution contract under S-spec, remain provenance and rationale rather than parallel current obligations. Capture edits do not institute semantic revisions without explicit human adoption, and none of these artifacts independently corroborates implementation or historical fidelity. The README is public product documentation. Neither OpenSpec artifacts nor task completion can change upstream authority or establish implementation acceptance. A-site consumes the published canonical distribution; it neither extends the package API nor introduces another canonical runtime distribution.
 
 Only realization of an allocation unit requires a Change in this repository. Evolution of design or canon, including governance tooling, is exempt. The [pull-request gate canon](gates.md) defines executable Verification/Archive checks for affected Changes; it does not infer omitted Changes or replace review of evidence freshness.
 

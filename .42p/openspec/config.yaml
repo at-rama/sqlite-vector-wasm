@@ -1,11 +1,14 @@
 schema: spec-driven
 context: |
-  Instituted decisions and sources ground the design.
-  Distinct current Captures retain reconciled non-authoritative
-  working projections; one global Allocation organizes responsibility coverage.
-  OpenSpec contractualizes realization, followed by implementation and Verification.
-  Captures do not institute decisions or corroborate themselves. Instituted
-  sources retain authority; historical Distribution contract provenance is immutable.
+  The maintainer has explicitly instituted the four reconciled Captures as this
+  project's authoritative current design reference under ../AGENTS.md.
+  Earlier sources retain historical provenance and rationale; they do not restore
+  superseded obligations as a parallel current contract. One derived global
+  Allocation organizes responsibility coverage. OpenSpec contractualizes
+  realization, followed by implementation and Verification.
+  Future semantic Capture revisions require explicit human adoption. Editing or
+  checking a Capture does not institute a decision or independently corroborate
+  history or implementation. Historical Distribution provenance is immutable.
   Current Captures and Allocation live in .42p/engineering/ relative to the
   repository root (parent of this project root). README is public documentation.
   A-site consumes the published canonical runtime without extending the package
