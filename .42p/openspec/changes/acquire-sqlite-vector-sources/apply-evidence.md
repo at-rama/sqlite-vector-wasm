@@ -29,3 +29,27 @@ The first successful handoff has only `sqlite` and `sqliteVector` component entr
 `python3 -m unittest discover -s tools/tests -p test_inputs.py` passed 47 tests (34 retained, 13 added), with subcases covering both fixed paths, independent version selection, stable/prerelease classification, official release/tag/commit binding, candidate-only hashing, established-pin drift, equal textual versions in distinct engine upstreams, unsafe archive paths/collisions/links/ancestors, required sources and header version, digest-before-use, clean failure/no alternative-engine fallback, exact handoff and Git-index matching. These authored fixtures establish exercised control behavior, not upstream build compatibility.
 
 The complete registered suite `sh tools/test-repository.sh` passed 317 tests: repository gates 44, inputs 47, build 28, package 12, acceptance controls 15, release 39, update notices 6, update controls 27, Watch 51, OpenSpec tooling 11 and site 37. These are offline controls; they do not establish a newly built runtime.
+
+## Isolated clean-checkout reproduction
+
+At implementation commit `823172e719b3ecdffa779b256b96fb69a29e9dc6`, created two new detached Git worktrees, each clean with no `.work/`, SDK, tool installation, npm state or source outputs. No dependency installation was performed in either checkout. An empty per-checkout npm cache remained empty. Shared system tools, host/network and Git object store are common dependencies; source archives were freshly downloaded for every invocation, not copied from a sibling checkout.
+
+In checkout A ran `bash tools/inputs.sh acquire --lock inputs/sources.lock.json`, then the same command with `--lock inputs/sqlite-vector.sources.lock.json`. In checkout B ran them in the opposite order. All four returned success with distinct new workspaces, exact consumed lock identities and only the requested engine component. Both Git worktrees remained clean.
+
+For each invocation, a separate temporary Python script rehashed the downloaded archive bytes using `hashlib`, compared the digest with the recorded pin and handoff, and compared every source-view file byte-for-byte with its corresponding ZIP/TAR member using `zipfile`/`tarfile`. It used the same standard-library hash/archive implementations as the helper but a separate comparison path; it is not an independent archive-parser implementation.
+
+Observed in both orders:
+
+| Input | Downloaded archive bytes | Source files compared per invocation | Result |
+| --- | ---: | ---: | --- |
+| SQLite 3.54.0 | 14,881,448 | 2,284 | SHA3-256 matches unchanged pin; executable configure retained |
+| sqlite-vec 0.1.9 | 53,872 | 2 | SHA-256 matches unchanged pin; unchanged amalgamation C/header |
+| SQLite-Vector 1.1.2 | 2,772,458 | 18 | SHA-256 matches new pin; unchanged selected files; no bundled SQLite/packages/links in view |
+
+The sqlite-vec lock SHA-256 is `29bd2007a91eecc7810814c76e911792c18507942b980f51b4280ff12afaeb8d`; the Vector lock SHA-256 remains `f8d1fd0bd8660eb69f964101a5ca0a650ac297cfc222494b4acc777116dbd779`. Source-view byte comparison covered 9,176 file comparisons across four pairs. This shows the two recorded compositions can be acquired in either order, not that every future upstream layout is supported.
+
+## Boundary review
+
+Compared against the planning baseline `d11e39bc559342795f85fdc0a19f11c0053db6d6`: default `inputs/sources.lock.json`, `inputs/release.json`, downstream build/package/acceptance/Watch/release/Updates code, workflows and synchronized OpenSpec specs are unchanged. The source helper, its tests, source documentation, separate candidate pin and Change evidence/task tracking are the only realization changes. No publication policy, engine registry or runtime selector is added.
+
+`sh tools/check-repository.sh` and pinned `sh tools/openspec.sh exec validate --all --strict` passed (13 items, zero failed). The seven modified delta requirements preserve their full scenarios; length notices are informational and are not hidden or resolved by splitting existing requirements.

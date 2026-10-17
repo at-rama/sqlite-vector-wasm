@@ -8,7 +8,7 @@ Read the complete selected passages, including conditions outside handles, then 
 
 ## Current applicability
 
-The 2026-10-17 S-release-engines amendment and revised Allocation at `f754f2b` supersede the temporary-compatibility/removal assumption in the earlier Change. This review re-reads that amended contract and all five revised planning documents; it does not carry forward the earlier PASS based on Allocation `0d43d5ee…`. The pending reconciliation noted in the revised Allocation is addressed here by retaining both acquisition paths in the proposal, design, delta and tasks. PR #66 is merged. No code has been applied.
+The 2026-10-17 S-release-engines amendment and revised Allocation at `f754f2b` supersede the temporary-compatibility/removal assumption in the earlier Change. This review re-reads that amended contract and all five revised planning documents; it does not carry forward the earlier PASS based on Allocation `0d43d5ee…`. The pending reconciliation noted in the revised Allocation is addressed here by retaining both acquisition paths in the proposal, design, delta and tasks. PR #66 is merged. That paragraph records the pre-Apply coverage assessment; subsequent execution is recorded in [Apply evidence](apply-evidence.md).
 
 ## Forward dispositions
 
