@@ -2,12 +2,52 @@ import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { appendFileSync } from 'node:fs';
 import { lstat, readFile, writeFile, mkdir, mkdtemp, rename, realpath, readdir } from 'node:fs/promises';
-import { isAbsolute, join, resolve } from 'node:path';
+import { isAbsolute, join, resolve, relative, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { configureOptions, hostOptions, targets, wasmOptions, runtimeNames } from './config.mjs';
 
 export const repositoryRoot = fileURLToPath(new URL('../../', import.meta.url));
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
+
+export function parseBuildArguments(args) {
+  if (args.length === 0) return {};
+  if (args.length !== 2 || args[0] !== '--lock' || !args[1] || args[1].startsWith('-')) {
+    throw new Error('Usage: bash tools/build.sh [--lock PATH]');
+  }
+  return { lockPath: args[1] };
+}
+
+export function selectedEngine(pins) {
+  const engine = pins?.schemaVersion === 1 ? 'sqliteVec' : pins?.schemaVersion === 2 ? 'sqliteVector' : null;
+  if (!engine || JSON.stringify(Object.keys(pins).sort()) !== JSON.stringify(['schemaVersion', 'sqlite', engine].sort())) {
+    throw new Error('Unsupported or ambiguous source-lock composition');
+  }
+  return engine;
+}
+
+export function verifyAcquisition(inputs, lock) {
+  const pins = JSON.parse(lock), engine = selectedEngine(pins);
+  if (!inputs?.lockDigest?.value || !inputs.sqlite?.sourcePath || !inputs[engine]?.sourcePath
+      || inputs[engine === 'sqliteVec' ? 'sqliteVector' : 'sqliteVec']) throw new Error('Incomplete acquisition handoff');
+  if (inputs.lockDigest.algorithm !== 'sha256' || inputs.lockDigest.value !== sha256(lock)) throw new Error('Source lock changed after acquisition');
+  for (const key of ['sqlite', engine]) {
+    for (const field of ['version', 'archiveUrl', 'releaseUrl', 'digestUrl', ...(key === 'sqliteVector' ? ['releaseId', 'tag', 'commit', 'tagUrl', 'commitUrl'] : [])]) {
+      if (inputs[key][field] !== pins[key][field] || inputs[key][field] === undefined) throw new Error(`Wrong acquired ${key} identity: ${field}`);
+    }
+    if (inputs[key].digest?.algorithm !== pins[key].digest?.algorithm || inputs[key].digest?.value !== pins[key].digest?.value) throw new Error(`Wrong acquired ${key} identity: digest`);
+    cInclude(inputs[key].sourcePath);
+  }
+  return engine;
+}
+
+export async function sourceSelection(root, lockPath = 'inputs/sources.lock.json') {
+  const path = await realpath(resolve(root, lockPath));
+  const local = relative(root, path);
+  if (!local || local === '..' || local.startsWith('..' + sep) || isAbsolute(local)) throw new Error('Source lock must be inside this repository');
+  const bytes = await readFile(path);
+  const engine = selectedEngine(JSON.parse(bytes));
+  return { path, local, bytes, engine };
+}
 
 export function buildEnvironment(environment) {
   // Keep SDK activation, PATH and ordinary system settings, not ambient recipes.
@@ -25,11 +65,12 @@ export function cInclude(path) {
   return `"${path}"`;
 }
 
-export async function generateBridge(source, destination, template) {
-  const path = await realpath(join(source, 'sqlite-vec.c'));
+export async function generateBridge(source, destination, template, engine = 'sqliteVec') {
+  const path = await realpath(join(source, engine === 'sqliteVec' ? 'sqlite-vec.c' : 'src/sqlite-vector.h'));
   const content = await readFile(template, 'utf8');
-  if (content.split('@SQLITE_VEC_SOURCE@').length !== 2) throw new Error('Invalid extra-init template');
-  await writeFile(destination, content.replace('@SQLITE_VEC_SOURCE@', cInclude(path)), { flag: 'wx' });
+  const token = engine === 'sqliteVec' ? '@SQLITE_VEC_SOURCE@' : '@SQLITE_VECTOR_HEADER@';
+  if (content.split(token).length !== 2) throw new Error('Invalid extra-init template');
+  await writeFile(destination, content.replace(token, cInclude(path)), { flag: 'wx' });
 }
 
 export function commandRunner(logPath) {
@@ -93,9 +134,39 @@ export async function atomicHandoff(path, handoff) {
   await rename(temporary, path);
 }
 
+export async function compileVector(source, sqliteSource, workspace, execute, commands) {
+  const make = await readFile(join(sqliteSource, 'ext/wasm/GNUmakefile'), 'utf8');
+  const generator = await readFile(join(sqliteSource, 'ext/wasm/mkwasmbuilds.c'), 'utf8');
+  if (!/sqlite3-wasm\.c\.in\s*=/.test(make) || !generator.includes('$(sqlite3-wasm.c.in)')) {
+    throw new Error('Unsupported pinned baseline: separate extension object inputs');
+  }
+  const names = ['sqlite-vector.c', ...['cpu', 'avx2', 'avx512', 'neon', 'rvv', 'sse2'].map(name => `distance-${name}.c`)];
+  const actual = (await readdir(join(source, 'src'))).filter(name => name.endsWith('.c')).sort();
+  if (JSON.stringify(actual) !== JSON.stringify([...names].sort())) throw new Error('Unsupported SQLite-Vector C source inventory');
+  const objects = [];
+  for (const name of names) {
+    const input = await realpath(join(source, 'src', name));
+    const object = join(workspace, name.replace(/\.c$/, '.o'));
+    for (const path of [input, object, sqliteSource, join(source, 'src'), join(source, 'libs')]) cInclude(path);
+    if (!(await lstat(input)).isFile()) throw new Error('Nonregular Vector source');
+    const args = ['-Oz', '-std=c99', '-fPIC', '-DSQLITE_CORE', '-DSQLITE_WASM_EXTRA_INIT', '-include', 'strings.h',
+      '-I' + sqliteSource, '-I' + join(source, 'src'), '-I' + join(source, 'libs'), '-c', input, '-o', object];
+    commands.push(['emcc', ...args]);
+    await execute('emcc', args);
+    const info = await lstat(object);
+    if (!info.isFile() || info.size === 0) throw new Error('Missing/nonregular Vector object');
+    objects.push(object);
+  }
+  const include = join(workspace, 'vector-inputs.mk');
+  // Upstream computes dir.wasm lazily from MAKEFILE_LIST's last entry.
+  // Preserve its original GNUmakefile identity after adding our include.
+  await writeFile(include, `# Separate immutable extension inputs; upstream recipes remain intact.\nMAKEFILE := GNUmakefile\nsqlite3-wasm.c.in += ${objects.join(' ')}\n`, { flag: 'wx' });
+  return include;
+}
+
 // run is an explicit dependency for offline fixtures, never a production CLI option.
 export async function construct({ root = repositoryRoot, environment = process.env,
-  run: injectedRunner, saveHandoff = atomicHandoff } = {}) {
+  run: injectedRunner, saveHandoff = atomicHandoff, lockPath = 'inputs/sources.lock.json' } = {}) {
   const parent = join(root, '.work/build');
   await mkdir(parent, { recursive: true });
   const workspace = await mkdtemp(join(parent, 'run-'));
@@ -106,6 +177,7 @@ export async function construct({ root = repositoryRoot, environment = process.e
   const execute = (command, args, options = {}) => run(command, args, { cwd: root, env, ...options });
   try {
     cInclude(workspace);
+    const selection = await sourceSelection(root, lockPath);
     const tools = {};
     for (const command of ['cc', 'make', 'emcc', 'wasm-strip', 'wasm-opt', 'node', 'npm']) {
       const executable = command === 'wasm-opt' && env.EMSDK
@@ -113,33 +185,40 @@ export async function construct({ root = repositoryRoot, environment = process.e
       tools[command] = await execute(executable, ['--version'], { capture: true });
     }
     const platform = await execute('uname', ['-srm'], { capture: true });
-    const inputs = JSON.parse(await execute('bash', [join(root, 'tools/inputs.sh'), 'acquire', '--lock', join(root, 'inputs/sources.lock.json')], { capture: true }));
-    if (!inputs.lockDigest?.value || !inputs.sqlite?.sourcePath || !inputs.sqliteVec?.sourcePath) throw new Error('Incomplete acquisition handoff');
-    const lock = await readFile(join(root, 'inputs/sources.lock.json'));
-    const pins = JSON.parse(lock);
-    if (inputs.lockDigest.algorithm !== 'sha256' || inputs.lockDigest.value !== sha256(lock)) throw new Error('Source lock changed after acquisition');
-    for (const key of ['sqlite', 'sqliteVec']) {
-      if (inputs[key].version !== pins[key].version || inputs[key].digest?.algorithm !== pins[key].digest.algorithm
-          || inputs[key].digest?.value !== pins[key].digest.value) throw new Error(`Wrong acquired ${key} identity`);
-      cInclude(inputs[key].sourcePath);
-    }
+    const inputs = JSON.parse(await execute('bash', [join(root, 'tools/inputs.sh'), 'acquire', '--lock', selection.path], { capture: true }));
+    const lock = await readFile(selection.path);
+    if (!lock.equals(selection.bytes)) throw new Error('Source lock changed during acquisition');
+    const engine = verifyAcquisition(inputs, lock);
     await checkRecipe(inputs.sqlite.sourcePath);
     const bridge = join(workspace, 'extra-init.c');
-    await generateBridge(inputs.sqliteVec.sourcePath, bridge, join(root, 'tools/build/extra-init.c.in'));
+    const templatePath = join(root, 'tools/build', engine === 'sqliteVec' ? 'extra-init.c.in' : 'vector-extra-init.c.in');
+    await generateBridge(inputs[engine].sourcePath, bridge, templatePath, engine);
     const configure = ['env', ...hostOptions, './configure', ...configureOptions];
     await execute(configure[0], configure.slice(1), { cwd: inputs.sqlite.sourcePath });
     await execute('make', ['sqlite3.c'], { cwd: inputs.sqlite.sourcePath });
     await checkRelease(inputs.sqlite.sourcePath, inputs.sqlite.version);
+    const extensionCommands = [];
     const wasmArguments = [...targets, ...wasmOptions, `sqlite3_wasm_extra_init.c=${bridge}`];
+    let makeInclude;
+    if (engine === 'sqliteVector') {
+      makeInclude = await compileVector(inputs[engine].sourcePath, inputs.sqlite.sourcePath, workspace, execute, extensionCommands);
+      wasmArguments.push('-f', 'GNUmakefile', '-f', makeInclude);
+    }
     await execute('make', wasmArguments, { cwd: join(inputs.sqlite.sourcePath, 'ext/wasm') });
     const runtimeDirectory = join(inputs.sqlite.sourcePath, 'ext/wasm/jswasm');
     const handoff = {
       schemaVersion: 1,
       inputs,
+      sourceLockPath: selection.local,
+      engine: { key: engine, upstream: engine === 'sqliteVec' ? 'asg017/sqlite-vec' : 'sqliteai/sqlite-vector', version: inputs[engine].version },
       build: { tools, platform, configure, amalgamation: ['make', 'sqlite3.c'], wasm: ['make', ...wasmArguments],
+        commonWasmOptions: [...targets, ...wasmOptions],
         harnessSha256: sha256(await readFile(join(root, 'tools/harness.sh'))),
         configSha256: sha256(await readFile(join(root, 'tools/build/config.mjs'))),
-        templateSha256: sha256(await readFile(join(root, 'tools/build/extra-init.c.in'))),
+        templateSha256: sha256(await readFile(templatePath)),
+        ...(engine === 'sqliteVector' ? { extensionCommands, integration: {
+          bridgeSha256: sha256(await readFile(bridge)), makeIncludeSha256: sha256(await readFile(makeInclude)),
+        } } : {}),
         dependencyLockSha256: sha256(await readFile(join(root, 'tools/harness/package-lock.json'))) },
       runtimeDirectory,
       runtimeFiles: await runtimeInventory(runtimeDirectory),
@@ -156,8 +235,9 @@ export async function construct({ root = repositoryRoot, environment = process.e
 
 if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.meta.url) {
   try {
-    if (process.argv.length !== 2 || process.version !== 'v24.19.0') throw new Error('Use bash tools/build.sh with the qualified SDK');
-    console.log(JSON.stringify(await construct()));
+    const options = parseBuildArguments(process.argv.slice(2));
+    if (process.version !== 'v24.19.0') throw new Error('Use bash tools/build.sh with the qualified SDK');
+    console.log(JSON.stringify(await construct(options)));
   } catch (error) {
     console.error(`Build: ${error.message}`);
     process.exitCode = 1;
