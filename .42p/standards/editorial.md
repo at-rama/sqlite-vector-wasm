@@ -1,6 +1,6 @@
 # Editorial standard
 
-Applies to all human-facing repository prose. These rules govern presentation; [repository authority rules](../../AGENTS.md) distinguish instituted decision/source authority from non-authoritative design projections and the [technical canon](software.md) owns engineering rules.
+Applies to all human-facing repository prose. These rules govern presentation; [repository authority rules](../../AGENTS.md) identify the human-instituted Captures as the current design reference and distinguish them from derived projections and the [technical canon](software.md) owns engineering rules.
 
 1. **Write for the reader.** Product documentation must directly explain the repository's purpose, intended capabilities, boundaries and consumption. Development content must explain what contributors need to work here. Internal engineering documents may use the precise vocabulary needed for their subject.
 2. **Keep internal language in context.** Do not expose contracts, 42P terminology, agent instructions, verification mechanics or implementation workflows in product prose unless they help the reader use the product. Put relevant contributor commands and factual disclosures about agentic development in development content; link to deeper engineering material instead of explaining its machinery in the README.
