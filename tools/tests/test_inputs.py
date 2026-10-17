@@ -492,5 +492,249 @@ sys.exit(int(os.environ['CURL_STATUS']))
         self.assertNotIn(b'fixture-token', result.stderr)
 
 
+
+VECTOR_COMMIT = '0' * 40
+
+
+def vector_lock(v='1.1.2'):
+    return {'schemaVersion': 2, 'sqlite': lock()['sqlite'], 'sqliteVector': {
+        'version': v, 'releaseId': 456, 'tag': v, 'commit': VECTOR_COMMIT,
+        'archiveUrl': 'https://codeload.github.com/sqliteai/sqlite-vector/tar.gz/' + VECTOR_COMMIT,
+        'digest': {'algorithm': 'sha256', 'value': 'd' * 64},
+        'releaseUrl': 'https://github.com/sqliteai/sqlite-vector/releases/tag/' + v,
+        'digestUrl': inputs.VECTOR_API + '/releases/456',
+        'tagUrl': inputs.VECTOR_API + '/git/ref/tags/' + v,
+        'commitUrl': inputs.VECTOR_API + '/git/commits/' + VECTOR_COMMIT}}
+
+
+def vector_release(v='1.1.2'):
+    pin = vector_lock(v)['sqliteVector']
+    return {'id': 456, 'tag_name': v, 'draft': False, 'prerelease': '-' in v,
+            'published_at': '2026-09-11T14:27:22Z', 'url': pin['digestUrl'], 'html_url': pin['releaseUrl']}
+
+
+def vector_metadata(url):
+    if '/git/ref/tags/' in url:
+        tag = url.rsplit('/', 1)[1]
+        return json.dumps({'ref': 'refs/tags/' + tag, 'object': {
+            'type': 'commit', 'sha': VECTOR_COMMIT, 'url': vector_lock()['sqliteVector']['commitUrl']}})
+    if '/git/commits/' in url:
+        return json.dumps({'sha': VECTOR_COMMIT})
+    return release_page(url)
+
+
+class VectorResolutionTests(unittest.TestCase):
+    def resolve(self, releases=None, fetch=vector_metadata, **kwargs):
+        return inputs.resolve_vector_pair(metadata()[0], releases if releases is not None else [vector_release()],
+            fetch=fetch, archive_digest=lambda url: 'd' * 64, **kwargs)
+
+    def test_fixed_schema_and_independent_selection(self):
+        self.assertEqual(self.resolve(), vector_lock())
+        for sv, vv in ((None, None), ('3.53.4', None), (None, '1.1.2'), ('3.53.4', '1.1.2')):
+            self.assertEqual(self.resolve(sqlite_version=sv, vector_version=vv), vector_lock())
+        self.assertEqual(self.resolve(baseline=lock()), vector_lock())
+        self.assertEqual(inputs.resolve_pair(*metadata(), baseline=vector_lock(), fetch=release_page), lock())
+        for mutate in (lambda p:p.update(commit='bad'), lambda p:p.update(tag='1.1.1'),
+                       lambda p:p.update(archiveUrl='https://example.org/source'),
+                       lambda p:p.update(releaseId=True), lambda p:p.update(commitUrl=inputs.VECTOR_API+'/git/commits/'+'a'*40),
+                       lambda p:p.update(tagUrl='https://example.org/tag'), lambda p:p.pop('digest'),
+                       lambda p:p.update(releaseUrl='https://github.com/sqliteai/sqlite-wasm/releases/tag/1.1.2')):
+            candidate = vector_lock(); mutate(candidate['sqliteVector'])
+            with self.subTest(mutate=mutate), self.assertRaises(inputs.InputError): inputs.validate_lock(candidate)
+        mixed = vector_lock(); mixed['sqliteVec'] = lock()['sqliteVec']
+        with self.assertRaises(inputs.InputError): inputs.validate_lock(mixed)
+
+    def test_explicit_prereleases_and_stable_default(self):
+        for v in ('1.2.0-alpha.1', '1.2.0-beta.1', '1.2.0-rc.1'):
+            records = [vector_release(v), vector_release()]
+            self.assertEqual(self.resolve(releases=records), vector_lock())
+            self.assertEqual(self.resolve(releases=records, vector_version=v), vector_lock(v))
+        for v in ('latest', 'main', '1.2.0-dev.1', '^1.1.2', '1.1.02'):
+            with self.subTest(v=v), self.assertRaises(inputs.InputError): self.resolve(vector_version=v)
+
+    def test_invalid_release_and_no_latest_fallback(self):
+        for mutate in (lambda r:r.update(draft=True), lambda r:r.update(published_at=None),
+                       lambda r:r.update(published_at='invalid'), lambda r:r.update(prerelease=True),
+                       lambda r:r.update(prerelease='false'), lambda r:r.update(id=True),
+                       lambda r:r.update(url='https://example.org/release'), lambda r:r.update(html_url='bad')):
+            r = vector_release(); mutate(r)
+            with self.subTest(mutate=mutate), self.assertRaises(inputs.InputError): self.resolve(releases=[r], vector_version='1.1.2')
+        with self.assertRaises(inputs.InputError): self.resolve(releases=[vector_release()] * 2)
+        with self.assertRaises(inputs.InputError): self.resolve(vector_version='1.1.1')
+        r = vector_release('1.1.3'); r['id'] = None
+        with self.assertRaises(inputs.InputError): self.resolve(releases=[vector_release(), r])
+        r = vector_release('1.2.0-alpha.1'); r['draft'] = True
+        with self.assertRaises(inputs.InputError): self.resolve(releases=[r, vector_release()], vector_version='1.2.0-alpha.1')
+
+    def test_bindings_and_archive_drift_fail(self):
+        for response in ({}, {'ref': 'refs/tags/other'}, {'ref': 'refs/tags/1.1.2', 'object': {'type':'tree','sha':VECTOR_COMMIT}}):
+            with self.subTest(response=response), self.assertRaises(inputs.InputError):
+                self.resolve(fetch=lambda url:json.dumps(response) if '/git/' in url else release_page(url))
+        def moved(url):
+            return vector_metadata(url).replace(VECTOR_COMMIT, 'a' * 40)
+        with self.assertRaises(inputs.InputError): self.resolve(baseline=vector_lock(), fetch=moved)
+        baseline = vector_lock(); baseline['sqliteVector']['digest']['value'] = 'e' * 64
+        before = copy.deepcopy(baseline)
+        with self.assertRaises(inputs.InputError): self.resolve(baseline=baseline)
+        self.assertEqual(baseline, before)
+        self.assertEqual(self.resolve(baseline=vector_lock()), vector_lock())
+
+    def test_same_version_other_upstream_cannot_supply_pin(self):
+        baseline = lock(); pin = baseline['sqliteVec']
+        for key in ('version', 'archiveUrl', 'releaseUrl'):
+            pin[key] = pin[key].replace('0.1.9', '1.1.2')
+        self.assertEqual(self.resolve(baseline=baseline)['sqliteVector']['digest']['value'], 'd' * 64)
+        self.assertEqual(baseline['sqliteVec']['digest']['value'], 'b' * 64)
+        sql, releases = metadata()
+        for key in ('tag_name',): releases[0][key] = 'v1.1.2'
+        for key in ('html_url',): releases[0][key] = releases[0][key].replace('0.1.9','1.1.2')
+        for key in ('name','browser_download_url'): releases[0]['assets'][0][key] = releases[0]['assets'][0][key].replace('0.1.9','1.1.2')
+        result = inputs.resolve_pair(sql, releases, baseline=vector_lock(), fetch=release_page)
+        self.assertEqual(result['sqliteVec']['digest']['value'], 'b' * 64)
+
+    def test_annotated_tag_and_unbound_commit(self):
+        def annotated(url):
+            if '/git/ref/' in url:
+                return json.dumps({'ref':'refs/tags/1.1.2','object':{'sha':'a'*40,'type':'tag','url':inputs.VECTOR_API+'/git/tags/'+'a'*40}})
+            if '/git/tags/' in url:
+                return json.dumps({'sha':'a'*40,'object':{'sha':VECTOR_COMMIT,'type':'commit','url':vector_lock()['sqliteVector']['commitUrl']}})
+            return vector_metadata(url)
+        self.assertEqual(self.resolve(fetch=annotated), vector_lock())
+        def unbound(url):
+            return json.dumps({'sha':'a'*40}) if '/git/commits/' in url else vector_metadata(url)
+        with self.assertRaises(inputs.InputError): self.resolve(fetch=unbound)
+
+    def test_sqlite_digest_policy_is_unchanged(self):
+        with self.assertRaises(inputs.InputError):
+            inputs.resolve_vector_pair(metadata()[0].replace('a'*64,''), [vector_release()], fetch=vector_metadata, archive_digest=lambda url:'d'*64)
+
+    def test_command_candidate_is_atomic_and_not_adopted(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d); (root/'inputs').mkdir(); baseline=root/'inputs/sources.lock.json'
+            baseline.write_text(json.dumps(lock())); output=root/'candidate.json'; output.write_text('previous')
+            args=argparse.Namespace(sqlite_version=None,vector_version='1.1.2',baseline_lock=None,output=str(output))
+            def fetch(url):
+                if url==inputs.SQLITE_DOWNLOAD:return metadata()[0]
+                if '/releases/tags/' in url:return json.dumps(vector_release())
+                return vector_metadata(url)
+            def archive(url,path):path.write_bytes(b'candidate bytes')
+            with patch.object(inputs,'ROOT',root), patch.object(inputs,'MetadataFetch',return_value=fetch), patch.object(inputs,'fetch_file',side_effect=archive):
+                with patch('sys.stdout',new=io.StringIO()):inputs.resolve_vector_command(args)
+                candidate=inputs.read_json(output)
+                self.assertEqual(candidate['sqliteVector']['digest']['value'],hashlib.sha256(b'candidate bytes').hexdigest())
+                self.assertEqual(inputs.read_json(baseline),lock())
+                self.assertFalse(list((root/'.work/inputs').glob('acquire-*')))
+                with patch.object(inputs,'fetch_file',side_effect=OSError('transport')):
+                    with self.assertRaises(OSError):inputs.resolve_vector_command(args)
+                self.assertEqual(inputs.read_json(output),candidate)
+
+
+def vector_archive(path, v='1.1.2', change=None):
+    root='sqlite-vector-'+VECTOR_COMMIT
+    files={f'src/distance-{cpu}.{ext}':b'fixture\n' for cpu in ('cpu','avx2','avx512','neon','rvv','sse2') for ext in ('c','h')}
+    files.update({'src/sqlite-vector.c':b'fixture\n','src/sqlite-vector.h':f'#define SQLITE_VECTOR_VERSION "{v}"\n'.encode(),
+        'LICENSE.md':b'fixture license\n', **{f'libs/fp16/{n}.h':b'fixture\n' for n in ('fp16','bitcasts','macros')},
+        'libs/sqlite3.c':b'excluded','packages/unrelated':b'excluded'})
+    with tarfile.open(path,'w:gz') as archive:
+        for name,data in files.items():
+            if change and change[0]=='omit' and name==change[1]:continue
+            entry=tarfile.TarInfo(root+'/'+name);entry.size=len(data);entry.mode=0o644
+            archive.addfile(entry,io.BytesIO(data))
+        entry=tarfile.TarInfo(root+'/packages/node/LICENSE.md');entry.type=tarfile.SYMTYPE;entry.linkname='../../../LICENSE.md';archive.addfile(entry)
+        if change and change[0]!='omit':
+            name,kind=change; entry=tarfile.TarInfo(root+'/'+name if not name.startswith('/') else name)
+            entry.type=kind; entry.linkname='../../outside';archive.addfile(entry)
+
+
+class VectorAcquisitionTests(unittest.TestCase):
+    def setUp(self):
+        self.temp=tempfile.TemporaryDirectory(); self.addCleanup(self.temp.cleanup);self.directory=Path(self.temp.name)
+        self.legacy,self.sql,self.vec=archives(self.directory)
+        self.path=self.directory/'vector.tar.gz';vector_archive(self.path)
+        self.candidate=vector_lock();self.candidate['sqlite']=self.legacy['sqlite'];self.freeze()
+        self.parent=self.directory/'work';self.parent.mkdir();self.older=self.parent/'older';self.older.mkdir();(self.older/'keep').write_text('keep')
+        self.calls=[]
+
+    def freeze(self):
+        self.candidate['sqliteVector']['digest']['value']=hashlib.sha256(self.path.read_bytes()).hexdigest()
+        self.raw=json.dumps(self.candidate).encode()
+
+    def fetch(self,url,destination):
+        self.calls.append(url)
+        sources={self.candidate['sqlite']['archiveUrl']:self.sql,self.candidate['sqliteVector']['archiveUrl']:self.path,self.legacy['sqliteVec']['archiveUrl']:self.vec}
+        destination.write_bytes(sources[url].read_bytes())
+
+    def acquire(self):return inputs.acquire_lock(self.raw,self.parent,fetch=self.fetch)
+
+    def test_selected_bytes_exclusions_handoff_and_both_orders(self):
+        for raw in (self.raw,json.dumps(self.legacy).encode(),json.dumps(self.legacy).encode(),self.raw):
+            before=len(self.calls);h=inputs.acquire_lock(raw,self.parent,fetch=self.fetch)
+            engine='sqliteVector' if 'sqliteVector' in h else 'sqliteVec';pin=json.loads(raw)[engine]
+            self.assertEqual(set(h),{'workspace','lockDigest','sqlite',engine})
+            self.assertEqual(len(self.calls)-before,2)
+            self.assertEqual(h[engine]['archiveUrl'],pin['archiveUrl']);self.assertEqual(h[engine]['digest'],pin['digest'])
+            self.assertEqual(h['lockDigest']['value'],hashlib.sha256(raw).hexdigest())
+            source=Path(h[engine]['sourcePath'])
+            self.assertTrue((Path(h['sqlite']['sourcePath'])/'configure').stat().st_mode & 0o111)
+            if engine=='sqliteVector':
+                self.assertEqual(h[engine]['commit'],VECTOR_COMMIT)
+                self.assertFalse((source/'libs/sqlite3.c').exists());self.assertFalse((source/'packages').exists())
+                self.assertFalse(any(p.is_symlink() for p in source.rglob('*')))
+                with tarfile.open(self.path,'r:gz') as archive:
+                    for p in source.rglob('*'):
+                        if p.is_file():self.assertEqual(p.read_bytes(),archive.extractfile('sqlite-vector-'+VECTOR_COMMIT+'/'+p.relative_to(source).as_posix()).read())
+            self.assertEqual(inputs.read_json(Path(h['workspace'])/'handoff.json'),h)
+        self.assertEqual(len(list(self.parent.glob('acquire-*'))),4)
+        self.assertEqual((self.older/'keep').read_text(),'keep')
+
+    def test_unsafe_paths_selected_links_and_collisions(self):
+        for change in (('../escape',tarfile.REGTYPE),('/escape',tarfile.REGTYPE),('src/escape\\file',tarfile.REGTYPE),
+                       ('src/sqlite-vector.c',tarfile.REGTYPE),('src/new',tarfile.SYMTYPE),('src/new',tarfile.LNKTYPE),
+                       ('src/new',tarfile.FIFOTYPE),('src',tarfile.SYMTYPE),('libs',tarfile.SYMTYPE),
+                       ('src/distance-cpu.c/child',tarfile.REGTYPE)):
+            vector_archive(self.path,change=change);self.freeze()
+            with self.subTest(change=change),self.assertRaises(inputs.InputError):self.acquire()
+            self.assertEqual(list(self.parent.iterdir()),[self.older])
+        self.assertFalse((self.directory/'escape').exists())
+
+    def test_content_and_version_required(self):
+        for missing in ('src/sqlite-vector.c','libs/fp16/fp16.h','src/distance-rvv.h','LICENSE.md'):
+            vector_archive(self.path,change=('omit',missing));self.freeze()
+            with self.subTest(missing=missing),self.assertRaises(inputs.InputError):self.acquire()
+        vector_archive(self.path,v='1.1.1');self.freeze()
+        with self.assertRaises(inputs.InputError):self.acquire()
+        self.assertEqual(list(self.parent.iterdir()),[self.older])
+
+    def test_failures_clean_only_own_workspace_without_other_engine(self):
+        for fail_index in (0,1):
+            calls=[]
+            def fail(url,dest):
+                calls.append(url)
+                if len(calls)==fail_index+1:raise OSError('download failed')
+                self.fetch(url,dest)
+            with self.assertRaises(OSError):inputs.acquire_lock(self.raw,self.parent,fetch=fail)
+            self.assertNotIn(self.legacy['sqliteVec']['archiveUrl'],calls)
+            self.assertEqual(list(self.parent.iterdir()),[self.older])
+        def corrupt(url,dest):
+            self.fetch(url,dest)
+            if url==self.candidate['sqliteVector']['archiveUrl']:dest.write_bytes(b'changed')
+        with patch.object(inputs,'extract_vector',wraps=inputs.extract_vector) as extract:
+            with self.assertRaises(inputs.InputError):inputs.acquire_lock(self.raw,self.parent,fetch=corrupt)
+            extract.assert_not_called()
+        self.assertEqual(list(self.parent.iterdir()),[self.older])
+
+    def test_prerelease_handoff_and_git_index_boundary(self):
+        v='1.2.0-rc.1';vector_archive(self.path,v=v)
+        self.candidate['sqliteVector']=vector_lock(v)['sqliteVector'];self.freeze()
+        h=self.acquire();self.assertEqual(h['sqliteVector']['version'],v)
+        path=self.directory/'lock.json';path.write_bytes(self.raw)
+        with patch.object(inputs,'ROOT',self.directory):
+            for raw,ok in ((b'',False),(self.raw,True)):
+                with patch.object(inputs.subprocess,'run',return_value=subprocess.CompletedProcess([],0,raw,b'')):
+                    if ok:self.assertEqual(inputs.recorded_lock(path),self.raw)
+                    else:
+                        with self.assertRaises(inputs.InputError):inputs.recorded_lock(path)
+
+
 if __name__ == '__main__':
     unittest.main()
