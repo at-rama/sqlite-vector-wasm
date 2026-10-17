@@ -4,9 +4,9 @@
 
 Current direct inputs. Earlier full-design and release refinements remain historical comparison context; the bounded notification reconciliation below is retained, followed by the Site subdivision and the bounded npm-navigation revision and their affected contributions and handoffs:
 
-- [Distribution Capture](2026-10-04_sqlite-vec-wasm_capture_edit-0.1.md), snapshot SHA-256 `4ce8240028f21830f3c90aa1571b66290f54565dfa432a8bf436bfed8d908855`.
-- [Site Capture](2026-10-08_sqlite-vec-wasm_site_capture_edit-0.1.md), snapshot SHA-256 `971d6a0e9593f4587f723075ff0590643526b8978f746ec0d36e4dd9554c9b93`.
-- [Release/Watch Capture](2026-10-09_sqlite-vec-wasm_release-watch_capture_edit-0.1.md), snapshot SHA-256 `f81b23986a0556b9da61d9838fb674fbd5fd886958c84896389a1735173771e0`.
+- [Distribution Capture](2026-10-04_sqlite-vec-wasm_capture_edit-0.1.md), snapshot SHA-256 `cdec56ee15c5c4eee2d32a42c93a3da0168715004ab469e14a37a7c59a6bb589`.
+- [Site Capture](2026-10-08_sqlite-vec-wasm_site_capture_edit-0.1.md), snapshot SHA-256 `c50ef77890f5e3dc524deaa8314e54e066251231db6a8201bc8ce6bf904d5cd7`.
+- [Release/Watch Capture](2026-10-09_sqlite-vec-wasm_release-watch_capture_edit-0.1.md), snapshot SHA-256 `b75e064a5b4f21cc29be561313be04d88493ce59d29b60fce5ce8705a15a53be`.
 - [Workflow Notifications Capture](2026-10-14_sqlite-vector-wasm_workflow-notifications_capture_edit-0.1.md), snapshot SHA-256 `a9f1fb38d0f7d679d8dcb663bd6d1f9ecde86ad3cfcff59693b0120aa3373bef`.
 
 Reference prefixes `D`, `S`, `W` and `N` identify these scopes; a handle is local to its Capture. The links above retrieve the current input files; their fingerprints identify the exact bytes examined. The immutable comparison revision below preserves the preceding state, not these refreshed editorial snapshots. S-institution, recorded in each Capture and AGENTS.md, adopts the reconciled Captures as the authoritative current design reference. Earlier sources retain historical provenance and rationale; this Allocation derives responsibility coverage without instituting requirements or certifying realization. Future semantic Capture revisions require explicit human adoption. The institution changes authority status, not unit duties, evidence requirements or publication authority. Explicit scoped supersessions recorded in the Captures govern the revised release/watch matter. Related sources and projections are not independent corroboration.
@@ -31,11 +31,17 @@ The 2026-10-15 [S/S-site-npm] instruction adds an adjacent npm package link and 
 
 The 2026-10-17 `S-engine-neutral` instruction, retained in Distribution, Release/Watch and Site, replaces component-specific wording by the selected-engine obligations without adding or removing a responsibility unit. Existing qualified references carry the same functional, integrity, publication and evidence obligations: `A-inputs` owns exact official sources; `A-build` static integration; `A-package` composition/notices; `A-acceptance` native Float32 and binary/Hamming oracles plus the complete browser/persistence matrix; `A-release`, `A-watch` and `A-updates` own their existing policy, discovery and selection contributions; `A-site_demo` owns observed engine identity and real queries, and `A-site_docs` retains its published-example duty. The existing version/maturity policy and original discovery baseline remain bound to their engine lineage; no substitution version, new baseline, workflow schema, multi-engine implementation or source-integrity exception is inferred. Current pins, code and synchronized realization specs are unchanged. Their component-specific assumptions must be reconciled through future Changes before any replacement is implemented; archives and historical evidence retain their original scope. This is design-input reconciliation, not renewed product Verification.
 
+The 2026-10-17 S-release-engines decision, recorded in Distribution, Release/Watch and Site, retains sqlite-vec and adds SQLite-Vector as potential release compositions, with exactly one selected engine per release and the same qualification duties. It supersedes planned retirement of the sqlite-vec path. Existing units remain: A-inputs owns exact source selection/provenance for the chosen engine; A-build retains the integrations and constructs the selected composition; A-package carries its exact identity, native assets and notices; A-acceptance qualifies that composition against the complete unchanged browser/Float32/binary/Hamming/Workers/FTS5/OPFS contract. A-release owns composition-aware policy; A-watch and A-updates distinguish engine identities in discovery, comparisons, candidate selection and deduplication without ordering unrelated version numbers. A-site_demo consumes the one engine in its fixed published runtime; A-site_docs follows the published composition used by its example. No new unit, runtime selector, SQL facade, publication channel or automatic publication is instituted.
+
+Release/Watch Q-engine-transition is explicitly unresolved: cross-engine version/maturity/alpha/reference policy and the new engine's discovery baseline require a future design decision. A-release owns the version/maturity/alpha/publication-reference policy field; A-watch owns the discovery-baseline contribution already attributed by W/C-watch. These remain human design decisions to institute, not defaults either unit may invent; A-watch/A-updates consume the applicable common publication policy. Same-engine rules continue within their lineage. This question does not create a new allocation unit or require acquisition to decide publication policy.
+
+The current acquire-sqlite-vector-sources Change in PR #67 was derived from Allocation 0d43d5ee8864388060ee7e15b1b0aac0491190adc77b2c4431400a82d273badd. Its temporary-coexistence and later-removal assumptions must be reconciled with this retained-composition decision, then its complete A-inputs coverage reexamined before Apply. The preceding planning PASS remains evidence for its recorded snapshot; it is not carried forward as conformity to this revised Allocation. This edit changes Captures/Allocation only, not that Change, synchronized specs, source pins, code or archives.
+
 ## Allocation units
 
 ### A-inputs — Upstream selection and acquisition
 
-Identify and acquire the exact official source pair.
+Identify and acquire the exact official source pair for the engine selected for the candidate release, retaining the existing sqlite-vec path while adding the SQLite-Vector source option.
 
 **Qualified references:** [D/C-purpose], official selected upstream inputs; [D/C-inputs], released-input admissibility, origins, repository-recorded pins/digests, integrity before use, acquisition preference/exceptions and source-tree exclusion; [D/R-inputs], archive/acquisition context; [W/C-provenance], input origins, versions and source digests.
 
@@ -43,7 +49,7 @@ Identify and acquire the exact official source pair.
 
 ### A-build — Canonical browser build and static integration
 
-Construct the canonical browser runtime with the selected engine.
+Construct the canonical browser runtime with exactly one selected engine, retaining the sqlite-vec integration and adding the SQLite-Vector option for release composition.
 
 **Qualified references:** [D/C-purpose] and [D/C-nonmodification], runtime/integration boundary; [D/C-inputs], pinned toolchain/options and clean build reproduction; [D/R-inputs], construction context and same-release SQLite components; [D/C-browser], construction of the retained baseline; [D/C-static], per-connection integration; [D/C-storage], upstream persistence behavior, conditions and prerequisite documentation; [W/C-provenance], build tools, options and environment.
 
@@ -67,9 +73,9 @@ Establish the required evidence for the actual packaged runtime and complete pro
 
 ### A-watch — Upstream planning and result presentation
 
-Produce the human-readable upstream job plan and its reference execution results.
+Produce the human-readable upstream job plan and its reference execution results, distinguishing retained engine identities and their same-engine version references.
 
-**Qualified references:** [D/C-watch] and [W/C-watch], discovery sources/baselines, cadence, plan contents, directly consultable GitHub restitution, weekly/manual planning, scheduling and stop before preparation; [W/C-selection], pair eligibility, published references, current-candidate awareness/preparation deduplication and no refusal registry; [W/C-determinism], [W/C-semver] and [W/C-channels], shared forecast calculation; [D/C-autonomy], independent human candidate initiation; [D/R-updates] and [W/R-frugality], planning/state and human-authority boundaries; [N/C-status], actual success/empty/error technical outcomes; [N/C-summary], reference Job Summary/artifacts and their prior simplification preserving required plan information; [N/C-trigger], a fresh plan from either trigger as notification input, distinct from applying notification eligibility or delivery.
+**Qualified references:** [D/C-watch] and [W/C-watch], discovery sources/baselines, cadence, plan contents, directly consultable GitHub restitution, weekly/manual planning, scheduling and stop before preparation; [W/C-selection], pair eligibility, published references, current-candidate awareness/preparation deduplication and no refusal registry; [W/Q-engine-transition], open discovery-baseline and cross-engine reference impacts within this unit's discovery/consumer boundary; [W/C-determinism], [W/C-semver] and [W/C-channels], shared forecast calculation; [D/C-autonomy], independent human candidate initiation; [D/R-updates] and [W/R-frugality], planning/state and human-authority boundaries; [N/C-status], actual success/empty/error technical outcomes; [N/C-summary], reference Job Summary/artifacts and their prior simplification preserving required plan information; [N/C-trigger], a fresh plan from either trigger as notification input, distinct from applying notification eligibility or delivery.
 
 **Boundary and dependencies:** use `A-inputs`' admissibility criteria, `A-release`'s publication state/policy and `A-updates`' current candidate state. Make the actual plan/result, technical outcome and concerned run reference available to `A-notifications`, which owns notification selection/message/delivery. This is a responsibility handoff, not a selected API or data format. Plan production and direct consultation do not wait for notification integration; the content/trigger rule is now established in [N/C-trigger]. A plan reserves no version and initiates no preparation; independent manual planning and forecast-policy ownership remain unchanged.
 
@@ -83,7 +89,7 @@ Apply established notification conditions and deliver short messages pointing to
 
 ### A-updates — Manual candidate preparation
 
-Prepare an eligible candidate and stop at the pull request for human integration.
+Prepare an eligible candidate with an explicit engine identity and exact version, and stop at the pull request for human integration.
 
 **Qualified references:** [D/C-inputs], candidate input records and clean acquisition composition; [D/C-autonomy], initiation, automated preparation and adoption boundary; [D/C-failure], eligibility stop; [D/C-nonmodification], intervention limit; [W/C-dispatch], exact selections, comment and rollback conditions; [W/C-candidate], complete preparation/PR boundary; [W/C-version-identity], candidate branches and code identity; [W/C-determinism], [W/C-semver] and [W/C-channels], application of shared policy during preparation; [W/C-provenance], invocation context; [D/R-updates] and [W/R-frugality], applicable constraints/rationale.
 
@@ -91,9 +97,9 @@ Prepare an eligible candidate and stop at the pull request for human integration
 
 ### A-release — Distribution policy and publication
 
-Own the shared distribution calculation and publish the authorized, qualified payload.
+Own the shared composition-aware distribution calculation and publish the authorized, qualified single-engine payload; retain the unresolved Q-engine-transition policy without inventing a cross-engine version result.
 
-**Qualified references:** [D/C-purpose], distribution publication boundary; [D/C-release], full identity/envelope/publication obligations; [D/C-autonomy], post-integration trigger; [D/C-failure], mandatory publication stop; [D/C-bootstrap], normal publication/authentication/attestation provisions and bounded exception relationship; [W/C-determinism], shared policy; [W/C-version-identity], [W/C-semver] and [W/C-channels], distribution/code identity, numerical/maturity/initial/alpha rules, channel classification and progression; [W/C-publication], definitive recalculation, uniqueness/collision and revision/payload/evidence binding; [W/C-provenance], full publication composition; [D/R-updates] and [W/R-frugality], applicable constraints/rationale.
+**Qualified references:** [D/C-purpose], distribution publication boundary; [D/C-release], full identity/envelope/publication obligations; [D/C-autonomy], post-integration trigger; [D/C-failure], mandatory publication stop; [D/C-bootstrap], normal publication/authentication/attestation provisions and bounded exception relationship; [W/C-determinism], shared policy; [W/C-version-identity], [W/C-semver] and [W/C-channels], distribution/code identity, numerical/maturity/initial/alpha rules, channel classification and progression; [W/C-publication], definitive recalculation, uniqueness/collision and revision/payload/evidence binding; [W/C-provenance], full publication composition; [W/Q-engine-transition], unresolved version/maturity/alpha/publication-reference policy, with no inferred implementation rule; [D/R-updates] and [W/R-frugality], applicable constraints/rationale.
 
 **Boundary and dependencies:** supply policy/publication state to `A-watch` and `A-updates`; consume authorized integration context from `A-updates`, exact payload from `A-package` and applicable evidence from `A-acceptance`. Coordinate payload changes and renewed checks before publication. `A-bootstrap` establishes setup or the bounded first-npm exception and receives the accepted archive; `A-release` verifies the initial npm completion without new publication side effects. Published stable archives feed `A-site_demo`; `A-site_docs` consumes published distribution information and the published version exercised by its usage example. Policy ownership assigns responsibility without requiring a separate engine/service or relaxing checks.
 
@@ -131,7 +137,7 @@ Deliver the browser emoji demonstration of the actually distributed stable runti
 
 ## Reverse correspondence and examined limits
 
-The following correspondence retains the preceding mapping of 41 non-source D/S/W handles, qualified by the bounded N revision above, and includes the five current N design handles below; the resolved Q-trigger question is removed from the current working projection. Attribution to several units selects distinct contributions; contextual treatment is explicit. Unit references above retain the source's full obligations rather than replacing them with the table's summaries.
+The following correspondence retains the preceding mapping of 41 non-source D/S/W handles, qualified by the bounded N revision above, and includes the five current N design handles and the new W/Q-engine-transition context below; the resolved Q-trigger question is removed from the current working projection. Attribution to several units selects distinct contributions; contextual treatment is explicit. Unit references above retain the source's full obligations rather than replacing them with the table's summaries.
 
 | Capture element | Qualified contributions or contextual treatment |
 | --- | --- |
@@ -180,7 +186,10 @@ The following correspondence retains the preceding mapping of 41 non-source D/S/
 | [W/C-publication] | `A-release`: definitive recalculation, collision/uniqueness, authoritative revision/payload/publication; `A-package`: resulting payload changes; `A-acceptance`: applicable/renewed evidence; `A-bootstrap`: retained bounded exception. |
 | [W/C-provenance] | `A-inputs`: sources; `A-build`: tools/options/environment; `A-package`: output digests/metadata; `A-updates`: invocation context; `A-release`: complete cross-publication identity/composition. |
 | [W/R-frugality] | `A-watch`/`A-updates`/`A-release`: existing shared-policy/state/authority boundaries. `A-notifications`: bounded transport, no notification deduplication/history or general infrastructure; retained alternatives remain context. |
+| [W/Q-engine-transition] | Open cross-engine version/maturity/alpha/reference policy and additional-engine discovery baseline. `A-release` owns version/maturity/alpha/publication-reference policy; `A-watch` owns discovery-baseline contributions and consumes common policy, as does `A-updates`. Same-engine rules retain their scope; no implementation unit, default answer or global acquisition blocker is invented. |
 | [W/C-reconciliation] | Documentary reconciliation instruction: this Allocation replaces its superseded mapping, reports downstream impacts and preserves history. It is not a product realization unit or evidence of implementation. |
+
+S-release-engines in D, W and S records the adopted retained-composition revision; it is one human decision with scoped contributions, not three independent sources. Its qualified requirements travel through D/C-purpose, D/C-release/C-watch/C-autonomy/R-engine and W/C-semver/C-channels/C-watch/C-selection/C-dispatch/C-provenance, with Site C-demo-release.
 
 The source handles have the following provenance treatment. Their decisions/relationships govern interpretation of the attributed passages; they do not create source-processing product units.
 
@@ -253,6 +262,7 @@ Material prose outside handles is also covered: scope/authority and explicit rev
 [W/C-publication]: 2026-10-09_sqlite-vec-wasm_release-watch_capture_edit-0.1.md#c-publication--authorized-integration-definitive-version-and-exact-payload
 [W/C-provenance]: 2026-10-09_sqlite-vec-wasm_release-watch_capture_edit-0.1.md#c-provenance--distribution-composition-and-publication-identity
 [W/R-frugality]: 2026-10-09_sqlite-vec-wasm_release-watch_capture_edit-0.1.md#r-frugality--bounded-automation-and-retained-alternatives
+[W/Q-engine-transition]: 2026-10-09_sqlite-vec-wasm_release-watch_capture_edit-0.1.md#q-engine-transition--publication-references-across-engine-identities
 [W/C-reconciliation]: 2026-10-09_sqlite-vec-wasm_release-watch_capture_edit-0.1.md#c-reconciliation--replace-superseded-active-rules-preserve-history
 [W/S-watch-native]: 2026-10-09_sqlite-vec-wasm_release-watch_capture_edit-0.1.md#material-sources
 [W/S-capture-reconciliation]: 2026-10-09_sqlite-vec-wasm_release-watch_capture_edit-0.1.md#material-sources
