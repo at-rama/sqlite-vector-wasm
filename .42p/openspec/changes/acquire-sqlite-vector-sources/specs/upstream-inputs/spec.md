@@ -1,27 +1,27 @@
 # upstream-inputs Delta
 
-These requirements govern the SQLite-Vector candidate source path. The recorded current production pair and its existing acquisition callers remain unchanged until their dependent realization units are updated.
+These requirements govern A-inputs for both retained source options: sqlite-vec and SQLite-Vector. Each invocation selects SQLite plus exactly one engine. Adding SQLite-Vector does not schedule removal of sqlite-vec. The recorded current production pair and its existing acquisition callers remain unchanged in this Change.
 
 ## MODIFIED Requirements
 
 ### Requirement: Official published source selection
 
-The resolver SHALL select exact published, non-draft official upstream releases. Explicit versions SHALL take precedence independently and admit published alpha, beta or release-candidate versions with sufficient official source/integrity metadata. Omitted versions SHALL select the latest stable release. Development snapshots, malformed or ambiguous release identities SHALL fail without fallback. The helper SHALL NOT select npm channels or waive downstream checks.
+The resolver SHALL select exact published, non-draft official upstream releases. Explicit versions SHALL take precedence independently and admit published alpha, beta or release-candidate versions with sufficient official source/integrity metadata. Omitted versions SHALL select the latest stable release. Development snapshots, malformed or ambiguous release identities SHALL fail without fallback. Selection SHALL apply independently within the chosen engine upstream, without choosing or switching engines from version numbers. The helper SHALL NOT select npm channels or waive downstream checks.
 
 #### Scenario: Both versions omitted
-- **WHEN** neither project has an explicit version
-- **THEN** the resolver selects each project's latest official stable release, excluding newer prereleases, and returns both exact versions
+- **WHEN** neither SQLite nor the chosen engine has an explicit version
+- **THEN** the resolver selects SQLite's and the chosen engine's latest official stable releases, excluding newer prereleases, and returns both exact versions
 
 #### Scenario: One explicit version
-- **WHEN** an exact admissible SQLite version is supplied and SQLite-Vector is omitted
-- **THEN** that SQLite version is retained and the latest stable SQLite-Vector release is selected
+- **WHEN** an exact admissible SQLite version is supplied and the version of the chosen engine (sqlite-vec or SQLite-Vector) is omitted
+- **THEN** that SQLite version is retained and the latest stable release of that same engine is selected
 
 #### Scenario: Explicit sqlite-vec or both versions
-- **WHEN** an exact published stable or prerelease SQLite-Vector version is supplied, alone or with an exact admissible SQLite version
+- **WHEN** an exact published stable or prerelease version of the chosen engine (sqlite-vec or SQLite-Vector) is supplied, alone or with an exact admissible SQLite version
 - **THEN** each supplied version takes precedence and only an omitted version is resolved to latest stable
 
 #### Scenario: Published prerelease selection
-- **WHEN** an exact SQLite-Vector alpha, beta or release-candidate version identifies a published non-draft official release with sufficient source and digest metadata
+- **WHEN** an exact alpha, beta or release-candidate version of the chosen engine identifies a published non-draft official release with sufficient source and digest metadata
 - **THEN** the resolver retains its exact suffix in the source lock without replacing it by its stable base or computing a distribution channel
 
 #### Scenario: Invalid or unstable selection
@@ -38,7 +38,7 @@ The resolver SHALL select exact published, non-draft official upstream releases.
 
 ### Requirement: Frozen source pair without automatic fallback
 
-The selected source pair SHALL be frozen before acquisition. Acquisition SHALL use those exact pins without re-resolving latest versions. Selection or acquisition failure SHALL terminate processing without an automatic older-version fallback or upstream repair; the helpers SHALL NOT replace the pair in response to a later compatibility failure.
+The selected source pair SHALL be frozen before acquisition. Acquisition SHALL use those exact pins without re-resolving latest versions. Selection or acquisition failure SHALL terminate processing without an automatic older-version fallback or upstream repair; the helpers SHALL NOT replace the pair in response to a later compatibility failure or switch to the other engine.
 
 #### Scenario: New release during acquisition
 - **WHEN** another stable upstream release appears after resolution
@@ -48,9 +48,13 @@ The selected source pair SHALL be frozen before acquisition. Acquisition SHALL u
 - **WHEN** source processing fails or a caller reports an incompatible selected pair
 - **THEN** the helpers provide no automatic replacement pair or repair
 
+#### Scenario: Failed engine acquisition does not select the alternative
+- **WHEN** resolution or acquisition fails for either retained engine path
+- **THEN** the operation fails without retrying with the other engine or altering its pins
+
 ### Requirement: Repository-recorded official source identities
 
-The source lock SHALL record exact component/release identity, official source origin and expected cryptographic digest before production source use. SQLite SHALL retain its official SHA3-256 pin. SQLite-Vector SHALL bind its published release to an exact tag and commit and a commit-addressed official source archive with recorded SHA-256. Only candidate preparation may compute a new archive digest; production acquisition SHALL verify an already repository-recorded pin and never authorize or refresh its own checksum.
+The source lock SHALL record exact component/upstream and release identity, official source origin and expected cryptographic digest before production source use. SQLite SHALL retain its official SHA3-256 pin. sqlite-vec SHALL retain its official release-asset origin and upstream-published asset SHA-256 policy. SQLite-Vector SHALL bind its published release to an exact tag and commit and a commit-addressed official source archive with recorded SHA-256. Only candidate preparation may compute a new archive digest; production acquisition SHALL verify an already repository-recorded pin and never authorize or refresh its own checksum.
 
 #### Scenario: New official source pin
 - **WHEN** a new published stable or prerelease source has sufficient official release and archive-integrity metadata
@@ -71,6 +75,14 @@ The source lock SHALL record exact component/release identity, official source o
 #### Scenario: Incomplete source lock
 - **WHEN** acquisition receives a lock with missing, malformed or inconsistent required identities
 - **THEN** it fails before exposing or using any source tree
+
+#### Scenario: Retained sqlite-vec source pin
+- **WHEN** a sqlite-vec release is selected through the retained acquisition path
+- **THEN** its official amalgamation asset and published SHA-256 are recorded and verified under the existing policy; a missing published digest fails without borrowing SQLite-Vector candidate hashing
+
+#### Scenario: Same version in different engine upstreams
+- **WHEN** both engine upstreams have the same textual version in separate candidate locks
+- **THEN** baseline lookup and validation distinguish component/upstream identity plus version; no digest, release binding or source origin is reused across engines
 
 ### Requirement: Existing pin integrity is retained
 
@@ -102,11 +114,11 @@ Every downloaded source archive SHALL be verified against its repository-recorde
 
 ### Requirement: Official sufficient archives without vendoring
 
-Acquisition SHALL use the official SQLite full-source release archive and the official release-bound SQLite-Vector commit archive. The extension handoff SHALL supply unchanged extension sources, required bundled headers and root license, excluding its bundled SQLite and unrelated packages. No clone, submodule, mirror or tracked upstream source tree is required. Missing required content SHALL fail without fallback; SQLite core, WASM support and JS bindings SHALL remain from the separately pinned SQLite release.
+Acquisition SHALL retain the official sqlite-vec release-asset path and add the official release-bound SQLite-Vector commit-archive path. Each pair SHALL use the official SQLite full-source release archive and only its selected engine archive. The extension handoff SHALL supply unchanged required sources/headers and available notices; SQLite-Vector handoffs SHALL exclude its bundled SQLite and unrelated packages. No clone, submodule, mirror or tracked upstream source tree is required. Missing required content SHALL fail without fallback; SQLite core, WASM support and JS bindings SHALL remain from the separately pinned SQLite release.
 
 #### Scenario: Sufficient official archives
 - **WHEN** the two selected official archives are verified and extracted
-- **THEN** acquisition provides the complete independently pinned SQLite source tree and unchanged Vector extension C/header and FP16 inputs, without a clone or exposing bundled SQLite as a build input
+- **THEN** acquisition provides the complete independently pinned SQLite source tree and unchanged inputs for the chosen engine: sqlite-vec amalgamation C/header inputs or SQLite-Vector extension C/header and FP16 inputs, without a clone or exposing bundled SQLite as a build input
 
 #### Scenario: Source archive contains unrelated package symlinks
 - **WHEN** the verified Vector archive includes package-license symlinks outside the selected extension inputs
@@ -138,12 +150,16 @@ Each invocation SHALL acquire sources in a fresh temporary workspace under ignor
 
 #### Scenario: Successful pair handoff
 - **WHEN** both inputs pass the required acquisition checks
-- **THEN** the invocation reports their temporary source locations, exact versions, origins and verified digests, Vector release/tag/commit and the exact lock identity consumed, without claiming build compatibility or product acceptance
+- **THEN** the invocation reports their temporary source locations, exact versions, origins and verified digests, the selected engine identity, its applicable release metadata (including SQLite-Vector release/tag/commit) and the exact lock identity consumed, without claiming build compatibility or product acceptance
 
 #### Scenario: Preparatory pair does not activate a distribution
 - **WHEN** a recorded Vector candidate pair is acquired while the default production lock still identifies the existing distribution inputs
 - **THEN** acquisition returns that requested pair without changing the default lock, release descriptor or consumer build; existing recorded production acquisitions keep their identities without silent conversion
 
 #### Scenario: Acquired prerelease identity
-- **WHEN** a recorded source pair includes a published SQLite-Vector prerelease and both archives pass integrity, extraction and content checks
+- **WHEN** a recorded source pair includes a published prerelease of the chosen engine and both archives pass integrity, extraction and content checks
 - **THEN** the handoff preserves that exact prerelease identity and recorded digest, without selecting a distribution channel or claiming build compatibility
+
+#### Scenario: Both acquisition paths remain available
+- **WHEN** the recorded SQLite-Vector pair has been acquired and a recorded sqlite-vec pair is then requested, or conversely
+- **THEN** the requested path still obtains SQLite plus only that engine with its own verified identities, without deleting, converting or reusing the other engine's source pair

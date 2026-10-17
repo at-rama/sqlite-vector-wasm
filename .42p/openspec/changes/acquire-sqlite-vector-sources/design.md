@@ -8,7 +8,7 @@ The official Vector release `1.1.2` is published, stable and non-draft. Its tag 
 
 ## Goals / Non-Goals
 
-**Goals:** supply a reproducible, provenance-complete candidate source pair under A-inputs; preserve source integrity, fresh-workspace failure behavior and current production callers.
+**Goals:** supply a reproducible, provenance-complete candidate source pair under A-inputs; retain both concrete engine acquisition paths as release options, with exact engine identity, source integrity, fresh-workspace failure behavior and unchanged current production callers.
 
 **Non-Goals:** build or patch the extension, run upstream packaging, modify SQLite/toolchain versions, add runtime engine selection, change channel/version policy or make a package/license-acceptance claim. A-build will consume the new handoff; package notices belong to A-package, including checking bundled FP16 notice provenance. Acquisition preserves available notices and does not invent a license assertion for that third-party code.
 
@@ -20,13 +20,13 @@ Use `https://codeload.github.com/sqliteai/sqlite-vector/tar.gz/<full-commit>` af
 
 A new candidate resolution may download and hash this official commit archive, but writes only a candidate lock and provenance. It cannot adopt that pin or expose source trees for production. Production acquisition requires reviewed lock bytes matching the Git index, exactly as today, and checks the expected digest before archive inspection/extraction. Existing pin identities cannot change under resolution, including a tag retarget or regenerated archive. No signature or upstream-published checksum is claimed for the locally measured Vector digest. TLS origin/release binding and integrity against a previously recorded digest are distinct evidence.
 
-Keep the existing SQLite pin unchanged. Candidate source-lock schema 2 uses `sqlite` and `sqliteVector`; the Vector record includes its exact version, official release URL and numeric release identity, tag, full commit, commit-addressed archive URL, SHA-256 and official metadata locators. The handoff preserves these identities and `lockDigest`. No registry of engines or interchangeable adapter interface is introduced.
+Keep the existing SQLite pin unchanged. Candidate source-lock schema 2 uses `sqlite` and `sqliteVector`; the Vector record includes its exact version, official release URL and numeric release identity, tag, full commit, commit-addressed archive URL, SHA-256 and official metadata locators. The schema-2 handoff preserves these identities and `lockDigest`. Schema 1 retains its `sqliteVec` identity and published release-asset SHA-256 policy. The fixed schema keys distinguish `asg017/sqlite-vec` from `sqliteai/sqlite-vector`; pin lookup compares component/upstream identity and exact version, never version alone. Existing schema-1 handoff fields remain compatible; no schema conversion is needed. No registry of engines or interchangeable adapter interface is introduced.
 
-### Minimal transition without breaking current callers
+### Retain two fixed acquisition paths without changing current callers
 
-Add a fixed `resolve-vector` command to the existing input helper, with `--sqlite-version`, `--vector-version`, `--baseline-lock` and `--output`. It targets only sqliteai/sqlite-vector. Existing `resolve` and schema-1 `validate`/`acquire` behavior stay intact for the current production pipeline. `validate`/`acquire` accept schema 2 without converting schemas or silently switching engines. Keep this compatibility confined to source acquisition until later units replace their callers; do not add new legacy features or a public runtime selection surface.
+Add a fixed `resolve-vector` command to the existing input helper, with `--sqlite-version`, `--vector-version`, `--baseline-lock` and `--output`. It targets only sqliteai/sqlite-vector. Existing `resolve` and schema-1 `validate`/`acquire` behavior stay intact for the current production pipeline. `validate`/`acquire` accept schema 2 without converting schemas or silently switching engines. Retain both paths as durable acquisition options for future single-engine releases. This does not promise support for every future upstream layout/version. Fixed commands and discriminated locks suffice; a generic selector, registry, adapter framework or public runtime selection surface is unnecessary.
 
-Record the prepared new pair in `inputs/sqlite-vector.sources.lock.json` during Apply; leave `inputs/sources.lock.json` and `inputs/release.json` unchanged. Acquire it explicitly with `bash tools/inputs.sh acquire --lock inputs/sqlite-vector.sources.lock.json`. This avoids advancing A-build, A-package or A-updates inside an acquisition Change. Default legacy acquisition is the existing frozen pair, not an automatic fallback when a Vector operation fails.
+Record the prepared new pair in `inputs/sqlite-vector.sources.lock.json` during Apply; leave `inputs/sources.lock.json` and `inputs/release.json` unchanged. Acquire it explicitly with `bash tools/inputs.sh acquire --lock inputs/sqlite-vector.sources.lock.json`. This avoids advancing A-build, A-package or A-updates inside an acquisition Change. Default acquisition remains the existing frozen sqlite-vec pair. An explicit schema-2 acquisition obtains SQLite plus SQLite-Vector only; a schema-1 acquisition obtains SQLite plus sqlite-vec only. Neither path is a fallback for a failure in the other.
 
 ### Select unchanged extension inputs without extracting unrelated files
 
@@ -40,16 +40,18 @@ On 2026-10-17, directly downloaded the official commit archive once: 2,772,458 b
 
 Source locators: [release](https://github.com/sqliteai/sqlite-vector/releases/tag/1.1.2), [tag binding](https://api.github.com/repos/sqliteai/sqlite-vector/git/ref/tags/1.1.2), [source tree](https://github.com/sqliteai/sqlite-vector/tree/0c2223ada9dce1fa33248c8835a15f51d9a0f655), [version/header](https://github.com/sqliteai/sqlite-vector/blob/0c2223ada9dce1fa33248c8835a15f51d9a0f655/src/sqlite-vector.h), [license](https://github.com/sqliteai/sqlite-vector/blob/0c2223ada9dce1fa33248c8835a15f51d9a0f655/LICENSE.md). sqliteai/sqlite-wasm and precompiled native artifacts are not source inputs for this Change.
 
-The delta preserves the historical scenario identifiers required by OpenSpec, including “Explicit sqlite-vec or both versions”; its updated WHEN/THEN text applies to SQLite-Vector. This is an identifier retained for contract continuity, not a second selected engine.
+The delta preserves the historical scenario identifiers required by OpenSpec, including “Explicit sqlite-vec or both versions”; its WHEN/THEN text now covers either retained acquisition path independently. It does not select both engines in one pair.
 
 ## Risks / Trade-offs
 
 - GitHub can regenerate archive bytes at a fixed commit → digest mismatch fails; a new pin needs explicit review, never an automatic checksum refresh or fallback.
 - Release tags can move → preserve and verify release/tag/commit binding against existing pins; mismatches fail.
 - A full upstream source archive includes its own SQLite and links → copy only the checked extension view, using the independent SQLite pin for the actual core.
-- Two source-lock schemas coexist during the unit-by-unit replacement → keep the old path unchanged and test both; no multi-engine distribution or permanent compatibility promise is made.
+- Two concrete source formats remain available → test both paths and keep engine identities distinct; retain existing behavior without promising arbitrary future upstream compatibility or combining engines in one distribution.
 - A source handoff cannot prove static integration or licensing completeness of the final package → retain separate A-build, A-package and A-acceptance responsibilities. No source-only success is product acceptance.
 
 ## Migration Plan
 
-Implement and verify the preparatory acquisition path and exact new pair. Keep the current production pair until dependent units can consume and qualify the new one. PR #66 must be integrated before this Change is integrated. A failed candidate acquisition cleans only its own temporary workspace; the existing production lock is unchanged, so rollback requires no runtime or publication operation. Later unit Changes own activation and removal of obsolete acquisition compatibility when no caller needs it. The existing synchronized upstream-inputs Purpose remains accurate for the current production pair during planning; native post-Verification synchronization must align that Purpose with the new selected-source capability, without changing another capability or rewriting archives.
+Implement and verify the additional acquisition path and exact new pair while retaining sqlite-vec acquisition. PR #66 is merged. A failed candidate acquisition cleans only its own temporary workspace; the existing production lock is unchanged, so rollback requires no runtime or publication operation. Later unit Changes own consuming, integrating and qualifying a chosen composition, without a scheduled removal of sqlite-vec. Native post-Verification synchronization must align the upstream-inputs Purpose with both retained source options, without changing another capability or rewriting archives.
+
+Cross-engine version increments, maturity, alpha/reference selection (including returning to a retained engine) and the SQLite-Vector Watch baseline remain unresolved in Release/Watch Q-engine-transition. A-release/A-watch own those decisions; A-inputs records engine identity and exact source pins without guessing that policy or making it an acquisition prerequisite.
