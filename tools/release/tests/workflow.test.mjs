@@ -34,6 +34,8 @@ test('hosted workflow pins actions, separates read qualification/write publicati
   assert.ok(detection.includes('present: ${{ steps.detect.outputs.candidate }}'));
   const qualification=workflow.split('  qualify:')[1].split('  publish:')[0];
   assert.ok(!qualification.includes('write'));
+  assert.ok(qualification.includes('actions: read'));
+  assert.ok(publicationPermissions(workflow).includes('actions: read'));
   assert.ok(qualification.includes('needs: candidate') && qualification.includes("if: needs.candidate.outputs.present == 'true'"));
   const publication=workflow.split('  publish:')[1];assert.ok(publication.includes('needs: qualify') && publication.includes('id-token: write') && publication.includes('attestations: write'));
   assert.ok(publication.includes('github.event.action == \'closed\' && github.event.pull_request.merged == true'));
@@ -122,3 +124,5 @@ test('npm post-publication inspection treats slow visibility as pending, not bro
   await assert.rejects(client(metadata({'0.1.1':absentProvenance})).verifyNpm(evidence),/npm provenance/);
   await assert.rejects(client({versions:{},'dist-tags':{latest:'0.1.1'}}).verifyNpm(evidence),/Unexpected npm package/);
 });
+
+function publicationPermissions(workflow) { return workflow.split('  publish:')[1].split('    steps:')[0]; }

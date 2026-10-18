@@ -58,6 +58,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: read
+      actions: read
     outputs:
       present: ${{ steps.detect.outputs.candidate }}
     steps:
@@ -79,6 +80,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: read
+      actions: read
     outputs:
       handoff: ${{ steps.prepare.outputs.handoff }}
       archive: ${{ steps.prepare.outputs.archive }}
@@ -120,6 +122,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: read
+      actions: read
       id-token: write
       attestations: write
     steps:
