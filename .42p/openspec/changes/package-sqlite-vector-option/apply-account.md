@@ -1,180 +1,178 @@
-# Apply execution account — partial implementation
+# Apply execution account
 
-## Outcome and boundary
+## Renewed repair and completion
 
-Implementation `c9c33ad928f975dc4fd96c88f0d462c22646c7fa` assembles both retained
-compositions and passes their extracted-package browser matrices. Apply stopped
-on an established downstream compatibility conflict; **3/8 tasks are complete**
-(1.2, 1.3, 2.1). This is not complete A-package realization or release acceptance.
-Task 2.2 explicitly requires failures to block rather than expanding scope.
+On 2026-10-18 the maintainer authorized “Tu peux réparer et poursuivre”. Implementation
+`8f20d4df5c9562526b0a414114298cbce1de1e58` resolves the stopped payload-consumption
+boundary without changing release policy. All eight tasks are complete on the
+renewed evidence below. This account is an authored execution record, not a raw
+log, full-product acceptance result or publication authorization.
 
-No source lock, release descriptor, harness, A-build, downstream implementation,
-root README, root usage guide, Capture, Allocation or synchronized spec was edited.
-No publication, merge, archive or upstream patch was attempted.
+### Construction, tools and commit continuity
 
-## Actual construction and packaging
-
-On 2026-10-17 UTC, `/tmp/package69-repro` began at proposition commit
-`335a4ff07e531f28e28e3bcf67c57cccaa5371b4`, with empty `.work`, npm dependency
-and product state; `/tmp/package69-sdk` was also new. From that checkout:
+`/tmp/repair69-repro` and `/tmp/repair69-sdk` began new, without product outputs,
+SDK, browser dependencies or npm state. A clean temporary worktree at
+`f3bdf97f50d0f89c01db734148f1145a26ee2086` bootstrapped the pinned toolchain:
 
 ```sh
-export HARNESS_STATE=/tmp/package69-sdk
+export HARNESS_STATE=/tmp/repair69-sdk
 bash tools/harness.sh install
 bash tools/harness.sh check
 bash tools/harness.sh deps
 bash tools/harness.sh smoke
-bash tools/build.sh > /tmp/package69-vec-build.json
-bash tools/build.sh --lock inputs/sqlite-vector.sources.lock.json > /tmp/package69-vector-build.json
+bash tools/build.sh > /tmp/repair69-vec-build.json
+bash tools/build.sh --lock inputs/sqlite-vector.sources.lock.json > /tmp/repair69-vector-build.json
 ```
 
-All returned zero. Tool smoke checked the harness only. The checkout then moved
-cleanly to implementation `c9c33ad928f975dc4fd96c88f0d462c22646c7fa` through the
-GitHub-created commit before packaging. Build/harness/locks were byte-unchanged
-between those commits; these were fresh product builds, not old runtime reuse.
-The second build could reuse the newly populated SDK compiler cache. Runtime
-rebuild byte reproducibility across independent hosts was not established.
+All returned zero. The checkout advanced to `8f20d4df5c9562526b0a414114298cbce1de1e58`
+around the first build's launch/tool-identity queries; source locks, acquisition,
+A-build/config/templates, harness and dependency pins are byte-unchanged between
+those commits. Packaging and final checks used the clean corrected checkout.
+This discloses the commit transition rather than treating the first launch as a
+single-snapshot rebuild. Both invocations acquired and constructed fresh sources;
+no original attempt's runtime or archive was reused. Vector could reuse the newly
+populated compiler cache. No byte-identical cross-host reconstruction is claimed.
 
-For each `ENGINE=vec` and `ENGINE=vector`, the following actual commands returned zero:
+Observed tools: Linux 6.18.55 x86_64; Ubuntu GCC 13.3.0; Make 4.3; Emscripten
+4.0.23 (`7a5d93b50f6a3a35e85a0d2fc9e667b8498e6aed`), Node 24.19.0, npm
+11.17.0, WABT 1.0.42, Binaryen 125 and Chrome 153.0.8010.12. Configure remained
+`env CC=cc CC_FOR_BUILD=cc CXX=/bin/false ./configure --enable-all`; amalgamation
+`make sqlite3.c`; WASM `b-vanilla b-esm b-bundler emcc_opt=-Oz`. Vector used the
+seven C object commands and extra Make include in unchanged `tools/build/build.mjs`.
+No upstream source, loader or harness patch was introduced.
+
+### Fresh final packages and checks
+
+For each `ENGINE=vec` and `ENGINE=vector`, these commands returned zero:
 
 ```sh
-bash tools/package.sh --build-handoff /tmp/package69-${ENGINE}-build.json \
+bash tools/package.sh --build-handoff /tmp/repair69-${ENGINE}-build.json \
   --name sqlite-vector-wasm-fixture --version 0.0.0-${ENGINE} \
-  > /tmp/package69-${ENGINE}-package.json
+  > /tmp/repair69-${ENGINE}-package.json
 bash tools/harness.sh exec node tools/package/check.mjs \
-  /tmp/package69-${ENGINE}-package.json
+  /tmp/repair69-${ENGINE}-package.json
+bash tools/harness.sh exec node /tmp/repair69-real-payload.mjs ${ENGINE}
 ```
 
-Before both check invocations, `.work/inputs` and `.work/build` were renamed to
-unavailable paths. They were restored only after both checks finished. Package
-checks performed their own fresh extraction, local `npm install --offline
---ignore-scripts`, consumer subpath resolution and HTTP hosting at `/runtime/`.
-Their all-file and archive hashes were unchanged afterward. Neither fixture name
-nor version was published. Each archive has 11 runtime assets and 29 total files.
+Before both final check sequences, `.work/inputs` and `.work/build` were renamed
+to unavailable paths; they were restored only after all four commands finished.
+Each actual tarball was freshly extracted and installed with npm offline, scripts
+disabled and explicit subpaths checked. Browser fixtures served only extracted
+companions at `/runtime/`, with COOP same-origin and COEP require-corp; loopback
+HTTP was secure/cross-origin isolated, with Web Locks and Atomics.waitAsync.
 
-Observed environment: Linux 6.18.55 x86_64; Ubuntu GCC 13.3.0; GNU Make 4.3;
-Emscripten 4.0.23 (7a5d93b50f6a3a35e85a0d2fc9e667b8498e6aed); Node 24.19.0;
-npm 11.17.0; WABT 1.0.42; Binaryen 125; Chrome 153.0.8010.12. Configure was
-`env CC=cc CC_FOR_BUILD=cc CXX=/bin/false ./configure --enable-all`; amalgamation
-`make sqlite3.c`; WASM targets `b-vanilla b-esm b-bundler emcc_opt=-Oz`.
-Vector added the seven source-specific commands and Make include defined in
-`tools/build/build.mjs`; no source patch or runtime loader modification occurred.
+Both compositions passed conventional/ESM/bundler main C/OO1, direct Worker,
+Worker1 and promiser: twelve contexts each. They checked exact selected versions,
+absence of the other engine and native deterministic neighbors. Main/Worker probes
+also checked BigInt, FTS5, kvvfs and conditional opfs/opfs-wl/installed SAH pool;
+main-thread OPFS requests remained explicitly unavailable. Each archive's eleven
+assets were requested only under its local runtime prefix (51 successful runtime
+responses). Four negatives actually requested absent WASM, ESM Worker1 and OPFS
+proxy (404), and corrupt WASM (200), then observed unavailable target capability.
+A bounded upstream initialization hang was failure to initialize, not success.
+All 29 extracted file hashes and each archive hash were unchanged after checks.
 
-| Actual fixture | sqlite-vec | SQLite-Vector |
+The temporary `repair69-real-payload.mjs` called the real `acceptedPayload` with
+each actual archive and exact raw build/package handoffs after cleanup. Its
+acceptance envelope was deliberately synthetic, using the existing contract's
+stage/case names solely to reach payload guards; no publication adapter ran and
+no real A-acceptance verdict is claimed. Both calls passed complete selected-source,
+metadata, runtime, notice and inventory validation. The same script loaded ESM from
+the separately extracted package and executed the exact SQL code block from its
+shipped `docs/usage.md` through OO1. Both returned `[[1,0],[2,1.4142135381698608]]`.
+This directly checks the new guides, not merely a similar probe query.
+
+| Measured identity/result | sqlite-vec fixture | SQLite-Vector fixture |
 | --- | --- | --- |
-| Upstream | 0.1.9 | 1.1.2, commit 0c2223ada9dce1fa33248c8835a15f51d9a0f655 |
 | SQLite | 3.54.0 | 3.54.0 |
+| Engine | 0.1.9 | 1.1.2 / 0c2223ada9dce1fa33248c8835a15f51d9a0f655 |
+| Archive bytes | 1166009 | 1164706 |
+| Archive SHA-256 | 4a4e654b791859ccc4203f37ca35570f2f6b937fc70c5c02cfefdc2d65a4f297 | 81e6eb5d8552f91fc5b5612e093774e086fb326849a71d313a5dfb57dcb2ff95 |
 | WASM bytes | 955300 | 943014 |
-| WASM SHA-256 | 037467b953545840774a31e72b6c62df32a27d443e72cf306e8b21ec45e73d47 | 020dc67ad711674b98f7621262054653e8692b9dc1e656298735b356cb488284 |
-| Archive bytes | 1166016 | 1164681 |
-| Archive SHA-256 | 47a183c6b910ece83d8c853d3d89fdbcd0dbede0e38b7c14a2776270b92ff260 | 5bbfd06710615e734d6139d5ed519fb2fe9412620ebd20086b9d0e636aceb275 |
-| Twelve positive contexts | passed | passed |
-| Four negative companions | passed | passed |
-| Packaged asset responses | 51, all local prefix/status 200 | 51, all local prefix/status 200 |
-| Final-file/archive hashes | unchanged | unchanged |
+| WASM SHA-256 | 2673d71618a1e44d3a2fb958fa421d08a8c4067d22b6258eb1788aeb68f4ebd4 | 020dc67ad711674b98f7621262054653e8692b9dc1e656298735b356cb488284 |
 
-Each composition exercised main C/OO1 and direct Worker, Worker1 and promiser
-through conventional/ESM/bundler modes. Native queries returned ids 1 then 2 at
-distances 0 and sqrt(2); version was exactly `v0.1.9` or `1.1.2`, with the other
-engine absent. Main/Worker probes also checked BigInt, FTS5, kvvfs and explicit
-unavailability of main-thread OPFS; Workers exercised opfs, opfs-wl and installed
-SAH pool. Loopback HTTP had COOP same-origin and COEP require-corp, secure context,
-Web Locks and Atomics.waitAsync. The negatives actually requested absent WASM,
-ESM Worker1 and OPFS proxy (404), and corrupt WASM (200), then observed the target
-capability fail. A bounded upstream initialization hang counts as unavailable,
-not as successful initialization. These observations establish packaging usability
-in these conditions, not full Hamming, restart persistence or production CI acceptance.
+The package names are explicitly nonpublished fixtures. Compact default input
+objects, distinct `inputs.sqliteVector`, source origins and all portable recorded
+commands were inspected; no original checkout path remains in `runtime.json`.
+Actual command paths remain in raw handoffs bound by `buildHandoffSha256`.
+New-name/version tests assemble fresh independent tarballs and retain runtime bytes;
+no qualified archive is relabeled.
 
-Source archive digests and origins remain in the unchanged recorded locks.
-Default lock SHA-256 is
-`29bd2007a91eecc7810814c76e911792c18507942b980f51b4280ff12afaeb8d`;
-Vector lock is `f8d1fd0bd8660eb69f964101a5ca0a650ac297cfc222494b4acc777116dbd779`.
-`runtime.json` contained no original checkout path; raw build handoffs retained
-actual commands. Compact `inputs.sqlite`/`inputs.sqliteVec` default fields and
-separate Vector identity were inspected. Selected/common document bytes matched
-the controlled mapping. Final inventories hash every document, notice and metadata
-file, in addition to the unchanged runtime inventory.
+### Selected document, notice and metadata identities
 
-## Notice provenance actually examined
+The following shipped SHA-256 values were checked against each final inventory;
+runtime records and other notice hashes remain in the controlled manifests/raw
+handoffs. These describe the new archives, not those from the first attempt.
 
-The acquired Vector archive's `LICENSE.md` exactly matched the shipped Apache
-text (SHA-256 `421717de661f6707b9829bd7d459994af9fc5c7b400335da822a817ffd8a42a1`).
-Its three incorporated FP16 files were compared byte-for-byte to
-`Maratyszcza/FP16` commit `98b0a46bce017382a6351a19577ec43a715b6835`:
+| Shipped file | sqlite-vec | SQLite-Vector |
+| --- | --- | --- |
+| README.md | b2f3f4f29b29e304aee8d4edaf2e8666ccf71b93f891e47d83637c101767656a | d8e510d007f518d43380771d61f75a598186b37186ce1bc59b33e0e9dbc94dfd |
+| docs/usage.md | d8c313ae4a5bf12c33de072d9f4aba8f880a27c11e17b945c03c03fa607f3644 | 9218ce31cf1fb02348f7a6d12e6cc1638996df6a736b1c016534fd0afdc3a067 |
+| docs/browser.md | 0705d1980e7f7d545a6d8cda5a7f3ea4d57e6504a440fb5445cde2c561fbe42d | 0705d1980e7f7d545a6d8cda5a7f3ea4d57e6504a440fb5445cde2c561fbe42d |
+| NOTICE | 4915554842879e9f047075c8bd4b930bedbb08f9b14ba80bfb8945744b7fa126 | 5d6b5d0a252bc3c1f2ad760a739ab5dc63f990afc9cb4e967f2134f385b95961 |
+| licenses/origins.json | 7b9a1ef5546d7e747f3a14727305106a69c30c2a37b01bf8339177ef5a867072 | 5391a1216fe0575d84b04c65b70164f42cb710949b8f3f95baa5d5de341c433a |
+| runtime.json | c34783ffe417e0937500e4854518b1135361730aa28839258ee16a3c043e373c | 96c230cac214a889d5ee89412819519cd3b5b1b638981df023c56a830c650188 |
+| package.json | ea9bf38cda0630a2e37c17954c3bf4546db5ab9ed1739c925c5558e5e11dd1b8 | 80d27c5bf11f517cfa9cc9b999561543759d697f761616996773a6ff110dfa39 |
 
-- `fp16.h`: Git blob `95fa0c2de8c0bbc76a0927304f20160737cb9f7b`.
-- `bitcasts.h`: `1de8d24297a0455f638f8ea552c236c4921d9f55`.
-- `macros.h`: `4018b0c9d0f87a29a7f2f4e7e40a29eb17103898`.
+Each archive includes ten applicable upstream notices, common material plus exactly
+its selected engine; Vector includes the controlled FP16 MIT text. Embedded runtime
+bytes were preserved. The acquired Vector archive's Apache text was compared again
+byte-for-byte with `tools/package/notices/sqlite-vector-APACHE.txt`. Its FP16 headers
+again matched the recorded Git blobs `95fa0c2de8c0bbc76a0927304f20160737cb9f7b`,
+`1de8d24297a0455f638f8ea552c236c4921d9f55` and
+`4018b0c9d0f87a29a7f2f4e7e40a29eb17103898` respectively. The immutable FP16 MIT
+license/revision association is reused from the [first-attempt account](https://github.com/at-rama/sqlite-vector-wasm/blob/471e0e1fc252dfffed02862c1a343e12db787e3d/.42p/openspec/changes/package-sqlite-vector-option/apply-account.md),
+“Notice provenance actually examined”: byte comparison to FP16 revision
+`98b0a46bce017382a6351a19577ec43a715b6835` and that revision's MIT license. Its old
+raw comparison files are unavailable; source-origin/license claims are not newly
+independently investigated. Controlled origins and exact notice hashes are unchanged.
 
-That exact revision supplies the included MIT license with Facebook, Georgia
-Institute of Technology and Google copyright notices. Controlled origins, source
-and shipped digests and header identities are in `tools/package/notices.json`.
-Each archive selected ten applicable upstream notices, without attribution of the
-other engine. Embedded runtime bytes remained unchanged. This examines the pinned
-incorporated files, not every possible future upstream dependency.
+### Repository tests and repair dispositions
 
-## Failures and uncompleted work
+`sh tools/check-repository.sh` passed. `sh tools/test-repository.sh` returned zero:
+341 tests, 108 Python and 233 Node, all passed. Breakdown: gates 44, acquisition 47,
+build 44, package 18, acceptance 15, release 41, Updates Node 27/Python 6, Watch 51,
+OpenSpec Python 11 and Site 37. Offline tests use system Node 24.19.0/npm 11.9.0,
+Python 3.12.14; real product commands use the pinned SDK above. Pinned OpenSpec
+preflight and strict validation from `.42p` passed (13/13 items).
 
-**F1 — publication document/inventory conflict.** `tools/release/run.mjs`,
-`acceptedPayload`, still compares extracted README/usage with the root files and
-reconstructs a fixed inventory without `docs/browser.md`. New engine-specific
-sources intentionally differ from those unchanged transitional Site inputs. A
-read-only control invoked the real `acceptedPayload` on the actual vec archive
-and observed `Published README.md differs from source revision`. Its acceptance
-envelope was synthetic solely to reach this byte check; it was not an acceptance
-result, and no publication adapter was invoked. Even aligning the two root files
-would not solve the fixed inventory/common-file conflict and would violate the
-chosen transitional Site boundary. Required action: explicitly revise the
-realization scope/dependency for publication's selected-document consumption,
-then cover it, rather than weakening the byte checks or editing A-release here.
+The previous F1 conflict is repaired by the authorized selected/common document
+consumer and exact reconstructed inventory. F2 is repaired by separate first-use
+and retained validation plus the raw-handoff digest binding; removed-input and
+stale-provenance fixtures pass. F3's sixteen release fixture failures are fixed
+without suppressing byte checks; changed selected/common docs still fail and root
+Site docs remain separate. F4 is fixed by the exact fixture name/version in both
+Vector guides, with fresh archived guide SQL executed above.
 
-**F2 — original build-file dependency.** New annotated `validateBuild` reads the
-generated bridge and Vector Make include. `acceptedPayload` reuses that function
-when original build paths may already be gone. A read-only default-handoff control
-renamed the build directory and observed ENOENT for `extra-init.c` despite intact
-extracted runtime bytes. This is an implementation gap in the preserved downstream
-contract. Required correction before renewed verification: distinguish raw build
-consumption validation from revalidation of already consumed/identified package
-provenance, retaining stale-input detection without requiring deleted build files.
-No correction was made after the stop.
+Source locks, release descriptor, harness/SDK, A-build and all other downstream
+policy/orchestration/Site implementations are unchanged. The bounded authorized
+exception is `acceptedPayload` in `tools/release/run.mjs` and its test inputs/cases;
+numbering/channels/triggers/publish adapters remain unchanged. Captures, Allocation
+and synchronized specs are untouched. The eight-requirement/twenty-eight-scenario
+unit still has 100% semantic coverage each way; this is not full-product acceptance.
 
-**F3 — existing release fixture setup.** The registered release suite's fixture
-copies only root README/usage, so 16/39 tests fail at missing selected docs before
-reaching their intended assertions. Fixtures need the new controlled inputs after
-F1 is resolved; merely changing fixtures or suppressing these failures would not
-repair the real conflict demonstrated above.
+### Evidence availability and limits
 
-Tasks 1.1/1.4/2.2/3.1/3.2 remain unchecked: raw validation, metadata and real-archive
-work is substantially implemented, but their complete compatibility/evidence
-requirements cannot be closed. The requested post-Apply Verification must report
-these failures rather than treating partial successes as complete realization.
+At completion, new raw logs/handoffs are under `/tmp/repair69-*.{json,log}`;
+archives and browser reports are under `/tmp/repair69-repro/.work`. Specific positive
+browser reports are:
 
-## Tests actually executed before Verification
+- vec: `/tmp/repair69-repro/.work/package-check/run-hVc9li/checks.json`.
+- vector: `/tmp/repair69-repro/.work/package-check/run-0zADlg/checks.json`.
 
-- `sh tools/check-repository.sh`: passed.
-- `sh tools/test-repository.sh`: failed. Gate Python 44/44, inputs Python 47/47,
-  build Node 44/44, package Node 17/17 and acceptance Node 15/15 passed; release
-  Node 23/39 passed, 16 failed. The canonical script stops there.
-- Remaining suites run separately to expose their actual state: Updates Node
-  27/27, Updates Python 6/6, Watch Node 51/51, OpenSpec Python 11/11 and Site Node
-  37/37 passed. This does not turn the failed canonical command into a pass.
-- `OPENSPEC_TELEMETRY=0 sh ../tools/openspec.sh exec validate --all --strict`, run
-  from `.42p`: passed.
+These raw artifacts are temporary/uncommitted, with no durable public download URL;
+future readers may only have this account and need to reproduce. Public-surface
+browser/HTTP observations share repository-authored build/probe/harness mechanisms
+and agentic authorship; controls use synthetic scaffolding where expressly labeled.
+Full binary/Hamming oracles, shutdown/reopen persistence, whole-path production CI
+and release authorization remain separately allocated. Current observations do not
+qualify every browser or future source pair or assert byte-identical reconstruction.
 
-## Evidence availability and dependencies
+## Historical first attempt
 
-This is an authored execution account, not raw output. At report preparation the
-primary build/package/check handoffs, tarballs and full logs remained accessible
-under `/tmp/package69-repro/.work` and `/tmp/package69-*.{json,log}`. They are
-transient, uncommitted and have no durable public artifact URL. In particular the
-browser results are `package-check/run-mVpIDU/checks.json` (vec) and
-`package-check/run-wl2fKE/checks.json` (Vector). Future readers may have only this
-account and must reproduce the commands rather than assume raw artifacts remain.
-
-The final-archive browser observations cross the actual package's public surface
-and inspect real HTTP requests, separate from assembly's own byte assertions.
-They share repository-authored harness, build/probe definitions and agentic
-authorship; this is not independently authored acceptance. The stopped release
-suite and explicit downstream controls are contrary evidence, not optional scope
-exclusions. Source/build checksum continuity permits reuse of these exact Apply
-observations for the unchanged implementation; it does not qualify a later fix.
+The [initial account](https://github.com/at-rama/sqlite-vector-wasm/blob/471e0e1fc252dfffed02862c1a343e12db787e3d/.42p/openspec/changes/package-sqlite-vector-option/apply-account.md)
+retains the original c9c33ad implementation, its stopped 3/8 progress, old archive
+identities and four discovered gaps. The [failed Verification](https://github.com/at-rama/sqlite-vector-wasm/blob/f3bdf97f50d0f89c01db734148f1145a26ee2086/.42p/openspec/changes/package-sqlite-vector-option/verification.md)
+remains tied to candidate `471e0e1fc252dfffed02862c1a343e12db787e3d`. Neither is
+retroactively labeled successful; the renewed implementation/evidence above replaces
+their applicability to the repaired candidate.
