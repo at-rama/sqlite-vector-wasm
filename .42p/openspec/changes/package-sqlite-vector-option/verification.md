@@ -2,178 +2,51 @@
 schema_version: 1
 change: package-sqlite-vector-option
 allocation_unit: A-package
-checked_commit: 63856526b1e97b0a7eaaeff40656cbca280e7a4d
-verdict: failed
+checked_commit: 291333893440b06c732bb2e2033ce45833c565ff
+verdict: passed
 coverage:
   allocation_to_change: 100
   change_to_allocation: 100
-openspec_verify: failed
+openspec_verify: passed
 repository_checks: passed
-applicable_tests: failed
+applicable_tests: passed
 ---
 
-# Verification — CI compatibility failure
+# Verification — corrected default acceptance compatibility
 
-## Institutional view — current failed result
+## Institutional view
 
-**Failed; the preceding conformity conclusion is invalidated.** Acceptance run
-[39099824526](https://github.com/at-rama/sqlite-vector-wasm/actions/runs/39099824526),
-job 117593622629, tested PR head `63856526b1e97b0a7eaaeff40656cbca280e7a4d` through
-merge revision `a198f26f4b5eee1f10bff66b48ab8d3c9cf5f095` and failed at
-`tools/acceptance/check.mjs:40`, vanilla-worker1: `0 !== 2`. The downloaded
-[CI artifact](https://github.com/at-rama/sqlite-vector-wasm/actions/runs/39099824526/artifacts/12125633064)
-(SHA-256 `897fbcd6e53d59bc134a19212b264557d293bd471e471a0cc0018a1ac05f7793`)
-contains `run-4XuBUe/browser.json`, `acceptance.json` and `logs/browser.log` proving
-this failure. Their extracted local copies are temporary under `/tmp/accept69-ci`.
+**Situated conclusion — passed for A-package at `291333893440b06c732bb2e2033ce45833c565ff`.** The default production acceptance regression is corrected and all three required controls pass. [The renewed execution account][account], “CI regression correction”, records 342 passing offline tests, renewed Vector package checks and the actual complete default [passing Acceptance run][ci]. Its downloaded [primary artifact][artifact] was digest-verified and remains available until 2026-11-17. Material reuse: the unchanged two-composition builds, removed-source checks, guide execution and license association are retained from the preceding Apply account; the Vector archive was replayed with the corrected checker rather than rebuilt. Those local primary archives/reports are temporary. This is not a claim of full Vector acceptance or release readiness. The [prior failed report][failed] explicitly retracts the mistaken preceding conformity conclusion.
 
-The command provenance and 100% Allocation/Change mapping remain those examined
-below: A-package already requires preserved default consumer conventions. The
-requirement was represented but its realization was incompletely tested.
+**Command provenance.** AGENTS.md records human institution of the reconciled Captures and S-release-engines. The [coverage mapping][coverage] identifies the Distribution and Release/Watch Captures, complete A-package unit and Allocation snapshot. Reviewed correspondences retain exact inputs, one engine, complete browser assets/storage conditions, supplied identity, notices/docs, portable provenance, exact downstream handoff and clean outputs. The producer-format repair realizes an existing default-caller obligation; it does not change Capture or Allocation semantics. This is a unit-to-Change review, not a fresh audit of all historical source-to-Capture fidelity.
 
-**Exact input, envelope, notices and output boundaries:** previous scoped evidence
-remains identified below, with no new conformity claim for these unaffected parts.
-CI records checkout/tools/build/package passed and complete packaged loader checks.
-**Native browser surface and exact downstream handoff:** failed. Worker1/promiser
-`sqlRows[0][2]` changed meaning from observed vector dimension to other-engine count;
-the unchanged A-acceptance consumer still expects dimension 2. Its assertion is
-valid for its retained report convention and must not be weakened to accept 0.
+**Exact selected inputs and complete browser payload — satisfied in the examined compositions.** Package validators bind the selected recorded lock, origins, versions/digests, actual templates/recipes/tools and eleven regular hashed runtime files. Offline tests reject missing, ambiguous, stale, altered and unsafe inputs; retained validation remains distinct from first consumption. The prior fresh two-composition assembly and cleanup evidence remains applicable because its build/package/runtime inputs are unchanged. The renewed full default CI independently reconstructs the default payload from a clean checkout.
 
-**Evidence limits and disposition:** the earlier 341 offline tests and packaged
-browser checks passed but missed the actual producer/consumer boundary. That is a
-real default-path regression, not an optional full-product concern or runner issue.
-The shared authored fixtures did not establish the compatibility conclusion claimed
-by the previous report. Reopen affected tasks, restore the producer's existing
-convention with an actual dimension query and separate registration rows, add a
-boundary regression and run the actual full acceptance workflow. No migration,
-policy or Capture/Allocation revision is needed. A passing replacement requires
-renewed Verification on the corrected committed candidate before re-archive.
+**Native APIs, asset resolution and storage fidelity — satisfied under the recorded conditions.** Both pinned archives pass twelve loader/transport contexts and four requested missing/corrupt companion controls; Vector was replayed with the corrected checker. C/OO1, BigInt, FTS5, native queries, one registered engine, prefix-only asset resolution and conditional storage behavior remain checked. The full default CI additionally passes Float32/Hamming oracles, SQLite-only baseline, SQL negatives, three actual OPFS shutdown/reopen cases, negative persistence and final hashes. Worker1/promiser now return the observed dimension 2 in their preserved `sqlRows` convention and separately expose registration count 0. The downstream assertion was not weakened. Finite Chrome/loopback results do not qualify every browser or host.
 
-## Previous verification record — superseded by the failure above
+**Truthful envelope, documentation, licensing and supplied identity — satisfied for the recorded inputs.** Exact selected/common document copying, source/extracted links, applicable notice inventories, portable metadata and fresh supplied-name/version assembly have suitable positive/failure fixtures. Previously executed extracted guide SQL and the explicit nonpublished Vector fixture reference remain applicable to unchanged guide/runtime bytes. FP16 header/revision/MIT association reuses the historical immutable-source examination identified in the account; it is not inferred from the extension's Apache license or newly independently investigated. Embedded notices remain untouched. Existing Site sources and their tests remain preserved.
 
-The following is retained as the historical examination of candidate
-`9bd7ea39b3f2fa2ddcbaa502d12db9c0bee8fdea`; its passed statements no longer establish
-current conformity. Its raw archives were packaging evidence, not the full
-acceptance path that exposed this regression.
+**Exact downstream package and failure behavior — satisfied at the allocated boundary.** The authorized `acceptedPayload` change reconstructs the selected/common documentation and complete expected inventory, binds raw build-handoff digest and checks runtime/notices/metadata. Post-cleanup real-archive controls use explicitly synthetic acceptance envelopes solely to reach payload guards; they invoke no publisher. The renewed real default CI supplies separate production acceptance evidence. Offline mutation/failure controls reject contradictions, partial assembly and changed supplied identity without relabeling an old payload. Numbering/channels/adapters and Vector acceptance orchestration remain separately allocated.
 
-### Previous institutional view
+**Glue and clean-output boundaries — satisfied by examined code/diff and reproduction.** No upstream patch, runtime selector, SQL facade, native/Node/WASI product, source-lock/SDK/A-build change or generated runtime/archive is introduced. Controlled code/docs/notices and authored Change records alone enter Git. The authorized release payload-consumer repair is bounded to this handoff, without publication policy changes.
 
-**Conclusion: passed for A-package at `9bd7ea39b3f2fa2ddcbaa502d12db9c0bee8fdea`.** The required three controls
-support the repaired realization of `package-sqlite-vector-option` in its examined
-scope. Repository tests and both real final-archive matrices were renewed after
-the corrections; the [execution account][account], “Renewed repair and completion”,
-records their identities and results. Primary archives/logs remain temporary and
-accessible at this report's preparation, without durable public artifact URLs.
-The initial FP16 upstream license association reuses the explicitly identified
-first-attempt comparison, supplemented by renewed acquired-header identities;
-no old archive/browser success is transferred to changed bytes. This verdict is
-neither complete product acceptance nor release authorization.
+**Common dependencies and limits.** Public browser observations share repository-authored probes, build/harness mechanisms and agentic implementation/test authorship. Synthetic controls are not production observations; source identity alone does not renew old runtime evidence. The prior missed producer/consumer boundary demonstrates a correlated-test limit, now addressed by the exact regression and real complete default acceptance. Required A-package compatibility is no longer waived as an out-of-scope concern. Full Vector acceptance, future source pairs, broader hosts and publication remain unestablished.
 
-**Command provenance.** [AGENTS.md][authority] identifies human institution of the
-reconciled Captures. [A-package in Allocation][allocation] attributes browser payload,
-consumer envelope, exact source/build consumption, native/glue/storage boundaries,
-licensing, supplied identity, provenance and the same-package downstream handoff.
-The [mapping][coverage] was reexamined against Distribution C-purpose,
-C-nonmodification, C-inputs, C-browser, C-storage, C-release and Release/Watch
-C-version-identity, C-provenance, C-publication. The maintainer's “Tu peux réparer et
-poursuivre” permits the documented minimal payload-consumer correction. No Capture
-or Allocation obligation changes. Historical S-spec at
-`d463c4034604d6593cf45bbf5a523598dd3f53cc` retains provenance, not parallel current
-authority; this review does not audit the complete historical derivation chain.
-
-**Consume the verified selected build — satisfied in the examined compositions.**
-Renewed invalid-input fixtures and real assemblies support exact lock/engine/
-origin/version/digest, recipe/tool/template and eleven-file runtime validation.
-[Validation implementation][package-code], `validateBuild`, still checks actual
-bridge/Make bytes on first consumption. `validatePackagedBuild` subsequently checks
-recorded provenance, reconstructed integration hashes and extracted bytes without
-requiring removed generated files; the consumer first binds the raw handoff digest.
-Both-engine retained-payload fixtures reject contradictory identities and stale
-integration metadata. These observed cases and the bounded checks support the
-obligation; they do not qualify arbitrary future locks or tools.
-
-**Deliver the complete native browser surface and conditional storage — satisfied
-under the recorded conditions.** Fresh archived runtimes passed conventional/ESM/
-bundler main C/OO1, direct Worker, Worker1 and promiser checks, exact engine/version,
-native nearest neighbors, BigInt and FTS5, plus kvvfs/Worker OPFS/opfs-wl/SAH pool.
-Each composition passed twelve contexts and four genuinely requested missing/
-corrupt companion controls, with source/build locations unavailable. The
-[account][account] records Chrome 153.0.8010.12, isolated loopback HTTP, prerequisites
-and all-file/archive hashes. [Checker definitions][checker] delimit these tests;
-no broad bundler/browser compatibility or restart-persistence claim follows.
-
-**Supply truthful documents, notices and an independently numbered envelope —
-satisfied for the pinned payloads.** Renewed tests and archive inspection show
-byte-exact engine/common selection, applicable licensing and metadata, offline
-installation without scripts/compiler dependencies, and fresh assembly for changed
-supplied identities. Vector guides now identify the exact nonpublished fixture;
-the actual SQL blocks from both extracted guides were executed. The account records
-renewed FP16 header/blob and Apache-text checks and the historical source of its MIT
-association. Root Site inputs remain unchanged and their 37 tests pass. Repository
-links are checked against candidate sources; external website uptime is not tested.
-
-**Supply the same identified package downstream — satisfied at the payload boundary.**
-The corrected [consumer code][release-code], `acceptedPayload`, verifies selected
-lock/composition, raw-handoff digest, selected/common document bytes and the entire
-expected inventory, including runtime/metadata/notices. Tests reject changed docs,
-common guide, metadata, provenance, archive or missing required acceptance records.
-Fresh real archives also pass this read-only payload function after cleanup, using
-explicitly synthetic acceptance envelopes solely to reach the consumption guard.
-That control does not establish the envelope's claimed production acceptance and
-invokes no publisher. The 41 release control tests pass; numbering/channel policy,
-triggers/adapters and full Vector publication orchestration remain unchanged.
-
-**Preserve glue and clean-output boundaries — satisfied by examined implementation
-and diff.** Only package/build-consumption tooling, explicit documentation/notices,
-the authorized payload consumer/fixtures and Change records changed. No upstream
-patch, runtime chooser, SQL facade, native/Node/WASI product, source-lock/harness/
-A-build change, Site implementation, Capture/Allocation revision or generated
-runtime/archive entered the candidate. The initial tooling bootstrap used a clean
-checkout and new tool/npm/product state; the account explains the unchanged-build
-commit transition instead of implying a byte-identical cross-host rebuild.
-
-**Common dependencies and limits.** The observed package/browser requests cross
-the public runtime surface, but share repository-authored build/probe/harness
-mechanisms and agentic authorship. Synthetic fixture and read-only consumer envelopes
-exercise controls, not real acceptance or publication. The code review is an agent's
-semantic examination. Finite successful cases do not eliminate correlated errors.
-Full Hamming, restart persistence, production-path acceptance, release policy and
-human merge/publication decisions retain their separately allocated duties; no
-required A-package failure is waived as one of those exclusions.
-
-**For institution.** The previously reported F1–F4 gaps and incomplete tasks have
-been addressed in the authorized realization and rechecked. Apply is complete;
-this scoped Verification is satisfactory. Archive, merge and publication have not
-been performed and are not authorized merely by this verdict.
+**For institution.** F1–F4 retain their evidenced repairs; F5 is closed by restored observed result shape and actual full default acceptance. No applicable control remains skipped or failed in this scoped Verification. This verdict does not authorize or perform archive, merge or publication.
 
 ## 1. Allocation ↔ Change coverage
 
-Allocation SHA-256:
-`2e1862a7dfb09a52675eb78bda79e32e0a2bad832c196a2b7fb37c9113f1a9ef`, unchanged
-from main `6bad238fdbbbd0793abfdfe382d8c94f8a2c3a62`. The [coverage mapping][coverage]
-contains fourteen qualified forward contributions and reverse grounding for all
-eight full MODIFIED requirements. Review compared the complete unit and attributed
-Capture passages to proposal, delta, design and tasks in both directions: exact
-inputs, one native engine, complete assets/storage conditions, envelope/docs/notices,
-independent supplied identity, portable provenance, downstream exact bytes and output
-exclusion are retained. Both semantic directions are **100%**. The minimal consumer
-repair implements the already allocated handoff; it adds no publication-policy unit.
-This is correspondence of requirements, not a confidence score or proof of full
-upstream fidelity. Current Capture/Allocation bytes and the authorized repair
-correspondence are identified in the account and mapping.
+Clean committed candidate: `291333893440b06c732bb2e2033ce45833c565ff`. The current Allocation at main `6bad238fdbbbd0793abfdfe382d8c94f8a2c3a62` has SHA-256 `2e1862a7dfb09a52675eb78bda79e32e0a2bad832c196a2b7fb37c9113f1a9ef`. Read the entire A-package unit and its qualified Distribution C-purpose/C-nonmodification/C-inputs/C-browser/C-storage/C-release and Release/Watch C-version-identity/C-provenance/C-publication contributions, then examined proposal, delta, design and tasks in both directions against [coverage][coverage]. All fourteen qualified contributions and all eight target requirements retain semantic coverage: **100% each way**. Consumer compatibility is explicit, including the result-format correction; no responsibility or requirement is weakened. Matching hashes/counts alone do not establish this judgment or full upstream historical fidelity.
 
-## 2. Official OpenSpec verification
+## 2. Official OpenSpec verify
 
-Used the unchanged generated `openspec-verify-change` 1.14.0 workflow, composed by
-`42p-verify-change`. Preflight, local project root, status and apply context resolve
-this Change under `.42p/openspec/changes/`, schema `spec-driven`. All four context
-artifact types are readable. Task tracking reports **8/8 complete**; implementation
-and scenario evidence were examined independently of the checkboxes.
+Used repository composition `42p-verify-change` and generated `openspec-verify-change` 1.14.0. Local root confirmed by `list --json` from `.42p`; `status --change package-sqlite-vector-option --json` and `instructions apply --change package-sqlite-vector-option --json` resolve the active `spec-driven` Change and readable proposal/specs/design/tasks. Tracking reports 8/8 complete, independently checked against implementation and evidence.
 
-| Dimension | Assessment |
+| Dimension | Result |
 | --- | --- |
-| Completeness | Passed: all eight tasks and eight MODIFIED requirements examined; no removal/rename or missing artifact. |
-| Correctness | Passed in scoped evidence: all 28 scenario conditions mapped below, with suitable positive/failure controls and renewed real archives. |
-| Coherence | Passed: concrete two-engine branches, explicit source map, preserved Site inputs, separate initial/retained validation and authorized consumer boundary match the revised design. Existing file/code patterns retained. |
+| Completeness | Passed: 8/8 tasks, all eight MODIFIED requirements examined; no removals/renames or missing applicable artifact. |
+| Correctness | Passed in scoped evidence: all 28 scenario conditions mapped below, positive and failure cases assessed, default caller regression closed with actual production acceptance. |
+| Coherence | Passed: concrete two-engine branches, explicit sources, initial/retained validation, preserved Site inputs and bounded authorized consumer match design and existing tool patterns. |
 
 | Full requirement / all scenarios | Implementation and examined evidence |
 | --- | --- |
@@ -186,73 +59,35 @@ and scenario evidence were examined independently of the checkboxes.
 | Traceable final package handoff / 4 | Portable manifest, final inventories/raw-handoff digest; atomic/copy/pack/archive failures and fresh supplied-identity fixtures; both-engine post-cleanup consumer controls including actual fresh archives. |
 | Generated outputs remain uncommitted / 2 | Clean initial temporary setup and fresh construction account; candidate diff, ignored outputs and repository integrity check; no generated asset committed. |
 
-Requirement implementations and fixture definitions are in [package code][package-code],
-[package test definitions][package-tests], [composition test definitions][composition-tests],
-[checker definitions][checker] and [release test definitions][release-tests]. Execution
-results and identities are in the [account][account], “Renewed repair and completion”;
-these links deliberately distinguish definitions from reported executions.
+Definitions examined: [package implementation][package], [checker implementation][checker], [composition regression/fixtures][tests], `tools/package/tests/package.test.mjs`, `tools/release/run.mjs` and its 41 release tests. These are definitions, not execution results; observed outcomes and reused historical evidence are distinguished in [the account][account]. Current `transportResult` at lines 35–41, native dimension SQL at 46–48 and Worker1/promiser execution at 93/111 specifically restore the consumer contract in unchanged `tools/acceptance/check.mjs:40`.
 
-### Finding dispositions
+Findings and dispositions:
 
-- **F1 closed:** the authorized consumer now reads the same selected/common sources,
-  compares their bytes and reconstructs the complete inventory. Selected and common
-  document mutation tests still reject; root Site-source mutation does not change
-  selected package consumption. Fresh real archive controls pass both engines.
-- **F2 closed:** first consumption still rejects absent/altered generated inputs;
-  retained validation succeeds after source/build removal and rejects contradictory
-  provenance/integration identities. Actual retained archives also pass.
-- **F3 closed:** release fixtures include selected documentation, and mutation cases
-  target those sources. The complete canonical test command passes, including 41/41
-  release tests, without suppressing previous assertions.
-- **F4 closed:** selected Vector README/usage explicitly identify
-  `sqlite-vector-wasm-fixture@0.0.0-vector`; changed archives and their authored SQL
-  were rechecked. No registry publication is claimed.
-- Tasks 1.1, 1.4, 2.2, 3.1 and 3.2 are complete on the repaired evidence; the previous
-  failed report remains in Git at `f3bdf97f50d0f89c01db734148f1145a26ee2086` for its
-  original candidate. No failed result is retroactively relabeled.
+- F1 closed: authorized consumer compares selected/common exact document bytes and full inventory; mutations still reject.
+- F2 closed: first consumption checks actual generated inputs; retained checks reconstruct provenance after cleanup and bind the raw handoff digest; contradictory records reject.
+- F3 closed: complete release fixtures target the selected docs and all 41 release controls pass without suppressing assertions.
+- F4 closed: guides identify the actual nonpublished fixture; prior rebuilt archives and exact extracted SQL execution remain identified and applicable.
+- **F5 closed:** prior CI proved `sqlRows` changed from dimension 2 to registration count 0. The actual native dimension query and separate registration assertion restore both requirements. New regression rejects the old broken shape and another engine; passing CI primary rows demonstrate the real fix across all modes. The old report remains failed at [its immutable correction revision][failed].
 
-**No unresolved critical findings, warnings or suggestions in this scoped review.**
-No applicable official dimension was skipped. This supports archive readiness under
-the remaining native lifecycle; it does not execute archive or release acceptance.
+No unresolved critical findings, warnings or suggestions in this review. No applicable official dimension was skipped. All checks passed within this scoped workflow; remaining archive lifecycle checks apply separately.
 
 ## 3. Repository checks and applicable tests
 
-Checked candidate `9bd7ea39b3f2fa2ddcbaa502d12db9c0bee8fdea` was clean and committed before this report. Its
-implementation bytes equal `8f20d4df5c9562526b0a414114298cbce1de1e58`; later pre-report
-changes only close task tracking and record execution. No implementation correction
-was made during this Verification. Apply runtime evidence is reused only for these
-unchanged implementation/document/input bytes, with exact artifact identities.
+On the clean committed candidate, `sh tools/check-repository.sh` returned zero. From `.42p`, `OPENSPEC_TELEMETRY=0 sh ../tools/openspec.sh exec validate --all --strict` passed 13/13 items (length advisories only). Local pinned OpenSpec 1.14.0 preflight and root/status/context succeeded.
 
-| Command | Outcome |
-| --- | --- |
-| `sh tools/check-repository.sh`, repository root | Passed; canonical source/canon/input identities, whitespace/output boundaries. |
-| `sh tools/test-repository.sh`, repository root | Passed: 341 registered tests, 0 failed. |
-| `OPENSPEC_TELEMETRY=0 sh ../tools/openspec.sh check`, from `.42p` | Passed: locked CLI/generated skills 1.14.0; none installed/updated during Verification. |
-| `OPENSPEC_TELEMETRY=0 sh ../tools/openspec.sh exec validate --all --strict`, from `.42p` | Passed 13/13 items; informational length notices only. |
-| Pinned harness install/check/deps/smoke, fresh build/package/check for both locks | Renewed Apply evidence, all returned zero; exact commands/conditions/hashes in the account. |
-| Read-only real-archive consumer plus extracted-guide SQL | Passed for each archive after original source/build locations became unavailable; synthetic control envelopes are not acceptance verdicts. |
+Reused suitable Apply executions on `78d05d4065fb6f16443ba09a1a321a2a3f359045`: `sh tools/test-repository.sh`, 342/342; actual `tools/package/check.mjs` against the identified Vector archive, twelve contexts/four negatives; actual full CI `tools/acceptance.sh --name sqlite-vector-wasm-acceptance-fixture --version 0.0.0-test`, all nine stages and 22 browser cases passed. Candidate differs only by authored Apply account and completed checkboxes; code, controlled sources, fixtures, dependencies and runtime-relevant configuration are byte-identical. Therefore these observations are applicable, not inferred from a former passing declaration. The separate full local reproduction also returned zero: all nine production stages and 22 cases passed on clean correction commit 78d05d4065fb6f16443ba09a1a321a2a3f359045, using a new automatically installed SDK and initially empty tool/npm/product state. Primary report `/tmp/accept69-full/.work/acceptance/run-hMtWdQ/acceptance.json`; archive 1166012 bytes, SHA-256 `6e3216fd7871a0037e14cbd30f524b7dd323c62685cf16eac89c7a36b252a23e`. Its stdout/progress are `/tmp/accept69-full-result.json` and `/tmp/accept69-full-progress.log`. Local evidence is temporary; CI artifact provides separately inspectable primary evidence with its stated expiration. Host path differences can affect bytes; no byte-identical cross-host rebuild is claimed.
 
-Canonical suite breakdown: Python gates 44, acquisition 47, notice refresh 6 and
-OpenSpec tooling 11 (108); Node build 44, package 18, acceptance 15, release 41,
-Updates 27, Watch 51 and Site 37 (233). Offline fixtures use system Node 24.19.0/npm
-11.9.0 and Python 3.12.14; actual products use the unchanged qualified SDK, npm
-11.17.0, Emscripten 4.0.23 and Chrome 153.0.8010.12. The account records full build
-flags, versions, source pins and host conditions. Necessary pre-existing product
-outputs or unpublished files were not used; shared newly populated compiler cache
-and shared authored probes are explicitly disclosed.
+CI head `78d05d4065fb6f16443ba09a1a321a2a3f359045`, tested merge `f29fb752e630456bb1431d67596774bdb492e8c4`, common tree `e6b47759f17258d07c78519cab251a3d31ca3ce3`. [Artifact][artifact] ZIP SHA-256 `667f315f56206bb8edc0f2fd46b471ab69c48fae632a644e4089d9ffcf4b6f09`, verified locators `run-JNlNal/acceptance.json`, `run-JNlNal/browser.json`, `run-JNlNal/logs/browser.log`. Accepted default archive 1166029 bytes, SHA-256 `86c9752af4246eac38dd7f239cb6c96fcb11515690296928e119c20d542ff934`. Primary artifact expires 2026-11-17; selected copies currently under `/tmp/accept69-passed-ci` are temporary.
 
-Raw renewed logs, handoffs and archives are ignored or external temporary files;
-the account gives their locators and summarizes the observed identities. They have
-no durable public artifact URLs and may disappear. The report/account are authored
-records, not raw logs or independently reproduced third-party evidence.
+SQLite 3.54.0, vec 0.1.9, Vector 1.1.2 at `0c2223ada9dce1fa33248c8835a15f51d9a0f655`; Emscripten 4.0.23, pinned Node 24.19.0/npm 11.17.0, Chromium 153.0.8010.12, secure isolated HTTP loopback with COOP same-origin/COEP require-corp. Exact archive/build/notice/doc identities and offline system prerequisites are in [the account][account]. Old build/source/guide/FP16 observations are expressly reused historical accounts with temporary primary evidence, not substituted for the renewed real default CI or Vector replay.
 
-[authority]: https://github.com/at-rama/sqlite-vector-wasm/blob/9bd7ea39b3f2fa2ddcbaa502d12db9c0bee8fdea/AGENTS.md
-[allocation]: https://github.com/at-rama/sqlite-vector-wasm/blob/9bd7ea39b3f2fa2ddcbaa502d12db9c0bee8fdea/.42p/engineering/2026-10-04_sqlite-vec-wasm_allocation_edit-0.1.md
-[coverage]: https://github.com/at-rama/sqlite-vector-wasm/blob/9bd7ea39b3f2fa2ddcbaa502d12db9c0bee8fdea/.42p/openspec/changes/package-sqlite-vector-option/coverage.md
-[account]: https://github.com/at-rama/sqlite-vector-wasm/blob/9bd7ea39b3f2fa2ddcbaa502d12db9c0bee8fdea/.42p/openspec/changes/package-sqlite-vector-option/apply-account.md
-[package-code]: https://github.com/at-rama/sqlite-vector-wasm/blob/9bd7ea39b3f2fa2ddcbaa502d12db9c0bee8fdea/tools/package/package.mjs
-[checker]: https://github.com/at-rama/sqlite-vector-wasm/blob/9bd7ea39b3f2fa2ddcbaa502d12db9c0bee8fdea/tools/package/check.mjs
-[release-code]: https://github.com/at-rama/sqlite-vector-wasm/blob/9bd7ea39b3f2fa2ddcbaa502d12db9c0bee8fdea/tools/release/run.mjs
-[package-tests]: https://github.com/at-rama/sqlite-vector-wasm/blob/9bd7ea39b3f2fa2ddcbaa502d12db9c0bee8fdea/tools/package/tests/package.test.mjs
-[composition-tests]: https://github.com/at-rama/sqlite-vector-wasm/blob/9bd7ea39b3f2fa2ddcbaa502d12db9c0bee8fdea/tools/package/tests/composition.test.mjs
-[release-tests]: https://github.com/at-rama/sqlite-vector-wasm/blob/9bd7ea39b3f2fa2ddcbaa502d12db9c0bee8fdea/tools/release/tests/publication.test.mjs
+No unresolved A-package gap remains in the examined conditions. No release, merge or broad future-composition qualification is asserted.
+
+[account]: https://github.com/at-rama/sqlite-vector-wasm/blob/291333893440b06c732bb2e2033ce45833c565ff/.42p/openspec/changes/package-sqlite-vector-option/apply-account.md
+[coverage]: https://github.com/at-rama/sqlite-vector-wasm/blob/291333893440b06c732bb2e2033ce45833c565ff/.42p/openspec/changes/package-sqlite-vector-option/coverage.md
+[package]: https://github.com/at-rama/sqlite-vector-wasm/blob/291333893440b06c732bb2e2033ce45833c565ff/tools/package/package.mjs
+[checker]: https://github.com/at-rama/sqlite-vector-wasm/blob/291333893440b06c732bb2e2033ce45833c565ff/tools/package/check.mjs
+[tests]: https://github.com/at-rama/sqlite-vector-wasm/blob/291333893440b06c732bb2e2033ce45833c565ff/tools/package/tests/composition.test.mjs
+[failed]: https://github.com/at-rama/sqlite-vector-wasm/blob/78d05d4065fb6f16443ba09a1a321a2a3f359045/.42p/openspec/changes/package-sqlite-vector-option/verification.md
+[ci]: https://github.com/at-rama/sqlite-vector-wasm/actions/runs/39100349134
+[artifact]: https://github.com/at-rama/sqlite-vector-wasm/actions/runs/39100349134/artifacts/12126238022
