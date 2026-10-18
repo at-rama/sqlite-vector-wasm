@@ -74,8 +74,13 @@ test('each production failure retains a failed record and never runs downstream 
   for (const failAt of productionStages.filter(n => !['checkout', 'bundle'].includes(n))) {
     const repo = await mkdtemp(join(tmpdir(), 'acceptance-test-'));
     try {
-      await mkdir(join(repo, 'inputs')); await writeFile(join(repo, 'inputs/sources.lock.json'), '{}');
+      await mkdir(join(repo, 'inputs')); await copyFile(join(root,'inputs/sources.lock.json'),join(repo,'inputs/sources.lock.json'));
       const archive = join(repo, 'archive.tgz'); await writeFile(archive, 'abc');
+      const lockBytes = await readFile(join(repo,'inputs/sources.lock.json')), lock=JSON.parse(lockBytes);
+      const inputs = {...lock,lockDigest:{algorithm:'sha256',value:hash(lockBytes)}}; delete inputs.schemaVersion;
+      for (const key of ['sqlite','sqliteVec']) inputs[key].sourcePath=join(repo,key);
+      const buildHandoff={schemaVersion:1,inputs,build:{},logPath:'fixture'};
+      const compact=Object.fromEntries(['sqlite','sqliteVec'].map(k=>[k,{version:lock[k].version,digest:lock[k].digest}]));
       const commands = []; let browserPath;
       const run = async (cmd, args, { log }) => {
         commands.push(args);
@@ -84,8 +89,8 @@ test('each production failure retains a failed record and never runs downstream 
           : args[1] === 'exec' ? 'browser' : args[1] === 'check' ? 'tools' : args[1];
         if (stage === failAt) throw Error(`Injected ${stage} failure`);
         await writeFile(log, 'diagnostic');
-        if (stage === 'build') return JSON.stringify({ build: {}, logPath: log });
-        if (stage === 'package') return JSON.stringify({ package: options([]), archive: { path: archive, size: 3, sha256: hash('abc') }, runtimeFiles: [], logPath: log });
+        if (stage === 'build') { buildHandoff.logPath=log; return JSON.stringify(buildHandoff); }
+        if (stage === 'package') return JSON.stringify({ inputs:compact,lockDigest:inputs.lockDigest,buildHandoffSha256:hash(Buffer.from(JSON.stringify(buildHandoff,null,2)+'\n')),package: options([]), archive: { path: archive, size: 3, sha256: hash('abc') }, runtimeFiles: [], logPath: log });
         if (stage === 'browser') { browserPath = args.at(-1); await writeFile(browserPath, JSON.stringify(browserResult())); }
         return '';
       };

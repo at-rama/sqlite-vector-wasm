@@ -5,10 +5,10 @@ import { pathToFileURL } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import { root, hash, regularBytes, fileInventory, inspectArchive } from '../package/package.mjs';
 import { checkPackage } from '../package/check.mjs';
-import { reference, fixture, inspect } from '../build/check.mjs';
+import { reference, fixture, inspect, assertReference } from '../build/check.mjs';
 import { launchBrowser } from '../harness/browser.mjs';
 import { serveAssets } from '../harness/server.mjs';
-import { browserCases, modes, vfsNames, compareBaseline, assertBrowserComplete } from './contracts.mjs';
+import { browserCases, modes, vfsNames, compareBaseline, assertBrowserComplete, defaultLock, vectorLock, recordedSelection, assertSelected } from './contracts.mjs';
 import { checkFixtures, checkRows, expectedFloats, expectedBits, floatTolerance } from './oracles.mjs';
 
 export async function checkFinalPackage(handoff, reportPath) {
@@ -24,10 +24,11 @@ export async function checkFinalPackage(handoff, reportPath) {
   let browser, server, context;
   try {
     assert.equal(handoff.schemaVersion, 1);
-    const lockBytes = await regularBytes(join(root, 'inputs/sources.lock.json'));
-    assert.equal(handoff.lockDigest.value, hash(lockBytes), 'Package source lock mismatch');
-    const lock = JSON.parse(lockBytes);
-    for (const key of ['sqlite', 'sqliteVec']) assert.deepEqual(handoff.inputs[key], { version: lock[key].version, digest: lock[key].digest });
+    const sourceLockPath = handoff.sourceLockPath || defaultLock;
+    assert.ok([defaultLock,vectorLock].includes(sourceLockPath), 'Unsupported recorded acceptance lock');
+    const selection = recordedSelection(await regularBytes(join(root,sourceLockPath)),sourceLockPath);
+    assertSelected(handoff,selection);
+    Object.assign(report,{engine:selection.engine,sourceLockPath,sourceLockSha256:selection.sourceLockSha256});
     const packaged = await checkPackage(handoff);
     report.packaging = JSON.parse(await readFile(packaged.checks, 'utf8'));
     report.browser = report.packaging.browser;
@@ -35,9 +36,13 @@ export async function checkFinalPackage(handoff, reportPath) {
       await test(`${mode}-${kind}`, () => {
         const result = report.packaging.positive.results[`${mode}-${kind}`];
         assert.equal(result.version, handoff.inputs.sqlite.version);
-        assert.equal(result.vecVersion, `v${handoff.inputs.sqliteVec.version}`);
+        assert.equal(result.vecVersion, selection.engine.key === 'sqliteVec' ? `v${selection.engine.version}` : selection.engine.version);
         if (kind === 'main' || kind === 'worker') assert.equal(result.independentVersionsChecked, true);
-        else { assert.equal(result.sqlRows[0][2], 2); }
+        else {
+          assert.equal(result.registrationRows[0][2],0);
+          if (selection.engine.key === 'sqliteVec') assert.equal(result.sqlRows[0][2], 2);
+          else assert.deepEqual(result.sqlRows,result.registrationRows);
+        }
         return result;
       });
     }
@@ -46,8 +51,8 @@ export async function checkFinalPackage(handoff, reportPath) {
     report.workspace = workspace;
     browser = await launchBrowser();
     await test('baseline', async () => {
-      const baseline = await reference(workspace);
-      assert.deepEqual(baseline.inputs.lockDigest, handoff.lockDigest);
+      const baseline = await reference(workspace,sourceLockPath);
+      assertReference({inputs:handoff.sourceOrigins ? {...handoff.sourceOrigins,lockDigest:handoff.lockDigest} : handoff.inputs,sourceLockPath,build:handoff.build},baseline);
       const expected = await inspect(browser, await fixture(workspace, 'baseline', baseline), false, baseline.inputs.sqlite.version);
       compareBaseline(expected, Object.fromEntries(Object.entries(report.packaging.positive.results).filter(([k]) => k.endsWith('-main') || k.endsWith('-worker'))));
       report.baseline = { inputs: baseline.inputs, runtimeFiles: baseline.runtimeFiles, expected };
@@ -71,7 +76,7 @@ export async function checkFinalPackage(handoff, reportPath) {
       w.onerror = ev => finish(ev.message);
       w.onmessage = ev => finish(ev.data.error, ev.data);
       w.postMessage(data);
-    }), data);
+    }), {...data,engine:selection.engine.key});
     const sql = (await worker({ phase: 'sql' })).result;
     await test('fts5', () => { assert.deepEqual(sql.fts, [1, 3]); return sql.fts; });
     await test('float32', () => { checkRows(sql.floats, expectedFloats, floatTolerance); return sql.floats; });
@@ -90,13 +95,16 @@ export async function checkFinalPackage(handoff, reportPath) {
       assert.equal(written.closed, true); assert.equal(written.workerTerminated, true); checkFixtures(written.result);
       const reopened = await worker({ ...data, phase: 'read' });
       assert.equal(reopened.closed, true); assert.equal(reopened.workerTerminated, true); checkFixtures(reopened.result);
+      assert.deepEqual(reopened.result.stored,written.result.stored, 'Committed schema/ordinary/vector bytes changed across restart');
       assert.equal(reopened.database, written.database); assert.equal(reopened.poolDirectory, written.poolDirectory);
       return { written, reopened, origin: server.origin, separateWorkerInvocations: true };
     });
     await test('persistence-negative-control', async () => {
       await worker({ ...identities[0], phase: 'corrupt' });
       await assert.rejects(() => worker({ ...identities[0], phase: 'read' }), /no such table.*ordinary/i);
-      return { missingTableRejectedWithoutRepair: true };
+      await worker({...identities[1],phase:'corrupt-vector'});
+      await assert.rejects(() => worker({...identities[1],phase:'read'}), /no such table.*bits/i);
+      return { missingTableRejectedWithoutRepair: true, missingVectorTableRejectedWithoutRepair:true };
     });
     await test('final-hashes', async () => {
       const bytes = await regularBytes(handoff.archive.path);

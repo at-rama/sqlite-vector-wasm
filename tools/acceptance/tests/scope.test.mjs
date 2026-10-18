@@ -94,14 +94,14 @@ test('workflow keeps required job and gates setup, production and artifacts with
   assert.match(workflow, /  push:/);
   assert.match(workflow, /  workflow_dispatch:/);
   assert.doesNotMatch(workflow, /paths-ignore:|paths:/);
-  assert.match(workflow, /  acceptance:\n    runs-on:/);
+  assert.match(workflow, /  acceptance:\n    needs: \[scope, composition\]\n    if: always\(\)\n    runs-on:/);
   assert.match(workflow, /fetch-depth: 0/);
   assert.match(workflow, /github.event.pull_request.base.sha/);
   assert.match(workflow, /github.event.before/);
   assert.match(workflow, /HEAD_SHA: \$\{\{ github.sha \}\}/);
   assert.match(workflow, /python3 tools\/acceptance\/scope.py >> "\$GITHUB_OUTPUT"/);
-  assert.match(workflow, /Install documented system prerequisites\n        if: steps.scope.outputs.required == 'true'/);
-  assert.match(workflow, /Produce and accept exact final package\n        if: steps.scope.outputs.required == 'true'/);
-  assert.match(workflow, /if: always\(\) && steps.scope.outputs.required == 'true'/);
+  assert.match(workflow, /composition:\n    needs: scope\n    if: needs.scope.outputs.required == 'true'/);
+  assert.match(workflow, /Produce and accept exact final package/);
+  assert.match(workflow, /Preserve available acceptance evidence and exact payload\n        if: always\(\)/);
   assert.match(workflow, /No package qualification was performed/);
 });

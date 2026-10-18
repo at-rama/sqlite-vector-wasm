@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import { runtimeNames } from '../build/config.mjs';
+import { selectedEngine } from '../build/build.mjs';
+import { engineIdentity, hash } from '../package/package.mjs';
 
 export const modes = ['vanilla', 'esm', 'bundler'];
 export const vfsNames = ['opfs', 'opfs-wl', 'opfs-sahpool'];
@@ -9,6 +11,42 @@ export const browserCases = [
   'baseline', 'fts5', 'float32', 'hamming', 'sql-negative-controls',
   ...vfsNames.map(name => `restart-${name}`), 'persistence-negative-control', 'final-hashes',
 ];
+
+export const defaultLock = 'inputs/sources.lock.json';
+export const vectorLock = 'inputs/sqlite-vector.sources.lock.json';
+
+export function recordedSelection(bytes, sourceLockPath = defaultLock) {
+  assert.ok([defaultLock, vectorLock].includes(sourceLockPath), 'Unsupported recorded acceptance lock');
+  const sourceLock = JSON.parse(bytes), key = selectedEngine(sourceLock);
+  assert.equal(sourceLockPath, key === 'sqliteVec' ? defaultLock : vectorLock, 'Selected lock/engine mismatch');
+  return { sourceLockPath, sourceLock, sourceLockSha256: hash(bytes),
+    engine: {key, upstream: key === 'sqliteVec' ? 'asg017/sqlite-vec' : 'sqliteai/sqlite-vector', version: sourceLock[key].version} };
+}
+
+export function assertSelected(handoff, selection, acquired = false) {
+  assert.deepEqual(engineIdentity(handoff), selection.engine, 'Selected engine mismatch');
+  assert.equal(handoff.sourceLockPath || defaultLock, selection.sourceLockPath, 'Selected lock path mismatch');
+  assert.deepEqual(handoff.lockDigest || handoff.inputs?.lockDigest,
+    {algorithm:'sha256', value:selection.sourceLockSha256}, 'Package source lock mismatch');
+  for (const key of ['sqlite', selection.engine.key]) {
+    for (const field of ['version','digest']) assert.deepEqual(handoff.inputs[key][field],selection.sourceLock[key][field], `Selected ${key} ${field} mismatch`);
+    if (handoff.sourceOrigins) for (const [field,value] of Object.entries(selection.sourceLock[key]))
+      assert.deepEqual(handoff.sourceOrigins[key]?.[field],value, `Selected ${key} origin mismatch`);
+  }
+  if (acquired) {
+    const inputs = handoff.inputs;
+    for (const key of ['sqlite', selection.engine.key]) {
+      assert.ok(inputs[key].sourcePath, 'Missing acquired source path');
+      for (const [field,value] of Object.entries(selection.sourceLock[key])) assert.deepEqual(inputs[key][field],value, 'Acquired source identity mismatch');
+    }
+  }
+}
+
+export function assertSelectionEvidence(report, selection) {
+  assert.deepEqual(report.engine, selection.engine, 'Evidence engine mismatch');
+  assert.equal(report.sourceLockPath, selection.sourceLockPath, 'Evidence selected lock mismatch');
+  assert.equal(report.sourceLockSha256, selection.sourceLockSha256, 'Evidence lock digest mismatch');
+}
 
 export function compareBaseline(expected, actual) {
   for (const [context, inventory] of Object.entries(expected)) {
@@ -42,4 +80,23 @@ export function assertApplicable(report, revision, archive) {
   assert.match(archive.sha256, /^[0-9a-f]{64}$/);
   assert.ok(Number.isSafeInteger(archive.size) && archive.size > 0);
   assertBrowserComplete(report.browserResults);
+  if (report.engine || report.sourceLockPath || report.browserResults.engine) assert.ok(report.sourceLock, 'Missing selected source lock');
+  if (report.sourceLock) {
+    const key = selectedEngine(report.sourceLock);
+    const path = report.sourceLockPath || (key === 'sqliteVec' ? defaultLock : vectorLock);
+    const selection = {sourceLockPath:path, sourceLock:report.sourceLock, sourceLockSha256:report.sourceLockSha256,
+      engine:{key,upstream:key === 'sqliteVec' ? 'asg017/sqlite-vec' : 'sqliteai/sqlite-vector',version:report.sourceLock[key].version}};
+    assert.equal(path,key === 'sqliteVec' ? defaultLock : vectorLock,'Evidence source lock/engine mismatch');
+    assert.match(selection.sourceLockSha256,/^[0-9a-f]{64}$/);
+    if (report.engine || report.sourceLockPath) {
+      assertSelectionEvidence(report,selection);
+      assertSelectionEvidence(report.browserResults,selection);
+    }
+    if (report.browserResults.packaging) {
+      const packaged = report.browserResults.packaging;
+      assert.deepEqual(engineIdentity(packaged),selection.engine,'Browser packaging engine mismatch');
+      for (const key of ['sqlite',selection.engine.key]) assert.deepEqual(packaged.inputs[key],
+        {version:selection.sourceLock[key].version,digest:selection.sourceLock[key].digest},'Browser packaging input mismatch');
+    }
+  }
 }
