@@ -2,7 +2,7 @@
 
 ## Identity and scope
 
-Unit: **A-release**, not the whole Allocation. The source is the [Allocation](../../../engineering/2026-10-04_sqlite-vec-wasm_allocation_edit-0.1.md), SHA-256 `00ab76dd9cd370ca1cf6e5cf6a8943efbf5076500bcd583b7c38932c7ff39840`, with the exact Capture inputs recorded there; the same PR records the explicitly adopted S-transition-references decision. Comparison main: `28c382dea0a7b81178d3a2440639d58dada6016c`. Paths below identify the current proposed input snapshot, not a claim that the changed bytes existed at that comparison commit.
+Unit: **A-release**, not the whole Allocation. The source is the [Allocation](../../../../engineering/2026-10-04_sqlite-vec-wasm_allocation_edit-0.1.md), SHA-256 `00ab76dd9cd370ca1cf6e5cf6a8943efbf5076500bcd583b7c38932c7ff39840`, with the exact Capture inputs recorded there; the same PR records the explicitly adopted S-transition-references decision. Comparison main: `28c382dea0a7b81178d3a2440639d58dada6016c`. Paths below identify the current proposed input snapshot, not a claim that the changed bytes existed at that comparison commit.
 
 Start: the complete A-release attributed responsibility field, including full qualified D/W passages, common authority/glue boundaries and handoffs. End: this proposal, delta, design and tasks plus the retained synchronized distribution-release requirements. This planning map records intended checks, not executed implementation evidence or post-Apply Verification. Baseline requirements not modified by the delta remain binding in full, with their scenarios.
 
