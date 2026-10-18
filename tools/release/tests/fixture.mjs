@@ -9,7 +9,7 @@ import { productionStages, browserCases } from '../../acceptance/contracts.mjs';
 export async function releaseFixture(t, { version = '0.1.0', name = '@at-rama/sqlite-vector-wasm' } = {}) {
   const repository = await mkdtemp(join(tmpdir(),'release-test-'));
   t.after(()=>rm(repository,{recursive:true,force:true}));
-  for (const file of ['inputs/sources.lock.json','tools/harness.sh','tools/build/config.mjs','tools/build/extra-init.c.in','tools/harness/package-lock.json','LICENSE','README.md','docs/usage.md','tools/package']) {
+  for (const file of ['inputs/sources.lock.json','tools/harness.sh','tools/build/config.mjs','tools/build/extra-init.c.in','tools/harness/package-lock.json','LICENSE','README.md','docs','tools/package']) {
     await mkdir(join(repository,file,'..'),{recursive:true}); await cp(join(root,file),join(repository,file),{recursive:true});
   }
   const runtimeDirectory = join(repository,'runtime'); await mkdir(runtimeDirectory);

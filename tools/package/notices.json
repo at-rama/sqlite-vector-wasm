@@ -95,6 +95,37 @@
       "version": "4.0.23",
       "origin": "https://github.com/emscripten-core/emscripten/blob/4.0.23/system/lib/libcxxabi/LICENSE.TXT",
       "sha256": "e2b35be49f7284a45b7baca8fc7b3ab7440e7902392b2528a457816b5bb2a15c"
+    },
+    {
+      "name": "sqlite-vector-APACHE.txt",
+      "project": "sqliteVector",
+      "version": "1.1.2",
+      "origin": "https://github.com/sqliteai/sqlite-vector/blob/0c2223ada9dce1fa33248c8835a15f51d9a0f655/LICENSE.md",
+      "sha256": "421717de661f6707b9829bd7d459994af9fc5c7b400335da822a817ffd8a42a1",
+      "source": {
+        "kind": "git",
+        "commit": "0c2223ada9dce1fa33248c8835a15f51d9a0f655",
+        "path": "LICENSE.md",
+        "sha256": "421717de661f6707b9829bd7d459994af9fc5c7b400335da822a817ffd8a42a1"
+      }
+    },
+    {
+      "name": "FP16-MIT.txt",
+      "project": "fp16",
+      "version": "98b0a46bce017382a6351a19577ec43a715b6835",
+      "origin": "https://github.com/Maratyszcza/FP16/blob/98b0a46bce017382a6351a19577ec43a715b6835/LICENSE",
+      "sha256": "17e4f539024be2749ee729d1e2f01d24cef12ece8c9bf18e91a4349be29c80bf",
+      "source": {
+        "kind": "git",
+        "commit": "98b0a46bce017382a6351a19577ec43a715b6835",
+        "path": "LICENSE",
+        "sha256": "17e4f539024be2749ee729d1e2f01d24cef12ece8c9bf18e91a4349be29c80bf"
+      },
+      "incorporatedHeaders": {
+        "fp16.h": "95fa0c2de8c0bbc76a0927304f20160737cb9f7b",
+        "bitcasts.h": "1de8d24297a0455f638f8ea552c236c4921d9f55",
+        "macros.h": "4018b0c9d0f87a29a7f2f4e7e40a29eb17103898"
+      }
     }
   ]
 }

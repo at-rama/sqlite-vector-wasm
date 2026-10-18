@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, writeFile, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { root, regularBytes, hash, validateBuild, noticeInputs, manifest, packageMetadata, inspectArchive } from '../package/package.mjs';
+import { root, regularBytes, hash, validatePackagedBuild, documentInputs, engineIdentity, noticeInputs, manifest, packageMetadata, inspectArchive } from '../package/package.mjs';
 import { production, command } from '../acceptance/run.mjs';
 import { assertApplicable } from '../acceptance/contracts.mjs';
 import { calculate } from './policy.mjs';
@@ -19,25 +19,33 @@ export async function acceptedPayload({ bundle, identity, commit, repository = r
   assert.deepEqual(report.package, { name: identity.name, version: identity.version }, 'Acceptance package identity');
   assert.deepEqual(packaged.package, report.package, 'Package/acceptance identity');
   assert.deepEqual({ size: packaged.archive.size, sha256: packaged.archive.sha256 }, archive);
-  const lockBytes = await regularBytes(join(repository, 'inputs/sources.lock.json'));
+  assert.equal(packaged.buildHandoffSha256, hash(jsonBytes(build)), 'Consumed build handoff identity');
+  const composition = manifest(build);
+  assert.deepEqual(packaged.inputs, composition.inputs, 'Packaged component identities');
+  assert.deepEqual(packaged.lockDigest, composition.lockDigest, 'Packaged lock identity');
+  for (const key of ['engine', 'sourceLockPath', 'sourceOrigins']) {
+    if (key in packaged) assert.deepEqual(packaged[key], composition[key], `Packaged ${key} identity`);
+  }
+  const sourceLockPath = build.sourceLockPath || 'inputs/sources.lock.json';
+  assert.ok(['inputs/sources.lock.json', 'inputs/sqlite-vector.sources.lock.json'].includes(sourceLockPath), 'Unsupported source lock');
+  const lockBytes = await regularBytes(join(repository, sourceLockPath));
   const sourceLock = JSON.parse(lockBytes);
   assert.equal(report.sourceLockSha256, hash(lockBytes)); assert.deepEqual(report.sourceLock, sourceLock);
   const inspection = await mkdtemp(join(bundle, 'release-inspect-'));
   const extracted = join(inspection, 'extracted');
   await inspectArchive(archivePath, packaged.files, extracted);
-  for (const path of ['README.md', 'docs/usage.md']) {
-    assert.equal(hash(await regularBytes(join(extracted, path))),
-      hash(await regularBytes(join(repository, path))), `Published ${path} differs from source revision`);
+  const documents = await documentInputs(build, repository);
+  for (const [path, data] of documents) {
+    assert.equal(hash(await regularBytes(join(extracted, path))), hash(data), `Published ${path} differs from selected source revision`);
   }
   // The retained archive is the downstream input; original build directories may be gone.
-  const runtime = await validateBuild({ ...build, runtimeDirectory: extracted }, repository);
+  const runtime = await validatePackagedBuild({ ...build, runtimeDirectory: extracted }, repository);
   const contents = await noticeInputs(build, repository);
   for (const item of runtime) contents.set(...item);
-  contents.set('README.md', await regularBytes(join(repository, 'README.md')));
-  contents.set('docs/usage.md', await regularBytes(join(repository, 'docs/usage.md')));
+  for (const entry of documents) contents.set(...entry);
   contents.set('runtime.json', jsonBytes(manifest(build)));
   const names = [...contents.keys(), 'package.json'].sort();
-  contents.set('package.json', jsonBytes(packageMetadata(identity.name, identity.version, names)));
+  contents.set('package.json', jsonBytes(packageMetadata(identity.name, identity.version, names, engineIdentity(build))));
   const expected = [...contents].map(([name, data]) => ({ name, size: data.length, sha256: hash(data) }));
   assert.deepEqual([...packaged.files].sort((a,b) => a.name.localeCompare(b.name)), [...expected].sort((a,b) => a.name.localeCompare(b.name)), 'Package inventory/notices/runtime/metadata mismatch');
   assert.deepEqual(packaged.runtimeFiles, build.runtimeFiles); assert.deepEqual(report.runtimeFiles, build.runtimeFiles);

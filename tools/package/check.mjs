@@ -2,7 +2,8 @@ import assert from 'node:assert/strict';
 import { readFile, writeFile, mkdir, mkdtemp, copyFile, cp, rm } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { createRequire } from 'node:module';
-import { root, hash, regularBytes, fileInventory, inspectArchive, execute } from './package.mjs';
+import { engineIdentity, root, hash, regularBytes, fileInventory, inspectArchive, execute } from './package.mjs';
+import { nativeProbeSql } from '../build/browser-probe.mjs';
 import { runtimeNames } from '../build/config.mjs';
 import { serveAssets } from '../harness/server.mjs';
 import { launchBrowser } from '../harness/browser.mjs';
@@ -17,7 +18,33 @@ async function fixture(directory) {
   }
 }
 
+export function assertNativeResult(result,version,vector,sqlDefinition=nativeProbeSql(vector)) {
+  assert.equal(result.versions[0][0],version);
+  if(vector) {
+    assert.equal(result.versions[0][1],sqlDefinition.expectedVersion);
+    assert.equal(result.versions[0][2],0,'Other engine must be absent');
+    assert.equal(result.neighbors.length,2);
+    assert.deepEqual(result.neighbors[0],[1,0]);
+    assert.equal(result.neighbors[1][0],2);
+    assert.ok(Math.abs(result.neighbors[1][1]-Math.SQRT2)<0.00001);
+  }
+}
+
+// Keep the retained default consumer's three columns; registration checks use
+// separate native version rows and must never replace the observed dimension.
+export function transportResult(result,version,vector,sqlDefinition=nativeProbeSql(vector)) {
+  assertNativeResult(result,version,vector,sqlDefinition);
+  if(typeof vector === 'string' || vector?.key === 'sqliteVec') {
+    assert.deepEqual(result.sqlRows, [[version,sqlDefinition.expectedVersion,2]], 'Default transport SQL result convention');
+  } else assert.deepEqual(result.sqlRows,result.versions);
+  return {version:result.versions[0][0],vecVersion:result.versions[0][1],sqlRows:result.sqlRows,
+    registrationRows:result.versions,neighbors:result.neighbors};
+}
+
 export async function inspect(browser,directory,vector,version) {
+  const sqlDefinition=nativeProbeSql(vector);
+  const legacySql=typeof vector === 'string' || vector?.key === 'sqliteVec'
+    ? "select sqlite_version(), vec_version(), vec_length(vec_f32('[1,0]'))" : null;
   const server=await serveAssets(directory);
   const context=await browser.newContext();
   const results={}; const requests=[];
@@ -41,7 +68,7 @@ export async function inspect(browser,directory,vector,version) {
       }),{mode,vector});
       console.error(`  ${mode}: Worker passed`);
       if(mode==='vanilla') await page.addScriptTag({url:`${server.origin}/runtime/sqlite3-worker1-promiser.js`});
-      const workerResult=await page.evaluate(async ({mode,vector})=>{
+      const workerResult=await page.evaluate(async ({mode,vector,sqlDefinition,legacySql})=>{
         const file=mode==='vanilla'?'sqlite3-worker1.js':mode==='esm'?'sqlite3-worker1.mjs':'sqlite3-worker1-bundler-friendly.mjs';
         const worker=new Worker(`./runtime/${file}`,{type:mode==='vanilla'?'classic':'module'});
         const ready=new Promise((accept,reject)=>{
@@ -59,34 +86,34 @@ export async function inspect(browser,directory,vector,version) {
         try {
           await ready;
           const opened=await request('open',{filename:':memory:'});
-          const sql=vector?"select sqlite_version(), vec_version(), vec_length(vec_f32('[1,0]'))":'select sqlite_version()';
+          const sql=sqlDefinition.versionSql;
           const result=await request('exec',{sql,resultRows:[],rowMode:'array'},opened.dbId);
+          let neighbors=[];
+          if(vector) { await request('exec',{sql:sqlDefinition.setup},opened.dbId); neighbors=(await request('exec',{sql:sqlDefinition.query,resultRows:[],rowMode:'array'},opened.dbId)).result.resultRows; }
+          const sqlRows=legacySql ? (await request('exec',{sql:legacySql,resultRows:[],rowMode:'array'},opened.dbId)).result.resultRows : result.result.resultRows;
           await request('close',{},opened.dbId);
-          return result.result.resultRows;
+          return {versions:result.result.resultRows,neighbors,sqlRows};
         } finally {worker.terminate();}
-      },{mode,vector});
-      assert.equal(workerResult[0][0],version);
-      if(vector) assert.equal(workerResult[0][1],`v${vector}`);
-      if(vector) assert.equal(workerResult[0][2],2);
-      results[`${mode}-worker1`]={version:workerResult[0][0],vecVersion:workerResult[0][1],sqlRows:workerResult};
+      },{mode,vector,sqlDefinition,legacySql});
+      results[`${mode}-worker1`]=transportResult(workerResult,version,vector,sqlDefinition);
       console.error(`  ${mode}: Worker1 passed`);
-      const promiseResult=await page.evaluate(async ({mode,vector})=>{
+      const promiseResult=await page.evaluate(async ({mode,vector,sqlDefinition,legacySql})=>{
         const factory=mode==='vanilla'?globalThis.sqlite3Worker1Promiser.v2:(await import(mode==='esm'?'./runtime/sqlite3-worker1-promiser.mjs':'./runtime/sqlite3-worker1-promiser-bundler-friendly.mjs')).default;
         const Original=globalThis.Worker, workers=[];
         globalThis.Worker=class extends Original {constructor(...args){super(...args);workers.push(this);}};
         try {
           const p=await Promise.race([factory(),new Promise((_,reject)=>setTimeout(()=>reject(Error('Promiser init timeout')),30000))]);
           const opened=await p('open',{filename:':memory:'});
-          const sql=vector?"select sqlite_version(), vec_version(), vec_length(vec_f32('[1,0]'))":'select sqlite_version()';
+          const sql=sqlDefinition.versionSql;
           const result=await p({type:'exec',dbId:opened.dbId,args:{sql,resultRows:[],rowMode:'array'}});
+          let neighbors=[];
+          if(vector) { await p({type:'exec',dbId:opened.dbId,args:{sql:sqlDefinition.setup}}); neighbors=(await p({type:'exec',dbId:opened.dbId,args:{sql:sqlDefinition.query,resultRows:[],rowMode:'array'}})).result.resultRows; }
+          const sqlRows=legacySql ? (await p({type:'exec',dbId:opened.dbId,args:{sql:legacySql,resultRows:[],rowMode:'array'}})).result.resultRows : result.result.resultRows;
           await p({type:'close',dbId:opened.dbId});
-          return result.result.resultRows;
+          return {versions:result.result.resultRows,neighbors,sqlRows};
         } finally {globalThis.Worker=Original;for(const worker of workers)worker.terminate();}
-      },{mode,vector});
-      assert.equal(promiseResult[0][0],version);
-      if(vector) assert.equal(promiseResult[0][1],`v${vector}`);
-      if(vector) assert.equal(promiseResult[0][2],2);
-      results[`${mode}-promiser`]={version:promiseResult[0][0],vecVersion:promiseResult[0][1],sqlRows:promiseResult};
+      },{mode,vector,sqlDefinition,legacySql});
+      results[`${mode}-promiser`]=transportResult(promiseResult,version,vector,sqlDefinition);
       console.error(`  ${mode}: promiser passed`);
       await page.close();
     }
@@ -169,7 +196,7 @@ export async function checkPackage(handoff) {
   const installed=await localInstall(handoff,workspace);
   const browser=await launchBrowser();
   try {
-    const positive=await inspect(browser,directory,handoff.inputs.sqliteVec.version,handoff.inputs.sqlite.version);
+    const positive=await inspect(browser,directory,engineIdentity(handoff),handoff.inputs.sqlite.version);
     for(const name of runtimeNames)assert.ok(positive.requests.some(r=>r.path===`/runtime/${name}`),`No packaged request for ${name}`);
     const negative=await brokenCompanions(browser,directory,workspace);
     assert.deepEqual(await fileInventory(join(directory,'runtime'),handoff.files.map(r=>r.name)),handoff.files);

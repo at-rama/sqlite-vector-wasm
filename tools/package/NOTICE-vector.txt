@@ -1,0 +1,20 @@
+sqlite-vector-wasm
+
+Repository-authored packaging code and documentation are Apache-2.0; see LICENSE.
+Included upstream runtime material retains its own terms:
+
+- SQLite core and browser APIs: public domain; see licenses/SQLite-LICENSE.txt
+  and licenses/SQLite-WASM-NOTICE.txt. Embedded runtime notices are retained.
+- SQLite-Vector: Apache-2.0; see licenses/sqlite-vector-APACHE.txt.
+- Incorporated FP16 headers: MIT; see licenses/FP16-MIT.txt.
+- Emscripten-generated glue and runtime: MIT and Illinois/NCSA terms; see
+  licenses/Emscripten-LICENSE.txt. Included musl libc and compiler-rt portions
+  have their accompanying notices in licenses/musl-COPYRIGHT.txt and
+  licenses/compiler-rt-LICENSE.txt. LLVM libc, libc++ and libc++abi support
+  libraries retain their accompanying terms in licenses/llvm-libc-LICENSE.txt,
+  licenses/libcxx-LICENSE.txt and licenses/libcxxabi-LICENSE.txt (including
+  Apache-2.0 with LLVM exceptions where applicable). The default dlmalloc
+  implementation is public domain; its Emscripten changes use the terms above.
+
+Version-associated origins and content digests are in licenses/origins.json.
+The project license does not replace the included upstream terms.

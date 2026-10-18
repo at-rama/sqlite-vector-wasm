@@ -11,7 +11,7 @@ async function fixture(t) {
   const repository = await mkdtemp(join(tmpdir(), 'package-fixture-'));
   t.after(() => rm(repository, { recursive: true, force: true }));
   for (const file of ['inputs/sources.lock.json', 'tools/harness.sh', 'tools/build/config.mjs',
-    'tools/build/extra-init.c.in', 'tools/harness/package-lock.json', 'LICENSE', 'README.md', 'docs/usage.md', 'tools/package']) {
+    'tools/build/extra-init.c.in', 'tools/build/vector-extra-init.c.in', 'inputs/sqlite-vector.sources.lock.json', 'docs/packaging.md', 'docs/common', 'docs/sqlite-vec', 'docs/sqlite-vector', 'tools/harness/package-lock.json', 'LICENSE', 'README.md', 'docs/usage.md', 'tools/package']) {
     await mkdir(join(repository, file, '..'), { recursive: true });
     await cp(join(root, file), join(repository, file), { recursive: true });
   }
@@ -43,9 +43,9 @@ test('complete handoff assembles one exact autonomous tarball and consumer subpa
   assert.equal(metadata.name, options.name); assert.equal(metadata.version, options.version);
   assert.equal(metadata.license, 'Apache-2.0');
   assert.equal(await readFile(join(result.runtimeDirectory, 'README.md'), 'utf8'),
-    await readFile(join(options.repository, 'README.md'), 'utf8'));
+    await readFile(join(options.repository, 'docs/sqlite-vec/README.md'), 'utf8'));
   assert.equal(await readFile(join(result.runtimeDirectory, 'docs/usage.md'), 'utf8'),
-    await readFile(join(options.repository, 'docs/usage.md'), 'utf8'));
+    await readFile(join(options.repository, 'docs/sqlite-vec/usage.md'), 'utf8'));
   assert.ok(result.files.some(file => file.name === 'docs/usage.md'));
   assert.equal(metadata.scripts, undefined); assert.equal(metadata.dependencies, undefined);
   assert.equal(metadata.exports['.'], undefined); assert.equal(metadata.sideEffects, undefined);
@@ -200,7 +200,7 @@ test('refreshed notice provenance survives the actual archive while strict assoc
   const result = await assemble(options);
   const extracted = join(options.repository, 'notice-inspection');
   await inspectArchive(result.archive.path, result.files, extracted);
-  assert.deepEqual(JSON.parse(await readFile(join(extracted, 'licenses/origins.json'))), records);
+  assert.deepEqual(JSON.parse(await readFile(join(extracted, 'licenses/origins.json'))), {schemaVersion:1,notices:records.notices.filter(n=>!['sqliteVector','fp16'].includes(n.project))});
   assert.equal(hash(await readFile(join(extracted, 'licenses/SQLite-LICENSE.txt'))), notice.sha256);
   for (const mutation of [record => { record.version = '99.0.0'; }, record => { record.project = 'sqliteVec'; }]) {
     const invalid = structuredClone(records); mutation(invalid.notices[0]);

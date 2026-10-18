@@ -19,7 +19,7 @@ bash tools/package.sh --build-handoff /tmp/sqlite-vector-wasm-build.json \
 
 The entry point verifies the source lock, build configuration identities,
 complete eleven-file inventory and each size/SHA-256. It copies those exact
-bytes into a fresh `.work/package/run-*/assembly/`, adds recorded notices, the root README and `docs/usage.md`,
+bytes into a fresh `.work/package/run-*/assembly/`, adds selected recorded notices and composition-specific/common documents,
 metadata inputs and the runtime manifest, and runs pinned
 `npm pack --ignore-scripts --json`. It then checks the actual archive contents
 and hashes and extracts an independent copy. Progress/diagnostics go to stderr;
@@ -32,9 +32,9 @@ the fixture identity above is never published by these commands. For the product
 use `--name @at-rama/sqlite-vector-wasm` and an independently selected SemVer according to
 the [release-version policy](publication.md). `0.1.0` is an initial example,
 not a repository release pin. `package.json` holds that product identity;
-`runtime.json` preserves exact `inputs.sqlite` and `inputs.sqliteVec` versions
-and digests. The latter key identifies the selected sqlite-vec upstream, not the
-product. No release orchestrator or registry publication is implemented here.
+`runtime.json` preserves exact `inputs.sqlite` and selected engine versions
+and digests (`inputs.sqliteVec` or `inputs.sqliteVector`). These identify upstream
+components, not the project version. Packaging performs no registry publication.
 
 The result identifies the archive path/size/SHA-256, every shipped file, runtime
 paths/hashes, source identities and actual build environment/options. These
@@ -68,7 +68,8 @@ and scoped results. It does not establish the full Hamming, restart-persistence
 or hosted production CI acceptance gates.
 
 The package checker uses browser test infrastructure, not a consumer server.
-See the [consumer usage guide](usage.md) for browser examples
+See the selected [sqlite-vec guide](sqlite-vec/usage.md) or
+[SQLite-Vector guide](sqlite-vector/usage.md) for browser examples
 and the [build storage conditions](build.md#browser-storage-conditions) for
 VFS-specific prerequisites. All generated material stays ignored. After assembly,
 the caller can remove the exact original build/input invocation directories;
@@ -91,3 +92,99 @@ Recorded notice inputs may remove trailing horizontal whitespace and blank
 EOF lines to meet repository checks; `notices.json` records each such
 normalization and the shipped digest. License wording and embedded runtime
 notices remain preserved.
+
+## Recorded engine selection
+
+The CLI remains `bash tools/package.sh --build-handoff PATH --name NAME --version VERSION`.
+The successful A-build handoff supplies the selected recorded lock and exact engine
+identity. Both retained compositions use SQLite 3.54.0 and Emscripten 4.0.23;
+source versions, origins, digests and actual template/bridge/Make input identities
+must agree. Annotated handoffs also have their configure, compile and link command
+shapes checked. Legacy unannotated handoffs retain only the exact default vec
+interpretation; they cannot represent Vector. All eleven runtime assets retain
+regular-file, size and SHA-256 checks. Nothing is acquired or rebuilt by packaging.
+
+`runtime.json` retains compact `inputs.sqlite` and `inputs.sqliteVec` objects for
+default consumers. Vector instead has `inputs.sqliteVector`. Additive `engine`,
+`sourceLockPath` and `sourceOrigins` describe the concrete composition. Source/build
+paths in every recorded command become symbolic `<sqlite-source>`,
+`<sqliteVec-source>`, `<sqliteVector-source>` or `<build>` paths. Flags, argument
+order, filenames and integration hashes remain. The success handoff retains actual
+commands and a digest of the consumed build handoff; the complete `files` inventory
+identifies notices, documentation and metadata as well as runtime bytes.
+
+## Documentation sources
+
+Package documents are copied byte for byte from this explicit map:
+
+| Source | Archive |
+| --- | --- |
+| `docs/sqlite-vec/README.md` or `docs/sqlite-vector/README.md` | `README.md` |
+| Matching engine directory's `usage.md` | `docs/usage.md` |
+| `docs/common/browser.md` | `docs/browser.md` |
+
+Every package description and selected guide follows the handoff. There are no
+prose overlays or generated examples. Required sources must be regular files;
+wrong-engine headings and broken repository/source/archive links fail checks.
+Shared browser instructions have one source. Absolute repository links retain
+their meaning after relocation; checks resolve this repository's `blob/main` links
+against the candidate source tree, without requiring an unpublished branch to be
+available on main. External upstream links are authored references, not a promise
+of network availability during offline assembly.
+
+Root `README.md` and `docs/usage.md` remain the existing Site inputs with the
+published 0.2.0 reference. Selecting these new sources for Site is subsequent
+A-site_docs work. The Vector guide explicitly has no published npm reference;
+its local fixture evidence must not be described as a registry release.
+
+## Selected notices and FP16 provenance
+
+`tools/package/notices.json` records common and engine-specific texts. Archives
+include common notices plus exactly the selected engine's notices; Vector also
+includes FP16 MIT. Project Apache-2.0 does not replace upstream terms or embedded
+runtime notices. `licenses/origins.json` contains only selected records and hashes.
+Ordinary packaging reads controlled local inputs and never downloads notices.
+
+All three incorporated Vector 1.1.2 FP16 headers exactly match Git blobs at
+[FP16 revision 98b0a46](https://github.com/Maratyszcza/FP16/tree/98b0a46bce017382a6351a19577ec43a715b6835/include/fp16).
+Their Git blob identities are recorded alongside the unmodified MIT
+[license at that revision](https://github.com/Maratyszcza/FP16/blob/98b0a46bce017382a6351a19577ec43a715b6835/LICENSE).
+Vector's separate Apache-2.0 text is pinned to its recorded source commit.
+Missing dependency provenance or changed texts fail assembly. The existing
+`noticeInputs({inputs: lock}, repository)` default convention remains usable;
+automated Vector notice refresh remains A-updates work.
+
+## Final archive checks and reuse
+
+Run `HARNESS_STATE=PATH bash tools/harness.sh exec node tools/package/check.mjs HANDOFF`
+in the pinned environment. This checker extracts the final archive again,
+installs it locally with npm offline and scripts disabled, and serves only the
+extracted companions at `/runtime/`. Conventional, ESM and bundler modes exercise
+C/OO1, direct Workers, Worker1 and promiser. Both engines use native deterministic
+queries and exact versions; the other engine must be absent. BigInt, FTS5, kvvfs,
+Worker OPFS, opfs-wl and SAH pool checks retain their browser prerequisites.
+Missing/corrupt WASM, missing Worker and missing proxy must make the targeted
+capability unavailable. Checks preserve the archive and all extracted file hashes.
+These are packaging checks, not complete Hamming, restart or production acceptance.
+Vector acceptance orchestration remains A-acceptance work.
+
+A changed supplied package name/version means a fresh assembly, archive and renewed
+downstream checks. Never relabel qualified bytes or transfer an acceptance result
+to another digest. Keep original sources/builds unavailable when checking the
+relocated package, and retain raw logs and artifacts only in ignored/external work
+storage. Remove temporary work only after recording identities and results; later
+reproduction must rebuild rather than depend on those files.
+
+
+## Retained-payload validation
+
+First assembly uses `validateBuild` and checks actual generated bridge/Make bytes
+before consuming the runtime. After assembly, `validatePackagedBuild` checks the
+same selected lock, exact origins, tools, recipe/template identities, reconstructed
+integration hashes and runtime bytes without reopening cleaned-up build paths.
+Its caller must first verify the raw handoff against `buildHandoffSha256` and the
+archive against its accepted identity. The publication consumer now performs this
+binding, reads selected document sources through the same explicit map, compares
+their exact bytes and reconstructs the complete expected inventory, including the
+common guide. Changed/missing documents, metadata, notices or provenance still fail.
+Numbering, channel policy, triggers and publication adapters are unchanged.

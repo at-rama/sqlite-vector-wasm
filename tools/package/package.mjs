@@ -2,10 +2,11 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { constants } from 'node:fs';
-import { open, readFile, writeFile, mkdir, mkdtemp, readdir, rename, appendFile } from 'node:fs/promises';
+import { open, readFile, writeFile, mkdir, mkdtemp, readdir, rename, appendFile, realpath } from 'node:fs/promises';
 import { join, resolve, isAbsolute } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { runtimeNames } from '../build/config.mjs';
+import { selectedEngine, verifyAcquisition } from '../build/build.mjs';
+import { runtimeNames, configureOptions, hostOptions, targets, wasmOptions } from '../build/config.mjs';
 
 export const root = fileURLToPath(new URL('../../', import.meta.url));
 export const hash = data => createHash('sha256').update(data).digest('hex');
@@ -32,21 +33,81 @@ export function identity(name, version) {
   return { name, version };
 }
 
+export function engineIdentity(handoff) {
+  const key = handoff.inputs?.sqliteVector ? 'sqliteVector' : 'sqliteVec';
+  require(handoff.inputs?.[key] && !handoff.inputs[key === 'sqliteVec' ? 'sqliteVector' : 'sqliteVec'], 'Ambiguous engine');
+  const engine = { key, upstream: key === 'sqliteVec' ? 'asg017/sqlite-vec' : 'sqliteai/sqlite-vector', version: handoff.inputs[key].version };
+  if (handoff.engine) assert.deepEqual(handoff.engine, engine, 'Contradictory engine');
+  return engine;
+}
+
+async function validateSelection(handoff, repository, checkGeneratedInputs) {
+  const engine = engineIdentity(handoff), annotated = handoff.sourceLockPath !== undefined || handoff.engine !== undefined;
+  const path = annotated ? handoff.sourceLockPath : 'inputs/sources.lock.json';
+  require(['inputs/sources.lock.json', 'inputs/sqlite-vector.sources.lock.json'].includes(path), 'Unsupported recorded lock');
+  const lockBytes = await regularBytes(join(repository, path)), pins = JSON.parse(lockBytes);
+  require(selectedEngine(pins) === engine.key, 'Wrong selected lock');
+  assert.deepEqual(handoff.inputs.lockDigest, {algorithm:'sha256',value:hash(lockBytes)}, 'Source lock identity mismatch');
+  for (const key of ['sqlite', engine.key]) {
+    require(handoff.inputs[key].version === pins[key].version, `Wrong ${key} version`);
+    assert.deepEqual(handoff.inputs[key].digest, pins[key].digest, `Wrong ${key} archive digest`);
+  }
+  if (annotated) {
+    require(handoff.engine && handoff.sourceLockPath, 'Incomplete annotated selection');
+    verifyAcquisition(handoff.inputs, lockBytes);
+    require(handoff.build.tools?.node === 'v24.19.0' && handoff.build.tools?.npm === '11.17.0'
+      && handoff.build.tools?.['wasm-strip'] === '1.0.42' && /^wasm-opt version 125(?: |$)/.test(handoff.build.tools?.['wasm-opt']), 'Wrong qualified tools');
+    assert.deepEqual(handoff.build.configure, ['env', ...hostOptions, './configure', ...configureOptions], 'Wrong configure command');
+    assert.deepEqual(handoff.build.amalgamation, ['make','sqlite3.c']);
+    assert.deepEqual(handoff.build.commonWasmOptions, [...targets,...wasmOptions]);
+    const bridgeArg = handoff.build.wasm[1 + targets.length + wasmOptions.length];
+    require(bridgeArg?.startsWith('sqlite3_wasm_extra_init.c=/'), 'Missing generated bridge');
+    const bridge = bridgeArg.slice('sqlite3_wasm_extra_init.c='.length);
+    const template = await regularBytes(join(repository, 'tools/build', engine.key === 'sqliteVec' ? 'extra-init.c.in' : 'vector-extra-init.c.in'));
+    const expected = template.toString().replace(engine.key === 'sqliteVec' ? '@SQLITE_VEC_SOURCE@' : '@SQLITE_VECTOR_HEADER@',
+      JSON.stringify(join(handoff.inputs[engine.key].sourcePath, engine.key === 'sqliteVec' ? 'sqlite-vec.c' : 'src/sqlite-vector.h')));
+    if (checkGeneratedInputs) require((await regularBytes(bridge)).toString() === expected, 'Wrong generated bridge');
+    const expectedWasm = ['make',...targets,...wasmOptions,bridgeArg];
+    if (engine.key === 'sqliteVector') {
+      const commands = handoff.build.extensionCommands;
+      require(Array.isArray(commands) && commands.length === 7, 'Incomplete extension commands');
+      const names = ['sqlite-vector',...['cpu','avx2','avx512','neon','rvv','sse2'].map(n=>'distance-'+n)];
+      const directory = resolve(bridge,'..');
+      const objects = names.map(n=>join(directory,n+'.o'));
+      for (const [i,name] of names.entries()) assert.deepEqual(commands[i], ['emcc','-Oz','-std=c99','-fPIC','-DSQLITE_CORE','-DSQLITE_WASM_EXTRA_INIT','-include','strings.h',
+        '-I'+handoff.inputs.sqlite.sourcePath,'-I'+join(handoff.inputs.sqliteVector.sourcePath,'src'),'-I'+join(handoff.inputs.sqliteVector.sourcePath,'libs'),
+        '-c',join(handoff.inputs.sqliteVector.sourcePath,'src',name+'.c'),'-o',objects[i]], 'Wrong extension command');
+      const include = join(directory,'vector-inputs.mk');
+      const includeBytes = Buffer.from('# Separate immutable extension inputs; upstream recipes remain intact.\nMAKEFILE := GNUmakefile\nsqlite3-wasm.c.in += '+objects.join(' ')+'\n');
+      if (checkGeneratedInputs) assert.deepEqual(await regularBytes(include), includeBytes, 'Wrong object input list');
+      assert.deepEqual(handoff.build.integration, {bridgeSha256:hash(Buffer.from(expected)),makeIncludeSha256:hash(includeBytes)}, 'Wrong integration hashes');
+      expectedWasm.push('-f','GNUmakefile','-f',include);
+    } else require(!handoff.build.extensionCommands && !handoff.build.integration, 'Unexpected other-engine integration');
+    assert.deepEqual(handoff.build.wasm, expectedWasm, 'Wrong WASM command');
+  } else require(engine.key === 'sqliteVec', 'Vector requires annotated provenance');
+  return engine;
+}
+
+// First consumption must still inspect the actual generated integration files.
 export async function validateBuild(handoff, repository = root) {
+  return validateRuntime(handoff, repository, true);
+}
+
+// Already-consumed payloads retain provenance/recipe/runtime checks after cleanup.
+// The caller must bind this raw handoff to the package's buildHandoffSha256.
+export async function validatePackagedBuild(handoff, repository = root) {
+  return validateRuntime(handoff, repository, false);
+}
+
+async function validateRuntime(handoff, repository, checkGeneratedInputs) {
   require(handoff && handoff.schemaVersion === 1 && handoff.inputs && handoff.build
     && isAbsolute(handoff.runtimeDirectory || '') && Array.isArray(handoff.runtimeFiles), 'Incomplete/unsupported build handoff');
-  const lockBytes = await regularBytes(join(repository, 'inputs/sources.lock.json'));
-  const lock = JSON.parse(lockBytes);
-  assert.deepEqual(handoff.inputs.lockDigest, { algorithm: 'sha256', value: hash(lockBytes) }, 'Source lock identity mismatch');
-  for (const key of ['sqlite', 'sqliteVec']) {
-    require(handoff.inputs[key]?.version === lock[key].version, `Wrong ${key} version`);
-    assert.deepEqual(handoff.inputs[key]?.digest, lock[key].digest, `Wrong ${key} archive digest`);
-  }
+  const engine = await validateSelection(handoff, repository, checkGeneratedInputs);
   for (const [field, path] of [
     ['harnessSha256', 'tools/harness.sh'], ['configSha256', 'tools/build/config.mjs'],
-    ['templateSha256', 'tools/build/extra-init.c.in'], ['dependencyLockSha256', 'tools/harness/package-lock.json'],
+    ['templateSha256', engine.key === 'sqliteVec' ? 'tools/build/extra-init.c.in' : 'tools/build/vector-extra-init.c.in'], ['dependencyLockSha256', 'tools/harness/package-lock.json'],
   ]) require(handoff.build[field] === hash(await regularBytes(join(repository, path))), `Stale build configuration: ${field}`);
-  require(typeof handoff.build.tools?.emcc === 'string' && handoff.build.tools.emcc.includes('4.0.23')
+  require(typeof handoff.build.tools?.emcc === 'string' && /(?:^|[^0-9])4\.0\.23(?:[^0-9]|$)/.test(handoff.build.tools.emcc)
     && typeof handoff.build.platform === 'string' && Array.isArray(handoff.build.configure)
     && Array.isArray(handoff.build.wasm) && Array.isArray(handoff.build.amalgamation)
     && ['cc','make','emcc','wasm-strip','wasm-opt','node','npm'].every(key => typeof handoff.build.tools[key] === 'string' && handoff.build.tools[key].length > 0), 'Incomplete/unsupported build provenance');
@@ -70,34 +131,89 @@ export async function noticeInputs(handoff, repository = root) {
   const required = ['SQLite-LICENSE.txt', 'SQLite-WASM-NOTICE.txt', 'sqlite-vec-MIT.txt', 'sqlite-vec-APACHE.txt',
     'Emscripten-LICENSE.txt', 'musl-COPYRIGHT.txt', 'compiler-rt-LICENSE.txt',
     'llvm-libc-LICENSE.txt', 'libcxx-LICENSE.txt', 'libcxxabi-LICENSE.txt'];
-  assert.deepEqual(records.notices.map(n => n.name).sort(), required.sort(), 'Missing/duplicate/extra notice association');
-  const versions = { sqlite: handoff.inputs.sqlite.version, sqliteVec: handoff.inputs.sqliteVec.version, emscripten: '4.0.23' };
+  const allRequired = [...required, 'sqlite-vector-APACHE.txt', 'FP16-MIT.txt'];
+  assert.deepEqual(records.notices.map(n => n.name).sort(), allRequired.sort(), 'Missing/duplicate/extra notice association');
+  const noticeProject = name => name.startsWith('SQLite-') ? 'sqlite' : name.startsWith('sqlite-vec-') ? 'sqliteVec' : name === 'sqlite-vector-APACHE.txt' ? 'sqliteVector' : name === 'FP16-MIT.txt' ? 'fp16' : 'emscripten';
+  for (const notice of records.notices) require(notice.project === noticeProject(notice.name), `Wrong notice association: ${notice.name}`);
+  const engine = engineIdentity(handoff);
+  const selected = records.notices.filter(n => engine.key === 'sqliteVec' ? !['sqliteVector','fp16'].includes(n.project) : n.project !== 'sqliteVec');
+  const versions = { sqlite: handoff.inputs.sqlite.version, sqliteVec: handoff.inputs.sqliteVec?.version, sqliteVector: handoff.inputs.sqliteVector?.version, fp16: '98b0a46bce017382a6351a19577ec43a715b6835', emscripten: '4.0.23' };
   const bytes = new Map();
-  for (const notice of records.notices) {
-    const project = notice.name.startsWith('SQLite-') ? 'sqlite' : notice.name.startsWith('sqlite-vec-') ? 'sqliteVec' : 'emscripten';
+  for (const notice of selected) {
+    const project = noticeProject(notice.name);
     require(notice.project === project && notice.version === versions[project] && typeof notice.origin === 'string'
       && notice.origin.length > 0 && digestPattern.test(notice.sha256), `Wrong notice association: ${notice.name}`);
+    if (['sqliteVector','fp16'].includes(project)) {
+      require(notice.source?.commit === (project === 'fp16' ? versions.fp16 : handoff.inputs.sqliteVector.commit) && notice.source?.sha256 === notice.sha256
+        && notice.origin === `https://github.com/${project === 'fp16' ? 'Maratyszcza/FP16' : 'sqliteai/sqlite-vector'}/blob/${notice.source.commit}/${project === 'fp16' ? 'LICENSE' : 'LICENSE.md'}`, 'Unestablished dependency provenance');
+      if (project === 'fp16') assert.deepEqual(notice.incorporatedHeaders, { 'fp16.h':'95fa0c2de8c0bbc76a0927304f20160737cb9f7b', 'bitcasts.h':'1de8d24297a0455f638f8ea552c236c4921d9f55', 'macros.h':'4018b0c9d0f87a29a7f2f4e7e40a29eb17103898' });
+    }
     const data = await regularBytes(join(repository, 'tools/package/notices', notice.name));
     require(hash(data) === notice.sha256, `Notice digest mismatch: ${notice.name}`);
     bytes.set(`licenses/${notice.name}`, data);
   }
-  bytes.set('licenses/origins.json', jsonBytes(records));
+  bytes.set('licenses/origins.json', jsonBytes({schemaVersion:1,notices:selected}));
   bytes.set('LICENSE', await regularBytes(join(repository, 'LICENSE')));
-  bytes.set('NOTICE', await regularBytes(join(repository, 'tools/package/NOTICE.txt')));
+  bytes.set('NOTICE', await regularBytes(join(repository, engine.key === 'sqliteVec' ? 'tools/package/NOTICE.txt' : 'tools/package/NOTICE-vector.txt')));
   return bytes;
 }
 
 export function manifest(handoff) {
-  const inputs = Object.fromEntries(['sqlite', 'sqliteVec'].map(key => [key,
+  const engine = engineIdentity(handoff);
+  const inputs = Object.fromEntries(['sqlite', engine.key].map(key => [key,
     { version: handoff.inputs[key].version, digest: handoff.inputs[key].digest }]));
-  const build = { ...handoff.build, wasm: handoff.build.wasm.map(arg =>
-    arg.startsWith('sqlite3_wasm_extra_init.c=') ? 'sqlite3_wasm_extra_init.c=<temporary generated bridge>' : arg) };
-  return { schemaVersion: 1, inputs, lockDigest: handoff.inputs.lockDigest,
-    build, runtimeFiles: handoff.runtimeFiles };
+  const paths = ['sqlite',engine.key].filter(k=>handoff.inputs[k].sourcePath).map(k=>[handoff.inputs[k].sourcePath, '<'+k+'-source>']);
+  const bridgeArg = handoff.build.wasm.find(a=>a.startsWith('sqlite3_wasm_extra_init.c='));
+  if (bridgeArg) paths.push([resolve(bridgeArg.slice('sqlite3_wasm_extra_init.c='.length),'..'),'<build>']);
+  paths.sort((a,b)=>b[0].length-a[0].length);
+  const portable = value => Array.isArray(value) ? value.map(portable) : value && typeof value === 'object' ? Object.fromEntries(Object.entries(value).map(([k,v])=>[k,portable(v)])) : typeof value === 'string' ? paths.reduce((v,[from,to])=>v.replaceAll(from,to),value) : value;
+  const sourceOrigins = Object.fromEntries(['sqlite',engine.key].map(key=>[key,Object.fromEntries(Object.entries(handoff.inputs[key]).filter(([k])=>!['sourcePath','archivePath'].includes(k)))]));
+  return { schemaVersion:1, inputs, engine, sourceLockPath:handoff.sourceLockPath || 'inputs/sources.lock.json', sourceOrigins,
+    lockDigest:handoff.inputs.lockDigest, build:portable(handoff.build), runtimeFiles:handoff.runtimeFiles };
 }
 
-export function packageMetadata(name, version, files) {
-  return { ...identity(name, version), description: 'SQLite browser/WASM with sqlite-vec statically integrated',
+export const documentMapping = engine => [
+  [`docs/${engine.key === 'sqliteVec' ? 'sqlite-vec' : 'sqlite-vector'}/README.md`, 'README.md'],
+  [`docs/${engine.key === 'sqliteVec' ? 'sqlite-vec' : 'sqlite-vector'}/usage.md`, 'docs/usage.md'],
+  ['docs/common/browser.md','docs/browser.md'],
+];
+
+export async function documentInputs(handoff, repository = root) {
+  const result = new Map();
+  for (const [source,destination] of documentMapping(engineIdentity(handoff))) {
+    require(!result.has(destination), 'Duplicate document destination');
+    const path = join(repository,source);
+    require(await realpath(path) === resolve(path), 'Unsafe document source');
+    result.set(destination, await regularBytes(path));
+  }
+  const engine = engineIdentity(handoff);
+  const title = engine.key === 'sqliteVec' ? 'sqlite-vec' : 'SQLite-Vector';
+  require(result.get('README.md').toString().startsWith('# SQLite WASM with '+title+'\n')
+    && result.get('docs/usage.md').toString().startsWith('# Using '+title+'\n'), 'Wrong-engine documents');
+  for (const [source,destination] of documentMapping(engine)) {
+    const text = result.get(destination).toString();
+    for (const match of text.matchAll(/\[[^\]]*\]\(([^)]+)\)/g)) {
+      const link = match[1];
+      const ownPrefix = 'https://github.com/at-rama/sqlite-vector-wasm/blob/main/';
+      if (/^https?:\/\//.test(link) && !link.startsWith(ownPrefix)) continue;
+      const [target,anchor] = link.split('#');
+      const local = target.startsWith(ownPrefix) ? target.slice(ownPrefix.length) : null;
+      for (const location of local !== null ? [join(repository,local)] : [resolve(repository,source,'..',target)]) {
+        require(location.startsWith(resolve(repository)+'/'), 'Unsafe document link');
+        const linked = await regularBytes(location);
+        if (anchor) require(linked.toString().split('\n').filter(l=>/^#+ /.test(l)).some(l=>l.replace(/^#+ /,'').toLowerCase().replace(/[^a-z0-9 -]/g,'').replaceAll(' ','-')===anchor), 'Broken document anchor');
+      }
+      if (local === null) {
+        const path = resolve('/',destination,'..',target).slice(1);
+        require(result.has(path), 'Broken extracted document link');
+      }
+    }
+  }
+  return result;
+}
+
+export function packageMetadata(name, version, files, engine = {key:'sqliteVec'}) {
+  return { ...identity(name, version), description: `SQLite browser/WASM with ${engine.key === 'sqliteVec' ? 'sqlite-vec' : 'SQLite-Vector'} statically integrated`,
     license: 'Apache-2.0',
     exports: Object.fromEntries([...runtimeNames, 'package.json', 'runtime.json'].map(name => [`./${name}`, `./${name}`])),
     files, repository: { type: 'git', url: 'https://github.com/at-rama/sqlite-vector-wasm.git' } };
@@ -145,11 +261,10 @@ export async function assemble({ handoff, name, version, repository = root, run 
     const runtime = await validateBuild(handoff, repository);
     const contents = await noticeInputs(handoff, repository);
     for (const entry of runtime) contents.set(...entry);
-    contents.set('README.md', await regularBytes(join(repository, 'README.md')));
-    contents.set('docs/usage.md', await regularBytes(join(repository, 'docs/usage.md')));
+    for (const entry of await documentInputs(handoff, repository)) contents.set(...entry);
     contents.set('runtime.json', jsonBytes(manifest(handoff)));
     const names = [...contents.keys(), 'package.json'].sort();
-    contents.set('package.json', jsonBytes(packageMetadata(name, version, names)));
+    contents.set('package.json', jsonBytes(packageMetadata(name, version, names, engineIdentity(handoff))));
     const directory = join(workspace, 'assembly'); await mkdir(directory);
     for (const [file, data] of contents) {
       await mkdir(resolve(directory, file, '..'), { recursive: true });
@@ -166,7 +281,7 @@ export async function assemble({ handoff, name, version, repository = root, run 
     const extracted = await inspectArchive(archivePath, files, join(workspace, 'extracted'), run, logPath);
     require(hash(await regularBytes(archivePath)) === hash(archiveBytes), 'Archive changed during inspection');
     const result = { schemaVersion: 1, workspace, package: { name, version }, inputs: manifest(handoff).inputs,
-      lockDigest: handoff.inputs.lockDigest, build: handoff.build,
+      lockDigest: handoff.inputs.lockDigest, engine:engineIdentity(handoff), sourceLockPath:manifest(handoff).sourceLockPath, sourceOrigins:manifest(handoff).sourceOrigins, build: handoff.build,
       buildHandoffSha256: hash(jsonBytes(handoff)),
       runtimeDirectory: extracted.directory, runtimeFiles: handoff.runtimeFiles, files,
       archive: { path: archivePath, size: archiveBytes.length, sha256: hash(archiveBytes) }, logPath };
