@@ -55,7 +55,7 @@ Within a same-engine lineage, while the selected Vector upstream remains in 0.x 
 - **THEN** the prior maturity cap no longer prevents transition into distribution `1.x`
 
 #### Scenario: Mature alternative is not a product major signal
-- **WHEN** the first selected Vector upstream is 1.1.2 while the stable product reference is 0.2.x with the same Vector upstream
+- **WHEN** the first selected Vector upstream is 1.1.2 while the stable product reference is 0.2.x with sqlite-vec
 - **THEN** the transition remains in product 0.x under the adopted MINOR rule
 
 ### Requirement: Selected stable bootstrap
