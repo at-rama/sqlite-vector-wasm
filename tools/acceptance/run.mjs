@@ -5,7 +5,7 @@ import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { pathToFileURL } from 'node:url';
 import { root, hash, regularBytes, identity } from '../package/package.mjs';
-import { productionStages, assertApplicable, assertBrowserComplete } from './contracts.mjs';
+import { productionStages, assertApplicable, assertBrowserComplete, defaultLock, vectorLock, recordedSelection, assertSelected, assertSelectionEvidence } from './contracts.mjs';
 
 export function command(commandName, args, { cwd, env, log }) {
   return new Promise((accept, reject) => {
@@ -26,18 +26,21 @@ export function command(commandName, args, { cwd, env, log }) {
 
 export function options(argv) {
   const result = { name: 'sqlite-vector-wasm-acceptance-fixture', version: '0.0.0-test' };
-  assert.ok(argv.length === 0 || argv.length === 4, 'Usage: acceptance.sh [--name NAME --version VERSION]');
+  assert.ok(argv.length % 2 === 0 && argv.length <= 6, 'Usage: acceptance.sh [--lock PATH] [--name NAME --version VERSION]');
   const seen = new Set();
   for (let i = 0; i < argv.length; i += 2) {
-    const key = { '--name': 'name', '--version': 'version' }[argv[i]];
+    const key = { '--name': 'name', '--version': 'version', '--lock': 'lockPath' }[argv[i]];
     assert.ok(key && !seen.has(key) && argv[i + 1], 'Invalid/duplicate acceptance arguments');
     seen.add(key); result[key] = argv[i + 1];
   }
+  assert.equal(seen.has('name'),seen.has('version'), 'Supply both package name and version');
+  if (result.lockPath) assert.ok([defaultLock,vectorLock].includes(result.lockPath), 'Unsupported recorded acceptance lock');
   identity(result.name, result.version);
   return result;
 }
 
-export async function production({ repository = root, metadata = options([]), run = command, environment = process.env } = {}) {
+export async function production({ repository = root, metadata = options([]), run = command, environment = process.env, lockPath = metadata.lockPath || defaultLock } = {}) {
+  metadata = identity(metadata.name,metadata.version);
   await mkdir(join(repository, '.work/acceptance'), { recursive: true });
   const workspace = await mkdtemp(join(repository, '.work/acceptance/run-'));
   const logs = join(workspace, 'logs'); await mkdir(logs);
@@ -69,8 +72,8 @@ export async function production({ repository = root, metadata = options([]), ru
         assert.equal(entries.length, 0, `Fresh production requires empty .work/${name}`);
       }
       assert.ok(!(await stat(env.HARNESS_STATE).catch(error => { if (error.code === 'ENOENT') return null; throw error; })), 'Fresh tools required');
-      report.sourceLock = JSON.parse(await readFile(join(repository, 'inputs/sources.lock.json'), 'utf8'));
-      report.sourceLockSha256 = hash(await regularBytes(join(repository, 'inputs/sources.lock.json')));
+      assert.ok([defaultLock,vectorLock].includes(lockPath), 'Unsupported recorded acceptance lock');
+      Object.assign(report,recordedSelection(await regularBytes(join(repository,lockPath)),lockPath));
       report.bootstrapNode = process.version;
     });
     await stage('install', () => invoke('bash', ['tools/harness.sh', 'install'], 'install'));
@@ -78,13 +81,16 @@ export async function production({ repository = root, metadata = options([]), ru
     await stage('deps', () => invoke('bash', ['tools/harness.sh', 'deps'], 'deps'));
     await stage('smoke', () => invoke('bash', ['tools/harness.sh', 'smoke'], 'smoke'));
     const build = await stage('build', async () => {
-      const result = JSON.parse(await invoke('bash', ['tools/build.sh'], 'build'));
+      const result = JSON.parse(await invoke('bash', ['tools/build.sh', '--lock', lockPath], 'build'));
+      assertSelected(result, report, true);
       await writeFile(join(workspace, 'build.json'), JSON.stringify(result, null, 2) + '\n');
       return result;
     });
     const packaged = await stage('package', async () => {
       const result = JSON.parse(await invoke('bash', ['tools/package.sh', '--build-handoff', join(workspace, 'build.json'), '--name', metadata.name, '--version', metadata.version], 'package'));
       assert.deepEqual(result.package, metadata);
+      assertSelected(result,report);
+      assert.equal(result.buildHandoffSha256,hash(Buffer.from(JSON.stringify(build,null,2)+'\n')), 'Raw build handoff mismatch');
       await writeFile(join(workspace, 'package.json'), JSON.stringify(result, null, 2) + '\n');
       report.archive = result.archive; report.runtimeFiles = result.runtimeFiles; report.build = build.build;
       return result;
@@ -92,7 +98,7 @@ export async function production({ repository = root, metadata = options([]), ru
     const browserResults = await stage('browser', async () => {
       await invoke('bash', ['tools/harness.sh', 'exec', 'node', 'tools/acceptance/check.mjs', join(workspace, 'package.json'), join(workspace, 'browser.json')], 'browser');
       const result = JSON.parse(await readFile(join(workspace, 'browser.json'), 'utf8'));
-      assertBrowserComplete(result); return result;
+      assertBrowserComplete(result); assertSelectionEvidence(result,report); return result;
     });
     report.browserResults = browserResults;
     await stage('bundle', async () => {
@@ -106,6 +112,7 @@ export async function production({ repository = root, metadata = options([]), ru
       report.archive = { ...packaged.archive, bundlePath: 'payload.tgz' };
       report.finished = new Date().toISOString();
     });
+    assert.equal(hash(await regularBytes(join(repository,lockPath))),report.sourceLockSha256, 'Selected lock changed during acceptance');
     report.verdict = 'passed'; assertApplicable(report, report.source.commit, packaged.archive);
     await save();
     return { report: reportPath, bundle: workspace, archive: report.archive, checkedCommit: report.source.commit };

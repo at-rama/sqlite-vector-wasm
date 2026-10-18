@@ -2,8 +2,8 @@
 
 ## 1. Selected-composition production and evidence
 
-- [ ] 1.1 Extend `tools/acceptance/run.mjs` and its CLI parsing with the two recorded `--lock` paths, passing the exact selection to A-build while retaining omitted-selection sqlite-vec, existing command forms, metadata-only callers and `{name,version}` identity semantics. Add offline tests for both selections/defaults, unsafe/unknown/duplicate/conflicting options, fresh-state prerequisites and stage-failure propagation; document both exact commands and defaults in `docs/acceptance.md`.
-- [ ] 1.2 Bind selected lock/engine/exact upstream identities to build/package/browser reports and success bundles, retaining default version-1 fields/signatures and exact revision/archive applicability. Add cross-engine/lock/digest/payload/revision/changed-name-version/incomplete-result rejection fixtures, plus existing default downstream consumer controls; update report/retention/applicability documentation. Restrict any downstream test edits to evidence fixtures, with no release/Updates policy or producer implementation changes.
+- [x] 1.1 Extend `tools/acceptance/run.mjs` and its CLI parsing with the two recorded `--lock` paths, passing the exact selection to A-build while retaining omitted-selection sqlite-vec, existing command forms, metadata-only callers and `{name,version}` identity semantics. Add offline tests for both selections/defaults, unsafe/unknown/duplicate/conflicting options, fresh-state prerequisites and stage-failure propagation; document both exact commands and defaults in `docs/acceptance.md`.
+- [x] 1.2 Bind selected lock/engine/exact upstream identities to build/package/browser reports and success bundles, retaining default version-1 fields/signatures and exact revision/archive applicability. Add cross-engine/lock/digest/payload/revision/changed-name-version/incomplete-result rejection fixtures, plus existing default downstream consumer controls; update report/retention/applicability documentation. Restrict any downstream test edits to evidence fixtures, with no release/Updates policy or producer implementation changes.
 
 ## 2. Native vector fixtures and actual persistent reopen
 
