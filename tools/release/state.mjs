@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { channelFor, distribution, commitPattern, validateSnapshot, npmPackageName } from './policy.mjs';
+import { channelFor, engineKey, distribution, commitPattern, validateSnapshot, npmPackageName } from './policy.mjs';
 
 export const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 export function repositoryName(value) {
@@ -79,7 +79,19 @@ export function publicationIdentity(evidence) {
   assert.match(evidence.commit, commitPattern);
   assert.match(evidence.archive?.sha256 || '', /^[0-9a-f]{64}$/);
   assert.ok(Number.isSafeInteger(evidence.archive.size) && evidence.archive.size > 0);
-  for (const key of ['sqlite', 'sqliteVec']) {
+  const key = engineKey(evidence.upstreams);
+  assert.deepEqual(Object.keys(evidence.sourceLock || {}).sort(), ['schemaVersion','sqlite',key].sort(), 'Ambiguous publication source lock');
+  assert.equal(evidence.sourceLock.schemaVersion, key === 'sqliteVec' ? 1 : 2, 'Publication lock engine mismatch');
+  const engine = {key, upstream:key === 'sqliteVec' ? 'asg017/sqlite-vec' : 'sqliteai/sqlite-vector',version:evidence.upstreams[key]};
+  if (key === 'sqliteVector' || evidence.engine) assert.deepEqual(evidence.engine, engine, 'Publication engine mismatch');
+  const sqliteOrigin = new URL(evidence.sourceLock.sqlite.archiveUrl);
+  assert.ok(sqliteOrigin.protocol === 'https:' && ['sqlite.org','www.sqlite.org'].includes(sqliteOrigin.hostname), 'Wrong SQLite source origin');
+  const origin = new URL(evidence.sourceLock[key].archiveUrl);
+  assert.ok(origin.protocol === 'https:' && (key === 'sqliteVec'
+    ? origin.hostname === 'github.com' && origin.pathname.startsWith('/asg017/sqlite-vec/')
+    : origin.hostname === 'codeload.github.com' && origin.pathname === '/sqliteai/sqlite-vector/tar.gz/'+evidence.sourceLock[key].commit), 'Wrong engine source origin');
+  if (key === 'sqliteVector') assert.match(evidence.sourceLock[key].commit || '', commitPattern);
+  for (const key of ['sqlite', engine.key]) {
     assert.equal(evidence.sourceLock?.[key]?.version, evidence.upstreams[key]);
     assert.ok(/^https:\/\//.test(evidence.sourceLock[key].archiveUrl || ''), 'Missing source origin');
     const digest = evidence.sourceLock[key].digest;

@@ -13,11 +13,11 @@ test('documented candidate schema is executable and shared calculator CLI has no
   const documentation=await readFile(join(root,'docs/publication.md'),'utf8');
   const example=JSON.parse(documentation.match(/```json\n([\s\S]*?)\n```/)[1]);
   // A durable example demonstrates the schema, not the candidate's current source pair.
-  const exampleLock={sqlite:{version:example.sqlite},sqliteVec:{version:example.sqliteVec}};
+  const exampleLock={sqlite:{version:example.sqlite},schemaVersion:2,sqliteVector:{version:example.sqliteVector}};
   descriptor(example,exampleLock);
   assert.throws(()=>descriptor({...example,sqlite:'3.0.0'},exampleLock));
   const dir=await mkdtemp(join(tmpdir(),'release-cli-'));t.after(()=>rm(dir,{recursive:true,force:true}));
-  const path=join(dir,'input.json');await writeFile(path,JSON.stringify({selection:{sqlite:example.sqlite,sqliteVec:example.sqliteVec},snapshot:{schemaVersion:1,tags:[],releaseTags:[],npmVersions:[],heads:{latest:null,next:null}}}));
+  const path=join(dir,'input.json');await writeFile(path,JSON.stringify({selection:{sqlite:example.sqlite,sqliteVector:example.sqliteVector},snapshot:{schemaVersion:1,tags:[],releaseTags:[],npmVersions:[],heads:{latest:null,next:null}}}));
   const output=JSON.parse(await execute('sh',['tools/release.sh','calculate',path],{cwd:root}));assert.equal(output.version,'0.1.0');
 });
 
@@ -37,6 +37,7 @@ test('hosted workflow pins actions, separates read qualification/write publicati
   assert.ok(qualification.includes('needs: candidate') && qualification.includes("if: needs.candidate.outputs.present == 'true'"));
   const publication=workflow.split('  publish:')[1];assert.ok(publication.includes('needs: qualify') && publication.includes('id-token: write') && publication.includes('attestations: write'));
   assert.ok(publication.includes('github.event.action == \'closed\' && github.event.pull_request.merged == true'));
+  assert.ok(workflow.includes('.42p/openspec/changes/release-sqlite-vector-product/tasks.md'));
   assert.ok(workflow.includes('sh tools/release.sh exercise') && workflow.includes('ref: ${{ github.event.pull_request.head.sha }}'));
 });
 

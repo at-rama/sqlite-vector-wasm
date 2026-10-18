@@ -3,8 +3,8 @@ import { mkdir, mkdtemp, writeFile, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { root, regularBytes, hash, validatePackagedBuild, documentInputs, engineIdentity, noticeInputs, manifest, packageMetadata, inspectArchive } from '../package/package.mjs';
 import { production, command } from '../acceptance/run.mjs';
-import { assertApplicable } from '../acceptance/contracts.mjs';
-import { calculate } from './policy.mjs';
+import { vectorLock, recordedSelection, assertSelected, assertSelectionEvidence, assertApplicable } from '../acceptance/contracts.mjs';
+import { engineKey, calculate } from './policy.mjs';
 import { publicationIdentity, npmState, download, sha256 } from './state.mjs';
 
 const jsonBytes = value => Buffer.from(JSON.stringify(value, null, 2) + '\n');
@@ -30,7 +30,7 @@ export async function acceptedPayload({ bundle, identity, commit, repository = r
   assert.ok(['inputs/sources.lock.json', 'inputs/sqlite-vector.sources.lock.json'].includes(sourceLockPath), 'Unsupported source lock');
   const lockBytes = await regularBytes(join(repository, sourceLockPath));
   const sourceLock = JSON.parse(lockBytes);
-  assert.equal(report.sourceLockSha256, hash(lockBytes)); assert.deepEqual(report.sourceLock, sourceLock);
+  assert.equal(report.sourceLockSha256, hash(lockBytes), 'Acceptance source lock identity mismatch'); assert.deepEqual(report.sourceLock, sourceLock);
   const inspection = await mkdtemp(join(bundle, 'release-inspect-'));
   const extracted = join(inspection, 'extracted');
   await inspectArchive(archivePath, packaged.files, extracted);
@@ -54,9 +54,27 @@ export async function acceptedPayload({ bundle, identity, commit, repository = r
   return { report, packaged, build, sourceLock, archive, archivePath };
 }
 
+export function bindSelection(context, accepted, { product = false } = {}) {
+  const key = engineKey(context.selection);
+  if (product) assert.equal(key, 'sqliteVector', 'New product publication requires SQLite-Vector');
+  assert.equal(accepted.sourceLock[key]?.version, context.selection[key], 'Context engine/version mismatch');
+  assert.equal(accepted.sourceLock.sqlite.version, context.selection.sqlite, 'Context SQLite version mismatch');
+  assert.deepEqual(engineIdentity(accepted.build), {key,upstream:key === 'sqliteVec' ? 'asg017/sqlite-vec' : 'sqliteai/sqlite-vector',version:context.selection[key]}, 'Context/build engine mismatch');
+  if (key === 'sqliteVector') {
+    const selection = recordedSelection(jsonBytes(accepted.sourceLock), vectorLock);
+    // Preserve the digest of actual lock bytes, including their formatting.
+    selection.sourceLockSha256 = accepted.report.sourceLockSha256;
+    assertSelected(accepted.build, selection, true);
+    assertSelected(accepted.packaged, selection);
+    assertSelectionEvidence(accepted.report, selection);
+    assertSelectionEvidence(accepted.report.browserResults, selection);
+  }
+}
+
 export function provenance(context, identity, accepted) {
+  bindSelection(context, accepted);
   const evidence = { schemaVersion: 1, ...identity, commit: context.commit, repository: context.repository,
-    upstreams: { ...context.selection }, sourceLock: accepted.sourceLock,
+    upstreams: { ...context.selection }, ...(engineKey(context.selection) === 'sqliteVector' ? {engine:engineIdentity(accepted.build)} : {}), sourceLock: accepted.sourceLock,
     sourceLockSha256: accepted.report.sourceLockSha256, build: accepted.build.build,
     runtimeFiles: accepted.build.runtimeFiles, archive: accepted.archive,
     acceptance: { verdict: accepted.report.verdict, source: accepted.report.source, stages: accepted.report.stages,
@@ -64,7 +82,9 @@ export function provenance(context, identity, accepted) {
       reportSha256: hash(jsonBytes(accepted.report)) },
     invocation: { pullRequest: context.pullRequest || null, preparation: context.preparation || null, comment: context.comment } };
   publicationIdentity(evidence);
-  const notes = `${identity.name} ${identity.version} (${identity.channel})\n\nCommit: ${context.commit}\nSQLite: ${context.selection.sqlite}\nsqlite-vec: ${context.selection.sqliteVec}\nArchive SHA-256: ${accepted.archive.sha256}\n${context.comment ? `\n${context.comment}\n` : ''}`;
+  const key = engineKey(context.selection), label = key === 'sqliteVector' ? 'SQLite-Vector' : 'sqlite-vec';
+  const breaking = identity.transition ? '\nBREAKING CHANGE: SQLite-Vector replaces sqlite-vec. Adapt native vector SQL using vec0/vec_* to SQLite-Vector SQL. Official SQLite JavaScript APIs remain; vector SQL is not interchangeable. No automatic database migration or compatibility of existing vector structures is established.\n' : '';
+  const notes = `${identity.name} ${identity.version} (${identity.channel})\n\nCommit: ${context.commit}\nSQLite: ${context.selection.sqlite}\n${label}: ${context.selection[key]}\nArchive SHA-256: ${accepted.archive.sha256}\n${breaking}${context.comment ? `\n${context.comment}\n` : ''}`;
   return { evidence, notes };
 }
 
@@ -73,8 +93,10 @@ export async function qualify({ context, readSnapshot, produce = production, ver
   assert.equal(await run('git', ['status','--porcelain','--untracked-files=all'], { cwd: repository }), '', 'Dirty release checkout');
   await run('sh', ['tools/check-repository.sh'], { cwd: repository });
   const identity = calculate({ selection: context.selection, snapshot: await readSnapshot(), comment: context.comment });
-  const result = await produce({ repository, metadata: { name: identity.name, version: identity.version } });
+  assert.equal(engineKey(context.selection), 'sqliteVector', 'New product publication requires SQLite-Vector');
+  const result = await produce({ repository, lockPath: vectorLock, metadata: { name: identity.name, version: identity.version } });
   const accepted = await verify({ bundle: result.bundle, identity, commit: context.commit, repository });
+  bindSelection(context, accepted, {product:true});
   const { evidence, notes } = provenance(context, identity, accepted);
   const parent = join(repository, '.work/release'); await mkdir(parent, { recursive: true });
   const directory = await mkdtemp(join(parent, 'run-'));
@@ -104,6 +126,7 @@ export async function publish({ handoff, readSnapshot, services, attestation, re
   };
   try {
     const accepted = await verify({ bundle: handoff.bundle, identity: handoff.identity, commit: handoff.context.commit, repository });
+    bindSelection(handoff.context, accepted, {product:true});
     const expected = provenance(handoff.context, handoff.identity, accepted);
     assert.deepEqual(await json(handoff.evidencePath), expected.evidence, 'Publication evidence changed');
     assert.equal(handoff.notes, expected.notes); assert.equal(handoff.archivePath, accepted.archivePath);

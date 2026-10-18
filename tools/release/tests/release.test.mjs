@@ -80,7 +80,7 @@ test('rollback channel reference, deterministic immutable input, changed state a
   assert.notEqual(calc(pair(), state()).version, calc(pair(), state('0.2.1')).version);
   for (const key of ['tags','npmVersions','releaseTags']) {
     const occupied = empty(); occupied[key].push(key === 'npmVersions' ? '0.1.0' : 'dist/v0.1.0');
-    assert.throws(() => calc(pair(), occupied), /collision/);
+    assert.throws(() => calc(pair(), occupied), /collision|Published npm history without stable published HEAD/);
   }
   const invalid = state(); invalid.heads.latest.commit = 'bad'; assert.throws(() => calc(pair(), invalid));
 });
@@ -90,7 +90,7 @@ test('state distinguishes genuine bootstrap, complete pagination, errors and par
   const get = async url => new URL(url).hostname === 'registry.npmjs.org' ? { status: 404, data: { error: 'Not found' } } : ok([]);
   assert.deepEqual(await readState({ repository: 'at-rama/sqlite-vector-wasm', get }), empty());
   const partial = await readState({ repository: 'at-rama/sqlite-vector-wasm', get: async url => url.includes('/tags?') ? ok([{ name:'dist/v0.1.0',commit:{sha:commit} }]) : get(url) });
-  assert.throws(() => calc(pair(), partial), /collision/);
+  assert.throws(() => calc(pair(), partial), /collision|Published npm history without stable published HEAD/);
   let count = 0;
   assert.deepEqual(await pages('a/b','tags', async () => ++count === 1 ? { ...ok([1]), headers: { link:'<https://api.github.com/repos/a/b/tags?per_page=100&page=2>; rel="next"' } } : ok([2])), [1,2]);
   for (const status of [401,403,500]) await assert.rejects(npmState(async () => ({ status, data: {} })), /unavailable/);
@@ -125,7 +125,7 @@ test('release candidate routing checks the exact changed descriptor and fails cl
 test('integrated context requires human merge, exact revision and changed descriptor', async () => {
   const pr = {number:1,merged:true,state:'closed',merged_by:{type:'User'},base:{ref:'main',repo:{full_name:'a/b'}},merge_commit_sha:commit,changed_files:1};
   const event = {action:'closed',repository:{full_name:'a/b'},pull_request:pr};
-  const invoke = (changes={}) => integratedContext({repository:'a/b',event,get:async url=>ok(url.includes('/files?') ? changes.files || [{filename:'inputs/release.json',status:'added'}] : {...pr,...changes.pr}),readAt:async (revision,path)=> {assert.equal(revision,commit);return JSON.stringify(path.endsWith('sources.lock.json') ? lock() : candidate());}});
+  const invoke = (changes={}) => integratedContext({repository:'a/b',event,get:async url=>ok(url.includes('/actions/runs/') ? {id:17,html_url:'https://github.com/a/b/actions/runs/17',repository:{full_name:'a/b'}} : url.includes('/files?') ? changes.files || [{filename:'inputs/release.json',status:'added'}] : {...pr,...changes.pr}),readAt:async (revision,path)=> {assert.equal(revision,commit);return JSON.stringify(path.endsWith('sources.lock.json') ? {schemaVersion:2,sqlite:{version:'3.53.4'},sqliteVector:{version:'1.1.2'}} : {...candidate(),schemaVersion:2,sqliteVec:undefined,sqliteVector:'1.1.2'});}});
   assert.equal((await invoke()).commit,commit);
   for (const changes of [{pr:{merged:false}},{pr:{merge_commit_sha:'b'.repeat(40)}},{pr:{merged_by:{type:'Bot'}}},{files:[]},{files:[{filename:'README.md',status:'modified'}]},{pr:{changed_files:3001}}]) await assert.rejects(invoke(changes));
 });
