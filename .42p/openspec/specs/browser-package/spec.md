@@ -8,7 +8,7 @@ Assemble the canonical browser runtime from A-build into a consumer-ready distri
 
 ### Requirement: Validated build input
 
-Packaging SHALL consume an explicit successful A-build handoff and verify its source-lock identity, input versions/digests and complete runtime inventory against the repository state being packaged. Each consumed file SHALL match its declared size and SHA-256. Missing, altered, unsupported or ambiguous input SHALL fail packaging without using earlier outputs.
+Packaging SHALL consume an explicit successful A-build handoff for either retained single-engine composition and verify its selected repository-recorded lock, exact engine/component identities, origins, versions/digests, actual build-input identities and complete runtime inventory against the repository state being packaged. Each consumed file SHALL match its declared size and SHA-256. Missing, altered, unsupported, stale or ambiguous input SHALL fail packaging without fallback, recompilation or earlier outputs.
 
 #### Scenario: Matching constructed runtime
 - **WHEN** the handoff identifies the recorded source pair and every expected runtime file matches its declared size and digest
@@ -18,9 +18,17 @@ Packaging SHALL consume an explicit successful A-build handoff and verify its so
 - **WHEN** the handoff is incomplete, unsupported, inconsistent with recorded inputs, or declares missing, duplicate, unsafe, nonregular, empty or altered runtime files
 - **THEN** packaging fails without a successful package result or substitution of previous output
 
+#### Scenario: Either retained composition
+- **WHEN** packaging receives a valid recorded sqlite-vec or SQLite-Vector build handoff
+- **THEN** it consumes only that exact composition using the same CLI, without independently selecting or acquiring an engine
+
+#### Scenario: Conflicting composition or stale integration input
+- **WHEN** selected lock bytes, engine metadata, exact origins/versions/digests or used template/integration identities disagree
+- **THEN** packaging fails before assembly without substituting the default lock or accepting another engine
+
 ### Requirement: Complete conservative runtime assembly
 
-The distribution SHALL retain the complete pinned canonical browser runtime from A-build, including all required loaders, Worker1/promiser variants, proxies and WASM assets. It SHALL preserve upstream names, bytes and relative layout, expose supplied bundler variants, and exclude demos, benchmarks, test applications, intermediate engines and optional experimental variants.
+The distribution SHALL retain the complete pinned canonical browser runtime from the selected A-build composition, including all required loaders, Worker1/promiser variants, proxies and WASM assets. It SHALL preserve upstream names, bytes and relative layout, expose supplied bundler variants, include exactly one selected vector engine, and exclude demos, benchmarks, test applications, intermediate engines and optional experimental variants.
 
 #### Scenario: All retained loading surfaces
 - **WHEN** the final distribution is inspected
@@ -30,9 +38,13 @@ The distribution SHALL retain the complete pinned canonical browser runtime from
 - **WHEN** upstream build directories contain demos, benchmarks, tests, sources or intermediates alongside the required runtime
 - **THEN** the distribution contains only the defined runtime and its package metadata, notices and consumption documentation
 
+#### Scenario: Selected-engine archive
+- **WHEN** either recorded composition is assembled
+- **THEN** all eleven canonical runtime files retain their A-build bytes and filename subpaths, with no second engine or consumer wrapper
+
 ### Requirement: Independent packaged asset resolution
 
-Final packaged loaders, workers, promisers and proxies SHALL resolve their companion assets under the pinned upstream's supported browser/hosting conditions from the documented package layout. Resolution SHALL work independently of temporary build/source directories. Supplied bundler variants SHALL remain accessible without promising compatibility with every bundler.
+Final packaged loaders, workers, promisers and proxies SHALL resolve their companion assets under the pinned upstream's supported browser/hosting conditions from the documented package layout for either retained composition. Resolution SHALL work independently of temporary build/source directories. Supplied bundler variants SHALL remain accessible without promising compatibility with every bundler.
 
 #### Scenario: Relocated extracted distribution
 - **WHEN** the final archive is extracted separately and hosted at a non-root URL prefix using the documented upstream loading mechanisms
@@ -42,9 +54,13 @@ Final packaged loaders, workers, promisers and proxies SHALL resolve their compa
 - **WHEN** a required WASM, Worker or proxy companion is removed from an extracted test copy
 - **THEN** the affected requested capability does not initialize successfully and the packaging check reports failure
 
+#### Scenario: Both native SQL transports
+- **WHEN** each retained composition’s extracted archive is tested through conventional, ESM and bundler loading, direct C/OO1 connections, Workers, Worker1 and promiser
+- **THEN** exact engine identity and native deterministic queries work without consumer extension registration and every runtime request resolves packaged assets
+
 ### Requirement: Consumer-ready distribution envelope
 
-Packaging SHALL supply an npm-compatible archive usable for npm publication and GitHub Release download, with the same runtime payload for both channels and no consumer native/WASM compilation. It SHALL carry explicit supplied package identity metadata without selecting the shared version/revision/publication policy owned by A-release.
+Packaging SHALL supply an npm-compatible archive usable for npm publication and GitHub Release download, with the same runtime payload for both channels and no consumer native/WASM compilation. It SHALL carry explicit supplied package identity and actual composition metadata without selecting A-release's version/revision/publication policy. Composition-dependent documentation SHALL follow the selected engine from explicit per-engine sources and common material, with stable consumer paths and honest verification/publication references.
 
 #### Scenario: Consumer installation and download
 - **WHEN** the archive is installed locally as an npm package or extracted for static hosting
@@ -54,13 +70,25 @@ Packaging SHALL supply an npm-compatible archive usable for npm publication and 
 - **WHEN** packaging is invoked with a valid package name and project version
 - **THEN** the generated package metadata carries those inputs and identifies the included upstream versions without claiming a tag, registry publication or accepted release
 
+#### Scenario: Documentation follows composition
+- **WHEN** an archive is assembled from a selected-engine handoff
+- **THEN** its presentation, usage, descriptions and other composition-dependent documents come from that engine’s explicit directory plus declared shared sources, using stable archive paths without merging prose or shipping another engine’s guide as its own
+
+#### Scenario: Documentation source or link failure
+- **WHEN** a required selected/common document is missing, unsafe, duplicated or its authored source or final-archive links are broken
+- **THEN** packaging checks fail rather than falling back to another engine’s document
+
+#### Scenario: Honest example reference
+- **WHEN** a guide identifies the archive or published composition used to check its examples
+- **THEN** it retains the exact observed reference and does not claim publication of an unlisted fixture archive or silently follow latest
+
 ### Requirement: Preserved behavior and glue boundary
 
-Packaging SHALL preserve A-build's browser APIs, SQL/vector semantics, default capabilities and storage limitations. Glue SHALL only initialize, locate or expose upstream functionality. It SHALL NOT add an application API, SQL abstraction, ORM, FluidJ behavior, Node.js/native/WASI runtime, upstream patch or silent transient-storage substitution for requested persistence.
+Packaging SHALL preserve the selected A-build composition's browser APIs, native SQL/vector semantics, default capabilities and storage limitations. Glue SHALL only initialize, locate or expose upstream functionality. It SHALL NOT add an application API, SQL abstraction, ORM, FluidJ behavior, runtime engine selector, simultaneous-engine payload, Node.js/native/WASI runtime, upstream patch or silent transient-storage substitution for requested persistence.
 
 #### Scenario: Direct upstream use
 - **WHEN** a consumer initializes the packaged runtime through its upstream loading surface
-- **THEN** the same upstream initialization/API behavior and statically integrated sqlite-vec functionality remain available without a new wrapper or consumer extension registration
+- **THEN** the same upstream initialization/API behavior and the statically integrated selected engine’s native functionality remain available without a new wrapper or consumer extension registration
 
 #### Scenario: Unavailable requested persistence
 - **WHEN** a requested persistent VFS lacks its required Worker, browser or hosting conditions
@@ -72,7 +100,7 @@ Packaging SHALL preserve A-build's browser APIs, SQL/vector semantics, default c
 
 ### Requirement: Complete licensing material
 
-The distribution SHALL include required upstream licensing notices for the delivered runtime and retain embedded notices. Repository-authored licensing material SHALL distinguish its own license from those applicable to included upstream code. Missing required notices SHALL prevent a successful package result.
+The distribution SHALL include the required licensing notices for its actual SQLite, selected engine, incorporated dependencies and generated runtime/glue, and retain embedded notices. Notice material SHALL have traceable recorded source/version-or-revision associations and validated digests. Repository-authored licensing material SHALL distinguish its own license from included upstream terms. Missing, unestablished, mismatched or altered required notices SHALL prevent a successful package result.
 
 #### Scenario: Upstream archive lacks license files
 - **WHEN** a verified source archive omits license texts required for binary redistribution
@@ -80,11 +108,19 @@ The distribution SHALL include required upstream licensing notices for the deliv
 
 #### Scenario: Extracted license inventory
 - **WHEN** the final archive is extracted
-- **THEN** its required SQLite, sqlite-vec and included generated-glue licensing material is present alongside repository-authored license information
+- **THEN** its required SQLite, selected engine, incorporated dependency and included generated-glue licensing material is present alongside repository-authored license information
+
+#### Scenario: Incorporated dependency attribution
+- **WHEN** the selected extension incorporates third-party code whose required notice is not supplied in its released source view
+- **THEN** version-associated immutable provenance and required notice material are established and recorded before successful packaging; an unresolved association fails
+
+#### Scenario: Notice selection and retained default helper
+- **WHEN** common and engine-specific notice records coexist in the repository or existing default notice-refresh callers validate their inputs
+- **THEN** packaging ships only the applicable verified records and a truthful NOTICE while the retained sqlite-vec helper calling convention remains usable without enabling automated Vector refresh
 
 ### Requirement: Traceable final package handoff
 
-Successful packaging SHALL identify final runtime paths, sizes and SHA-256 digests, the archive identity/digest, notice and metadata contents, upstream versions/digests and build environment/options. It SHALL supply the exact final assets to A-acceptance and the verified payload identities to A-release without asserting full acceptance or publication readiness.
+Successful packaging SHALL identify final runtime paths/sizes/SHA-256, archive identity/digest, notice/document/metadata contents, exact selected lock/engine/upstream origins/versions/digests and actual build environment/options/integration identities. The shipped manifest SHALL remain portable after removal of original build/source directories. Packaging SHALL supply the exact final assets to A-acceptance and verified payload identities to A-release, retain required default-composition handoff conventions and assert neither full acceptance nor publication readiness.
 
 #### Scenario: Successful downstream handoff
 - **WHEN** assembly and final-archive content/integrity checks succeed
@@ -94,9 +130,17 @@ Successful packaging SHALL identify final runtime paths, sizes and SHA-256 diges
 - **WHEN** copying, notice inclusion, packing or final-byte checks fail
 - **THEN** packaging returns failure without a success handoff, partial distribution represented as complete, or reuse of an earlier package
 
+#### Scenario: Portable extension provenance
+- **WHEN** a Vector package manifest records separate compilation/link commands
+- **THEN** flags, input roles and hashes remain traceable without absolute invocation paths or reliance on the original source/object/Make-include directories
+
+#### Scenario: New supplied distribution number
+- **WHEN** the caller supplies a different package name or version
+- **THEN** a fresh archive and final-file identities reflect that supplied identity and remain available for renewed downstream checks rather than relabeling previously qualified bytes
+
 ### Requirement: Generated outputs remain uncommitted
 
-Generated SQLite JavaScript/WASM, package assemblies, archives and execution reports SHALL remain temporary and uncommitted. Only repository-controlled packaging inputs, code, tests and documentation SHALL enter source control; distribution use SHALL not depend on unpublished files or necessary pre-existing package outputs.
+Generated SQLite JavaScript/WASM, package assemblies, archives and execution reports SHALL remain temporary and uncommitted. Only repository-controlled packaging inputs, code, tests, documentation and notice records SHALL enter source control; either distribution composition SHALL remain constructible without unpublished files or necessary pre-existing package outputs. Sources of documentation and notices SHALL be explicit and reproducible from repository inputs.
 
 #### Scenario: Clean checkout packaging
 - **WHEN** documented prerequisites and a fresh successful A-build handoff are available from a clean checkout
