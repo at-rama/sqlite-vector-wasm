@@ -174,3 +174,17 @@ to another digest. Keep original sources/builds unavailable when checking the
 relocated package, and retain raw logs and artifacts only in ignored/external work
 storage. Remove temporary work only after recording identities and results; later
 reproduction must rebuild rather than depend on those files.
+
+
+## Retained-payload validation
+
+First assembly uses `validateBuild` and checks actual generated bridge/Make bytes
+before consuming the runtime. After assembly, `validatePackagedBuild` checks the
+same selected lock, exact origins, tools, recipe/template identities, reconstructed
+integration hashes and runtime bytes without reopening cleaned-up build paths.
+Its caller must first verify the raw handoff against `buildHandoffSha256` and the
+archive against its accepted identity. The publication consumer now performs this
+binding, reads selected document sources through the same explicit map, compares
+their exact bytes and reconstructs the complete expected inventory, including the
+common guide. Changed/missing documents, metadata, notices or provenance still fail.
+Numbering, channel policy, triggers and publication adapters are unchanged.

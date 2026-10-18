@@ -1,6 +1,6 @@
 # Using SQLite-Vector
 
-This composition has no published npm release. Examples are exercised through a nonpublished local fixture archive; do not install an invented registry version. See the [packaging guide](https://github.com/at-rama/sqlite-vector-wasm/blob/main/docs/packaging.md) for fixture assembly and verification.
+This composition has no published npm release. Examples are exercised through the nonpublished local fixture `sqlite-vector-wasm-fixture@0.0.0-vector` (SQLite 3.54.0, SQLite-Vector 1.1.2); do not install an invented registry version. See the [packaging guide](https://github.com/at-rama/sqlite-vector-wasm/blob/main/docs/packaging.md) for fixture assembly and verification.
 
 Initialize the official runtime as described in the [browser guide](https://github.com/at-rama/sqlite-vector-wasm/blob/main/docs/common/browser.md), then execute the following SQL through `db.exec()` on an OO1 database. The example creates an in-memory Float32 dataset and returns rowids 1 then 2, at distances 0 and approximately 1.414214.
 

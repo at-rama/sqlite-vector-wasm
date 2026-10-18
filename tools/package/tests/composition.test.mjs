@@ -3,8 +3,10 @@ import assert from 'node:assert/strict';
 import {mkdtemp,mkdir,cp,readFile,writeFile,rm,symlink} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
-import {root,hash,validateBuild,assemble,noticeInputs,documentInputs,documentMapping,engineIdentity} from '../package.mjs';
+import {root,hash,validateBuild,validatePackagedBuild,assemble,noticeInputs,documentInputs,documentMapping,engineIdentity} from '../package.mjs';
 import {assertNativeResult} from '../check.mjs';
+import {acceptedPayload} from '../../release/run.mjs';
+import {productionStages,browserCases} from '../../acceptance/contracts.mjs';
 import {nativeProbeSql} from '../../build/browser-probe.mjs';
 import {runtimeNames,targets,wasmOptions,hostOptions,configureOptions} from '../../build/config.mjs';
 
@@ -99,4 +101,44 @@ test('native Worker1/promiser assertions cover both engines, legacy caller and f
  }
  assert.throws(()=>nativeProbeSql({key:'unknown'}));
  assert.throws(()=>engineIdentity({inputs:{sqliteVec:{},sqliteVector:{}}}));
+});
+
+
+test('both consumed archives remain independently verifiable after generated inputs are removed',async t=>{
+ for(const key of ['sqliteVec','sqliteVector']) {
+  const f=await fixture(t,key), packaged=await assemble(f);
+  const changed=await assemble({...f,name:f.name+'-renamed',version:'0.0.1-repair'});
+  assert.notEqual(changed.workspace,packaged.workspace);
+  assert.notEqual(changed.archive.sha256,packaged.archive.sha256);
+  assert.deepEqual(changed.runtimeFiles,packaged.runtimeFiles);
+  const bundle=join(f.repository,'bundle');await mkdir(bundle);
+  await cp(packaged.archive.path,join(bundle,'payload.tgz'));
+  const lock=await readFile(join(f.repository,f.handoff.sourceLockPath));
+  const commit='a'.repeat(40);
+  // Synthetic acceptance envelope isolates payload-consumption controls only.
+  const report={schemaVersion:1,verdict:'passed',package:packaged.package,source:{commit,dirty:false},archive:packaged.archive,
+   sourceLock:JSON.parse(lock),sourceLockSha256:hash(lock),runtimeFiles:f.handoff.runtimeFiles,build:f.handoff.build,
+   stages:Object.fromEntries(productionStages.map(n=>[n,{status:'passed'}])),browserResults:{schemaVersion:1,browser:'synthetic control record',hosting:{secureContext:true,crossOriginIsolated:true},runtimeFiles:f.handoff.runtimeFiles,cases:Object.fromEntries(browserCases.map(n=>[n,{status:'passed'}]))}};
+  for(const [name,value]of [['build',f.handoff],['package',packaged],['acceptance',report]])await writeFile(join(bundle,name+'.json'),JSON.stringify(value,null,2)+'\n');
+  await rm(join(f.repository,'build'),{recursive:true});await rm(f.handoff.runtimeDirectory,{recursive:true});
+  const retained={...f.handoff,runtimeDirectory:packaged.runtimeDirectory};
+  await assert.rejects(validateBuild(retained,f.repository),e=>e.code==='ENOENT');
+  assert.equal((await validatePackagedBuild(retained,f.repository)).size,runtimeNames.length);
+  const verify=()=>acceptedPayload({bundle,identity:packaged.package,commit,repository:f.repository});
+  assert.equal((await verify()).archive.sha256,packaged.archive.sha256);
+  const wrongEngine=structuredClone(packaged);wrongEngine.engine.key='contradictory';
+  await writeFile(join(bundle,'package.json'),JSON.stringify(wrongEngine));
+  await assert.rejects(verify(),/Packaged engine identity/);
+  await writeFile(join(bundle,'package.json'),JSON.stringify(packaged));
+  const tampered=structuredClone(f.handoff);tampered.build.platform='changed record';
+  await writeFile(join(bundle,'build.json'),JSON.stringify(tampered));
+  await assert.rejects(verify(),/Consumed build handoff identity/);
+  await writeFile(join(bundle,'build.json'),JSON.stringify(f.handoff));
+  const wrong=structuredClone(retained);wrong.inputs[key].version+='-changed';
+  await assert.rejects(validatePackagedBuild(wrong,f.repository));
+  if(key==='sqliteVector') {
+   const bad=structuredClone(retained);bad.build.integration.makeIncludeSha256='0'.repeat(64);
+   await assert.rejects(validatePackagedBuild(bad,f.repository),/Wrong integration hashes/);
+  }
+ }
 });

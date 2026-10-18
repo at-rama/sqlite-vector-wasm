@@ -41,7 +41,7 @@ export function engineIdentity(handoff) {
   return engine;
 }
 
-async function validateSelection(handoff, repository) {
+async function validateSelection(handoff, repository, checkGeneratedInputs) {
   const engine = engineIdentity(handoff), annotated = handoff.sourceLockPath !== undefined || handoff.engine !== undefined;
   const path = annotated ? handoff.sourceLockPath : 'inputs/sources.lock.json';
   require(['inputs/sources.lock.json', 'inputs/sqlite-vector.sources.lock.json'].includes(path), 'Unsupported recorded lock');
@@ -66,7 +66,7 @@ async function validateSelection(handoff, repository) {
     const template = await regularBytes(join(repository, 'tools/build', engine.key === 'sqliteVec' ? 'extra-init.c.in' : 'vector-extra-init.c.in'));
     const expected = template.toString().replace(engine.key === 'sqliteVec' ? '@SQLITE_VEC_SOURCE@' : '@SQLITE_VECTOR_HEADER@',
       JSON.stringify(join(handoff.inputs[engine.key].sourcePath, engine.key === 'sqliteVec' ? 'sqlite-vec.c' : 'src/sqlite-vector.h')));
-    require((await regularBytes(bridge)).toString() === expected, 'Wrong generated bridge');
+    if (checkGeneratedInputs) require((await regularBytes(bridge)).toString() === expected, 'Wrong generated bridge');
     const expectedWasm = ['make',...targets,...wasmOptions,bridgeArg];
     if (engine.key === 'sqliteVector') {
       const commands = handoff.build.extensionCommands;
@@ -78,8 +78,8 @@ async function validateSelection(handoff, repository) {
         '-I'+handoff.inputs.sqlite.sourcePath,'-I'+join(handoff.inputs.sqliteVector.sourcePath,'src'),'-I'+join(handoff.inputs.sqliteVector.sourcePath,'libs'),
         '-c',join(handoff.inputs.sqliteVector.sourcePath,'src',name+'.c'),'-o',objects[i]], 'Wrong extension command');
       const include = join(directory,'vector-inputs.mk');
-      const includeBytes = await regularBytes(include);
-      require(includeBytes.toString() === '# Separate immutable extension inputs; upstream recipes remain intact.\nMAKEFILE := GNUmakefile\nsqlite3-wasm.c.in += '+objects.join(' ')+'\n', 'Wrong object input list');
+      const includeBytes = Buffer.from('# Separate immutable extension inputs; upstream recipes remain intact.\nMAKEFILE := GNUmakefile\nsqlite3-wasm.c.in += '+objects.join(' ')+'\n');
+      if (checkGeneratedInputs) assert.deepEqual(await regularBytes(include), includeBytes, 'Wrong object input list');
       assert.deepEqual(handoff.build.integration, {bridgeSha256:hash(Buffer.from(expected)),makeIncludeSha256:hash(includeBytes)}, 'Wrong integration hashes');
       expectedWasm.push('-f','GNUmakefile','-f',include);
     } else require(!handoff.build.extensionCommands && !handoff.build.integration, 'Unexpected other-engine integration');
@@ -88,10 +88,21 @@ async function validateSelection(handoff, repository) {
   return engine;
 }
 
+// First consumption must still inspect the actual generated integration files.
 export async function validateBuild(handoff, repository = root) {
+  return validateRuntime(handoff, repository, true);
+}
+
+// Already-consumed payloads retain provenance/recipe/runtime checks after cleanup.
+// The caller must bind this raw handoff to the package's buildHandoffSha256.
+export async function validatePackagedBuild(handoff, repository = root) {
+  return validateRuntime(handoff, repository, false);
+}
+
+async function validateRuntime(handoff, repository, checkGeneratedInputs) {
   require(handoff && handoff.schemaVersion === 1 && handoff.inputs && handoff.build
     && isAbsolute(handoff.runtimeDirectory || '') && Array.isArray(handoff.runtimeFiles), 'Incomplete/unsupported build handoff');
-  const engine = await validateSelection(handoff, repository);
+  const engine = await validateSelection(handoff, repository, checkGeneratedInputs);
   for (const [field, path] of [
     ['harnessSha256', 'tools/harness.sh'], ['configSha256', 'tools/build/config.mjs'],
     ['templateSha256', engine.key === 'sqliteVec' ? 'tools/build/extra-init.c.in' : 'tools/build/vector-extra-init.c.in'], ['dependencyLockSha256', 'tools/harness/package-lock.json'],
