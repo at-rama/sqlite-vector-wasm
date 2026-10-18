@@ -2,19 +2,60 @@
 schema_version: 1
 change: package-sqlite-vector-option
 allocation_unit: A-package
-checked_commit: 9bd7ea39b3f2fa2ddcbaa502d12db9c0bee8fdea
-verdict: passed
+checked_commit: 63856526b1e97b0a7eaaeff40656cbca280e7a4d
+verdict: failed
 coverage:
   allocation_to_change: 100
   change_to_allocation: 100
-openspec_verify: passed
+openspec_verify: failed
 repository_checks: passed
-applicable_tests: passed
+applicable_tests: failed
 ---
 
-# Verification — A-package
+# Verification — CI compatibility failure
 
-## Institutional view
+## Institutional view — current failed result
+
+**Failed; the preceding conformity conclusion is invalidated.** Acceptance run
+[39099824526](https://github.com/at-rama/sqlite-vector-wasm/actions/runs/39099824526),
+job 117593622629, tested PR head `63856526b1e97b0a7eaaeff40656cbca280e7a4d` through
+merge revision `a198f26f4b5eee1f10bff66b48ab8d3c9cf5f095` and failed at
+`tools/acceptance/check.mjs:40`, vanilla-worker1: `0 !== 2`. The downloaded
+[CI artifact](https://github.com/at-rama/sqlite-vector-wasm/actions/runs/39099824526/artifacts/12125633064)
+(SHA-256 `897fbcd6e53d59bc134a19212b264557d293bd471e471a0cc0018a1ac05f7793`)
+contains `run-4XuBUe/browser.json`, `acceptance.json` and `logs/browser.log` proving
+this failure. Their extracted local copies are temporary under `/tmp/accept69-ci`.
+
+The command provenance and 100% Allocation/Change mapping remain those examined
+below: A-package already requires preserved default consumer conventions. The
+requirement was represented but its realization was incompletely tested.
+
+**Exact input, envelope, notices and output boundaries:** previous scoped evidence
+remains identified below, with no new conformity claim for these unaffected parts.
+CI records checkout/tools/build/package passed and complete packaged loader checks.
+**Native browser surface and exact downstream handoff:** failed. Worker1/promiser
+`sqlRows[0][2]` changed meaning from observed vector dimension to other-engine count;
+the unchanged A-acceptance consumer still expects dimension 2. Its assertion is
+valid for its retained report convention and must not be weakened to accept 0.
+
+**Evidence limits and disposition:** the earlier 341 offline tests and packaged
+browser checks passed but missed the actual producer/consumer boundary. That is a
+real default-path regression, not an optional full-product concern or runner issue.
+The shared authored fixtures did not establish the compatibility conclusion claimed
+by the previous report. Reopen affected tasks, restore the producer's existing
+convention with an actual dimension query and separate registration rows, add a
+boundary regression and run the actual full acceptance workflow. No migration,
+policy or Capture/Allocation revision is needed. A passing replacement requires
+renewed Verification on the corrected committed candidate before re-archive.
+
+## Previous verification record — superseded by the failure above
+
+The following is retained as the historical examination of candidate
+`9bd7ea39b3f2fa2ddcbaa502d12db9c0bee8fdea`; its passed statements no longer establish
+current conformity. Its raw archives were packaging evidence, not the full
+acceptance path that exposed this regression.
+
+### Previous institutional view
 
 **Conclusion: passed for A-package at `9bd7ea39b3f2fa2ddcbaa502d12db9c0bee8fdea`.** The required three controls
 support the repaired realization of `package-sqlite-vector-option` in its examined

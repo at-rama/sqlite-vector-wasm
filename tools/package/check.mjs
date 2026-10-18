@@ -30,8 +30,21 @@ export function assertNativeResult(result,version,vector,sqlDefinition=nativePro
   }
 }
 
+// Keep the retained default consumer's three columns; registration checks use
+// separate native version rows and must never replace the observed dimension.
+export function transportResult(result,version,vector,sqlDefinition=nativeProbeSql(vector)) {
+  assertNativeResult(result,version,vector,sqlDefinition);
+  if(typeof vector === 'string' || vector?.key === 'sqliteVec') {
+    assert.deepEqual(result.sqlRows, [[version,sqlDefinition.expectedVersion,2]], 'Default transport SQL result convention');
+  } else assert.deepEqual(result.sqlRows,result.versions);
+  return {version:result.versions[0][0],vecVersion:result.versions[0][1],sqlRows:result.sqlRows,
+    registrationRows:result.versions,neighbors:result.neighbors};
+}
+
 export async function inspect(browser,directory,vector,version) {
   const sqlDefinition=nativeProbeSql(vector);
+  const legacySql=typeof vector === 'string' || vector?.key === 'sqliteVec'
+    ? "select sqlite_version(), vec_version(), vec_length(vec_f32('[1,0]'))" : null;
   const server=await serveAssets(directory);
   const context=await browser.newContext();
   const results={}; const requests=[];
@@ -55,7 +68,7 @@ export async function inspect(browser,directory,vector,version) {
       }),{mode,vector});
       console.error(`  ${mode}: Worker passed`);
       if(mode==='vanilla') await page.addScriptTag({url:`${server.origin}/runtime/sqlite3-worker1-promiser.js`});
-      const workerResult=await page.evaluate(async ({mode,vector,sqlDefinition})=>{
+      const workerResult=await page.evaluate(async ({mode,vector,sqlDefinition,legacySql})=>{
         const file=mode==='vanilla'?'sqlite3-worker1.js':mode==='esm'?'sqlite3-worker1.mjs':'sqlite3-worker1-bundler-friendly.mjs';
         const worker=new Worker(`./runtime/${file}`,{type:mode==='vanilla'?'classic':'module'});
         const ready=new Promise((accept,reject)=>{
@@ -77,14 +90,14 @@ export async function inspect(browser,directory,vector,version) {
           const result=await request('exec',{sql,resultRows:[],rowMode:'array'},opened.dbId);
           let neighbors=[];
           if(vector) { await request('exec',{sql:sqlDefinition.setup},opened.dbId); neighbors=(await request('exec',{sql:sqlDefinition.query,resultRows:[],rowMode:'array'},opened.dbId)).result.resultRows; }
+          const sqlRows=legacySql ? (await request('exec',{sql:legacySql,resultRows:[],rowMode:'array'},opened.dbId)).result.resultRows : result.result.resultRows;
           await request('close',{},opened.dbId);
-          return {versions:result.result.resultRows,neighbors};
+          return {versions:result.result.resultRows,neighbors,sqlRows};
         } finally {worker.terminate();}
-      },{mode,vector,sqlDefinition});
-      assertNativeResult(workerResult,version,vector,sqlDefinition);
-      results[`${mode}-worker1`]={version:workerResult.versions[0][0],vecVersion:workerResult.versions[0][1],sqlRows:workerResult.versions,neighbors:workerResult.neighbors};
+      },{mode,vector,sqlDefinition,legacySql});
+      results[`${mode}-worker1`]=transportResult(workerResult,version,vector,sqlDefinition);
       console.error(`  ${mode}: Worker1 passed`);
-      const promiseResult=await page.evaluate(async ({mode,vector,sqlDefinition})=>{
+      const promiseResult=await page.evaluate(async ({mode,vector,sqlDefinition,legacySql})=>{
         const factory=mode==='vanilla'?globalThis.sqlite3Worker1Promiser.v2:(await import(mode==='esm'?'./runtime/sqlite3-worker1-promiser.mjs':'./runtime/sqlite3-worker1-promiser-bundler-friendly.mjs')).default;
         const Original=globalThis.Worker, workers=[];
         globalThis.Worker=class extends Original {constructor(...args){super(...args);workers.push(this);}};
@@ -95,12 +108,12 @@ export async function inspect(browser,directory,vector,version) {
           const result=await p({type:'exec',dbId:opened.dbId,args:{sql,resultRows:[],rowMode:'array'}});
           let neighbors=[];
           if(vector) { await p({type:'exec',dbId:opened.dbId,args:{sql:sqlDefinition.setup}}); neighbors=(await p({type:'exec',dbId:opened.dbId,args:{sql:sqlDefinition.query,resultRows:[],rowMode:'array'}})).result.resultRows; }
+          const sqlRows=legacySql ? (await p({type:'exec',dbId:opened.dbId,args:{sql:legacySql,resultRows:[],rowMode:'array'}})).result.resultRows : result.result.resultRows;
           await p({type:'close',dbId:opened.dbId});
-          return {versions:result.result.resultRows,neighbors};
+          return {versions:result.result.resultRows,neighbors,sqlRows};
         } finally {globalThis.Worker=Original;for(const worker of workers)worker.terminate();}
-      },{mode,vector,sqlDefinition});
-      assertNativeResult(promiseResult,version,vector,sqlDefinition);
-      results[`${mode}-promiser`]={version:promiseResult.versions[0][0],vecVersion:promiseResult.versions[0][1],sqlRows:promiseResult.versions,neighbors:promiseResult.neighbors};
+      },{mode,vector,sqlDefinition,legacySql});
+      results[`${mode}-promiser`]=transportResult(promiseResult,version,vector,sqlDefinition);
       console.error(`  ${mode}: promiser passed`);
       await page.close();
     }

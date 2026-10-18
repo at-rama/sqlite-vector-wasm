@@ -4,7 +4,7 @@ import {mkdtemp,mkdir,cp,readFile,writeFile,rm,symlink} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {root,hash,validateBuild,validatePackagedBuild,assemble,noticeInputs,documentInputs,documentMapping,engineIdentity} from '../package.mjs';
-import {assertNativeResult} from '../check.mjs';
+import {assertNativeResult,transportResult} from '../check.mjs';
 import {acceptedPayload} from '../../release/run.mjs';
 import {productionStages,browserCases} from '../../acceptance/contracts.mjs';
 import {nativeProbeSql} from '../../build/browser-probe.mjs';
@@ -141,4 +141,22 @@ test('both consumed archives remain independently verifiable after generated inp
    await assert.rejects(validatePackagedBuild(bad,f.repository),/Wrong integration hashes/);
   }
  }
+});
+
+
+test('Worker1/promiser reports retain the exact default acceptance column while checking registration separately',()=>{
+ for(const vector of ['0.1.9',{key:'sqliteVec',version:'0.1.9'}]) {
+  const observed={versions:[['3.54.0','v0.1.9',0]],sqlRows:[['3.54.0','v0.1.9',2]],neighbors:[[1,0],[2,Math.SQRT2]]};
+  const report=transportResult(observed,'3.54.0',vector);
+  // This is the unchanged downstream A-acceptance dimension assertion.
+  assert.equal(report.sqlRows[0][2],2);
+  assert.deepEqual(report.sqlRows,[['3.54.0','v0.1.9',2]]);
+  assert.equal(report.registrationRows[0][2],0);
+  const regressed=structuredClone(observed);regressed.sqlRows=regressed.versions;
+  assert.throws(()=>transportResult(regressed,'3.54.0',vector),/Default transport SQL result convention/);
+  const otherEngine=structuredClone(observed);otherEngine.versions[0][2]=1;
+  assert.throws(()=>transportResult(otherEngine,'3.54.0',vector),/Other engine must be absent/);
+ }
+ const vector={key:'sqliteVector',version:'1.1.2'},versions=[['3.54.0','1.1.2',0]];
+ assert.deepEqual(transportResult({versions,sqlRows:versions,neighbors:[[1,0],[2,Math.SQRT2]]},'3.54.0',vector).registrationRows,versions);
 });
