@@ -18,7 +18,7 @@ test('Updates exposes only the exact pair for dispatches and a separate rehearsa
 });
 const provenance=(version,selection=pair)=>({schemaVersion:1,name:npmPackageName,version,tag:`dist/v${version}`,
   channel:version.includes('-')?'next':'latest',commit,upstreams:selection,archive:{sha256:sha,size:bytes.length},
-  sourceLock:Object.fromEntries(Object.entries(selection).map(([k,version])=>[k,{version,archiveUrl:'https://example.invalid/source',digest:{algorithm:'sha256',value:'b'.repeat(64)}}])),
+  sourceLock:{schemaVersion:1,...Object.fromEntries(Object.entries(selection).map(([k,version])=>[k,{version,archiveUrl:k==='sqlite'?'https://sqlite.org/2026/source.zip':'https://github.com/asg017/sqlite-vec/releases/download/v0.1.9/source.tgz',digest:{algorithm:'sha256',value:'b'.repeat(64)}}]))},
   build:{tools:{}},acceptance:{verdict:'passed'}});
 function publicationFixture(){
   const versions=['0.1.0','0.2.0','0.3.0-alpha.1'];

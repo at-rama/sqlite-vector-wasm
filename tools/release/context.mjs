@@ -1,17 +1,21 @@
 import assert from 'node:assert/strict';
 import { channelFor, commitPattern } from './policy.mjs';
+import { selectedEngine } from '../build/build.mjs';
+import { vectorLock } from '../acceptance/contracts.mjs';
 import { pages, repositoryName } from './state.mjs';
 
 export function descriptor(value, lock) {
-  assert.deepEqual(Object.keys(value || {}).sort(), ['preparation', 'releaseComment', 'schemaVersion', 'sqlite', 'sqliteVec']);
-  assert.equal(value.schemaVersion, 1, 'Unsupported candidate descriptor');
-  channelFor({ sqlite: value.sqlite, sqliteVec: value.sqliteVec });
-  assert.equal(value.sqlite, lock.sqlite.version); assert.equal(value.sqliteVec, lock.sqliteVec.version, 'Selection/source lock mismatch');
+  const key = value?.schemaVersion === 2 ? 'sqliteVector' : 'sqliteVec';
+  assert.deepEqual(Object.keys(value || {}).sort(), ['preparation', 'releaseComment', 'schemaVersion', 'sqlite', key].sort());
+  assert.equal(value.schemaVersion, key === 'sqliteVector' ? 2 : 1, 'Unsupported candidate descriptor');
+  channelFor({ sqlite: value.sqlite, [key]: value[key] });
+  if (key === 'sqliteVector') assert.equal(selectedEngine(lock), key, 'Wrong candidate lock engine');
+  assert.equal(value.sqlite, lock.sqlite.version); assert.equal(value[key], lock[key]?.version, 'Selection/source lock mismatch');
   assert.equal(typeof value.releaseComment, 'string');
   assert.ok(Number.isSafeInteger(value.preparation?.runId) && value.preparation.runId > 0);
   assert.match(value.preparation?.url || '', /^https:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\/actions\/runs\/[1-9][0-9]*$/);
   assert.ok(value.preparation.url.endsWith(`/runs/${value.preparation.runId}`), 'Preparation identity mismatch');
-  return { selection: { sqlite: value.sqlite, sqliteVec: value.sqliteVec }, comment: value.releaseComment, preparation: value.preparation };
+  return { selection: { sqlite: value.sqlite, [key]: value[key] }, comment: value.releaseComment, preparation: value.preparation };
 }
 
 export async function candidateDescriptorChanged({ repository, pullRequest, get }) {
@@ -37,8 +41,15 @@ export async function integratedContext({ repository, event, get, readAt }) {
   assert.equal(pr.merge_commit_sha, event.pull_request.merge_commit_sha, 'Integration revision changed');
   assert.match(pr.merge_commit_sha || '', commitPattern);
   assert.ok(await candidateDescriptorChanged({ repository, pullRequest: pr, get }), 'Candidate descriptor was not introduced/updated');
-  const lock = JSON.parse(await readAt(pr.merge_commit_sha, 'inputs/sources.lock.json'));
-  const selected = descriptor(JSON.parse(await readAt(pr.merge_commit_sha, 'inputs/release.json')), lock);
+  const value = JSON.parse(await readAt(pr.merge_commit_sha, 'inputs/release.json'));
+  assert.equal(value.schemaVersion, 2, 'New product publication requires a Vector descriptor');
+  const lock = JSON.parse(await readAt(pr.merge_commit_sha, vectorLock));
+  const selected = descriptor(value, lock);
   assert.ok(selected.preparation.url.startsWith(`https://github.com/${repository}/actions/runs/`), 'Preparation repository mismatch');
+  const run = await get(`https://api.github.com/repos/${repository}/actions/runs/${selected.preparation.runId}`);
+  assert.equal(run.status, 200, 'Preparation run unavailable');
+  assert.equal(run.data?.id, selected.preparation.runId, 'Preparation run mismatch');
+  assert.equal(run.data?.html_url, selected.preparation.url, 'Preparation run URL mismatch');
+  assert.equal(run.data?.repository?.full_name, repository, 'Preparation run repository mismatch');
   return { ...selected, commit: pr.merge_commit_sha, repository, pullRequest: number };
 }

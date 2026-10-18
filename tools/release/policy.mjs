@@ -58,8 +58,23 @@ export function compareDistribution(a, b) {
     ? right.alpha === null ? 0 : 1 : right.alpha === null ? -1 : Math.sign(left.alpha - right.alpha));
 }
 
+export function engineKey(selection) {
+  const key = selection?.sqliteVector !== undefined ? 'sqliteVector' : 'sqliteVec';
+  assert.deepEqual(Object.keys(selection || {}).sort(), ['sqlite', key].sort(), 'Only exact upstream selections are accepted; no channel/version override');
+  return key;
+}
+
+// Product numbering references stay separate from comparable component references.
+export function componentReferences(selection, snapshot) {
+  const key = engineKey(selection), channel = channelFor(selection);
+  const reference = snapshot.heads[channel] || snapshot.heads.latest;
+  const vector = reference?.upstreams[key] !== undefined ? reference
+    : snapshot.heads.latest?.upstreams[key] !== undefined ? snapshot.heads.latest : null;
+  return { sqlite: reference || null, [key]: vector };
+}
+
 export function channelFor(selection) {
-  assert.deepEqual(Object.keys(selection).sort(), ['sqlite', 'sqliteVec'], 'Only exact upstream selections are accepted; no channel/version override');
+  engineKey(selection);
   return Object.entries(selection).some(([key, version]) => upstream(version, key).prerelease.length) ? 'next' : 'latest';
 }
 
@@ -98,6 +113,7 @@ export function validateSnapshot(snapshot) {
     assert.ok(snapshot.npmVersions.includes(head.version) && snapshot.tags.includes(`dist/v${head.version}`)
       && snapshot.releaseTags.includes(`dist/v${head.version}`), 'Incomplete published HEAD');
   }
+  assert.ok(!snapshot.npmVersions.length || snapshot.heads.latest, 'Published npm history without stable published HEAD');
   assert.ok(!snapshot.heads.next || snapshot.heads.latest, 'Experimental HEAD without initial stable publication');
   return snapshot;
 }
@@ -107,14 +123,19 @@ export function calculate({ selection, snapshot, comment = '' }) {
   validateSnapshot(snapshot);
   assert.equal(typeof comment, 'string', 'Release comment must be data');
   const stable = snapshot.heads.latest, reference = snapshot.heads[channel] || stable;
-  const rollback = !!reference && Object.entries(selection).some(([key, version]) => compareUpstream(version, reference.upstreams[key], key) < 0);
+  const key = engineKey(selection), references = componentReferences(selection, snapshot);
+  const transition = !!stable && key === 'sqliteVector' && engineKey(stable.upstreams) === 'sqliteVec';
+  if (transition) assert.equal(distribution(stable.version).numeric[0], 0, 'Transition policy requires a pre-transition 0.x product');
+  const rollback = Object.entries(selection).some(([component, version]) => references[component]
+    && compareUpstream(version, references[component].upstreams[component], component) < 0);
   assert.ok(!rollback || comment.trim(), 'Explicit rollback requires a release comment');
   let signal = 0, requiredBase = '0.1.0', version = requiredBase;
   if (!stable) {
     assert.equal(channel, 'latest', 'Initial experimental publication is not authorized');
   } else {
-    signal = Math.max(1, ...Object.entries(selection).map(([key, version]) => signalFor(version, stable.upstreams[key], key)));
-    if (upstream(selection.sqliteVec).numeric[0] === 0) signal = Math.min(signal, 2);
+    signal = transition ? 2 : Math.max(1, ...Object.entries(selection).map(([component, version]) =>
+      stable.upstreams[component] === undefined ? 0 : signalFor(version, stable.upstreams[component], component)));
+    if (upstream(selection[key], key).numeric[0] === 0) signal = Math.min(signal, 2);
     requiredBase = increment(stable.version, signal);
     version = requiredBase;
     if (channel === 'next') {
@@ -127,9 +148,9 @@ export function calculate({ selection, snapshot, comment = '' }) {
     }
   }
   if (reference) assert.ok(compareDistribution(version, reference.version) > 0, 'Channel must progress monotonically');
-  assert.ok(upstream(selection.sqliteVec).numeric[0] !== 0 || distribution(version).numeric[0] === 0, 'Maturity ceiling conflicts with channel progression');
+  assert.ok(upstream(selection[key], key).numeric[0] !== 0 || distribution(version).numeric[0] === 0, 'Maturity ceiling conflicts with channel progression');
   const tag = `dist/v${version}`;
   assert.ok(!snapshot.tags.includes(tag) && !snapshot.releaseTags.includes(tag) && !snapshot.npmVersions.includes(version), `Publication collision: ${version}`);
   return { name: npmPackageName, version, tag, channel, signal: signal ? ['PATCH','MINOR','MAJOR'][signal - 1] : 'INITIAL',
-    requiredBase, initial: !stable, rollback, stableReference: stable?.version || null, channelReference: reference?.version || null };
+    requiredBase, initial: !stable, rollback, stableReference: stable?.version || null, channelReference: reference?.version || null, ...(key === 'sqliteVector' ? {transition, componentReferences: references} : {}) };
 }

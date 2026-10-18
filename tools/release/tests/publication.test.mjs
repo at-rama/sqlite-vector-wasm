@@ -32,14 +32,14 @@ test('exact accepted archive remains independently inspectable after original bu
 
 test('release refuses a packaged README that differs from the source revision', async t => {
   const f = await releaseFixture(t);
-  await writeFile(join(f.repository, 'docs/sqlite-vec/README.md'), '# SQLite WASM with sqlite-vec\n\nchanged after packaging\n');
+  await writeFile(join(f.repository, 'docs/sqlite-vector/README.md'), '# SQLite WASM with SQLite-Vector\n\nchanged after packaging\n');
   await assert.rejects(acceptedPayload({bundle:f.bundle,commit:f.context.commit,
     repository:f.repository,identity:f.packaged.package}), /Published README.md differs from selected source revision/);
 });
 
 test('release refuses a packaged usage guide that differs from the source revision', async t => {
   const f = await releaseFixture(t);
-  await writeFile(join(f.repository, 'docs/sqlite-vec/usage.md'), '# Using sqlite-vec\n\nchanged after packaging\n');
+  await writeFile(join(f.repository, 'docs/sqlite-vector/usage.md'), '# Using SQLite-Vector\n\nchanged after packaging\n');
   await assert.rejects(acceptedPayload({bundle:f.bundle,commit:f.context.commit,
     repository:f.repository,identity:f.packaged.package}), /Published docs\/usage.md differs from selected source revision/);
 });
@@ -49,7 +49,7 @@ test('missing browser cases and altered notices/metadata/runtime fail before pub
   const verify=()=>acceptedPayload({bundle:f.bundle,commit:f.context.commit,repository:f.repository,identity:f.packaged.package});
   const report=structuredClone(f.report);delete report.browserResults.cases['restart-opfs'];await writeFile(join(f.bundle,'acceptance.json'),JSON.stringify(report));
   await assert.rejects(verify(),/browser case/);await writeFile(join(f.bundle,'acceptance.json'),JSON.stringify(f.report));
-  for(const name of ['package.json','sqlite3.wasm','licenses/sqlite-vec-MIT.txt']){
+  for(const name of ['package.json','sqlite3.wasm','licenses/sqlite-vector-APACHE.txt']){
     const packaged=structuredClone(f.packaged);packaged.files.find(file=>file.name===name).sha256='0'.repeat(64);await writeFile(join(f.bundle,'package.json'),JSON.stringify(packaged));
     await assert.rejects(verify(),/hash mismatch/);
   }
@@ -107,7 +107,7 @@ test('manual first-npm exception cannot be selected for a subsequent release',as
 test('stale state, concurrent occupancy, changed evidence and wrong attestation stop before tags',async t=>{
   const f=await qualified(t);
   for(const key of ['tags','npmVersions','releaseTags']){const snapshot=empty();snapshot[key].push(key==='npmVersions'?'0.1.0':'dist/v0.1.0');const services=destinations(f);
-    await assert.rejects(publish({...f,readSnapshot:async()=>snapshot,services}),/collision/);assert.deepEqual(services.calls,[]);}
+    await assert.rejects(publish({...f,readSnapshot:async()=>snapshot,services}),/collision|Published npm history without stable published HEAD/);assert.deepEqual(services.calls,[]);}
   const moved=empty();moved.tags=['dist/v0.1.0'];moved.releaseTags=['dist/v0.1.0'];moved.npmVersions=['0.1.0'];moved.heads.latest={version:'0.1.0',commit:f.context.commit,upstreams:f.context.selection};
   const beforeTag=destinations(f);await assert.rejects(publish({...f,readSnapshot:async()=>moved,services:beforeTag}),/Stale/);assert.deepEqual(beforeTag.calls,[]);
   const bad=structuredClone(f.attestation.bundle);bad.dsseEnvelope.payload=Buffer.from(JSON.stringify({predicateType:'https://slsa.dev/provenance/v1',subject:[{digest:{sha256:'0'.repeat(64)}}]})).toString('base64');

@@ -25,7 +25,7 @@ function observations({stage=true,versions=['0.1.0'],next=null}={}) {
     const payload=Buffer.from(`independent accepted archive ${version}`);
     const record={schemaVersion:1,name,version,tag:`dist/v${version}`,channel,initial:version==='0.1.0',commit,repository,
       upstreams,archive:{size:payload.length,sha256:sha256(payload)},
-      sourceLock:Object.fromEntries(Object.entries(upstreams).map(([key,v])=>[key,{version:v,archiveUrl:`https://sources.invalid/${key}`,digest:{algorithm:'sha256',value:'b'.repeat(64)}}])),
+      sourceLock:{schemaVersion:1,...Object.fromEntries(Object.entries(upstreams).map(([key,v])=>[key,{version:v,archiveUrl:key==='sqlite'?'https://sqlite.org/2026/source.zip':'https://github.com/asg017/sqlite-vec/releases/download/v0.1.9/source.tgz',digest:{algorithm:'sha256',value:'b'.repeat(64)}}]))},
       build:{tools:{node:'fixture'}},acceptance:{verdict:'passed'}};
     const id=releases.length+1;
     const assets=[{name:'publication.json',url:`${api}releases/assets/evidence-${id}`},{name:'payload.tgz',url:`${api}releases/assets/archive-${id}`}];
