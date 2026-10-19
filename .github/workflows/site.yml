@@ -21,6 +21,7 @@ on:
 permissions:
   contents: read
   pull-requests: read
+  actions: read
 
 # Covers main selection/build, assembly, freshness checks and publication.
 # GitHub may replace a pending run; neither ordering nor FIFO is assumed.
@@ -59,14 +60,19 @@ jobs:
             libglib2.0-0t64 libnss3 libnspr4 libatk1.0-0t64 libatk-bridge2.0-0t64 \
             libdbus-1-3 libx11-6 libxcomposite1 libxdamage1 libxext6 libxfixes3 \
             libxrandr2 libgbm1 libdrm2 libasound2t64
+      - name: Acquire exact qualified documentation input
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node tools/site/candidate-input.mjs
       - name: Check real builds and browser integration
         env:
           HARNESS_STATE: ${{ runner.temp }}/site-harness
         run: |
           bash tools/harness.sh install
           bash tools/harness.sh deps
-          bash tools/harness.sh exec sh tools/site.sh exercise
           bash tools/harness.sh exec sh tools/site.sh example
+          bash tools/harness.sh exec sh tools/site.sh exercise
           bash tools/harness.sh exec sh tools/site.sh demo
       - name: Build exact PR preview
         if: github.event_name == 'pull_request'
@@ -132,6 +138,7 @@ jobs:
             candidate/.work/site/*-initial-*.png
             candidate/.work/site/assembled-demo-mobile.png
             candidate/.work/docs-example/result.json
+            candidate/.work/docs-input/handoff.json
             candidate/.work/pages/site-publication.json
           retention-days: 30
           overwrite: true

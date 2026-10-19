@@ -1,3 +1,4 @@
+import { checkedDocumentation, renderPublicDocument } from './documentation.mjs';
 import { readFile, writeFile, mkdir, cp, stat, realpath } from 'node:fs/promises';
 import { resolve, dirname, join, relative } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -18,11 +19,13 @@ export async function renderer(root) {
   return createMarkdownRenderer(root, {}, '/');
 }
 
-export async function prepareDocs(root, source, base) {
+export async function prepareDocs(root, source, base, options = {}) {
+  const context = await checkedDocumentation(root, options);
   const md = await renderer(root);
   const parsed = {};
   for (const name of Object.keys(documents)) {
-    const text = await readFile(join(root, name), 'utf8');
+    const raw = await readFile(join(root, name), 'utf8');
+    const text = renderPublicDocument(raw, context);
     const env = { path: join(root, name), relativePath: name };
     const tokens = md.parse(text, env);
     const ids = [];
@@ -35,11 +38,11 @@ export async function prepareDocs(root, source, base) {
       if (token.type === 'fence') code.push(token.content.trimEnd());
     });
     for (let i = 0; i < tokens.length; i++) if (tokens[i].type === 'heading_open') headings.push(tokens[i + 1].content);
-    parsed[name] = { text, tokens, env, ids, headings, code, texts, links: [], images: [] };
+    parsed[name] = { raw, text, tokens, env, ids, headings, code, texts, links: [], images: [] };
   }
   const revision = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim();
   const target = documentationResolver({ root, source, base, parsed, md, revision });
-  const manifest = { pages: [] };
+  const manifest = { ...(context ? { documentation: context } : {}), pages: [] };
   for (const [name, page] of Object.entries(parsed)) {
     const pending = [];
     walk(page.tokens, token => {
@@ -66,7 +69,7 @@ export async function prepareDocs(root, source, base) {
     const destination = join(source, documents[name], 'index.md');
     await mkdir(dirname(destination), { recursive: true });
     await writeFile(destination, `---\ntitle: ${name === 'README.md' ? 'Presentation' : 'Usage'}\n---\n\n<div v-pre>\n${html}\n</div>\n`);
-    manifest.pages.push({ path: documents[name], source: name, sha256: sha(page.text), headings: page.headings,
+    manifest.pages.push({ path: documents[name], source: name, sha256: sha(page.text), sourceSha256: sha(page.raw), headings: page.headings,
       ids: page.ids, code: page.code, texts: page.texts, links: [...new Set(page.links)], images: [...new Set(page.images)] });
   }
   await mkdir(join(source, 'public'), { recursive: true });

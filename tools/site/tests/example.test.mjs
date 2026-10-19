@@ -26,7 +26,5 @@ test('explicit example version, publication and payload must agree; other releas
 
 test('tracked example dependency is explicit and isolated from demo state', async () => {
   const selection = JSON.parse(await readFile(new URL('../docs-example.json', import.meta.url)));
-  assert.equal(selection.version, '0.2.0');
-  assert.match(selection.archiveUrl, /\/dist\/v0\.2\.0\/payload.tgz$/);
-  for (const key of ['archiveSha256', 'publicationSha256']) assert.match(selection[key], /^[a-f0-9]{64}$/);
+  assert.deepEqual(selection, {mode:'candidate',engine:'sqliteVector',sourceLockPath:'inputs/sqlite-vector.sources.lock.json'});
 });

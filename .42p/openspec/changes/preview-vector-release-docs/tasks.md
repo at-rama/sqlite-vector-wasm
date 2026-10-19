@@ -2,11 +2,11 @@
 
 ## 1. Vector public sources
 
-- [ ] 1.1 Update the existing README/Usage source model for selected Vector candidate composition, native vector_* SQL and vec0/vec_* adaptation with no automatic migration claim; preserve loading/storage prerequisites and all single-source links. Add corresponding regression cases and update the existing guide in this group; verify the delivered behavior against this Change’s named modified/added scenarios before continuing.
+- [x] 1.1 Update the existing README/Usage source model for selected Vector candidate composition, native vector_* SQL and vec0/vec_* adaptation with no automatic migration claim; preserve loading/storage prerequisites and all single-source links. Add corresponding regression cases and update the existing guide in this group; verify the delivered behavior against this Change’s named modified/added scenarios before continuing.
 
 ## 2. Candidate example mode
 
-- [ ] 2.1 Extend the existing example/render checks for explicit qualified candidate archive/revision/digest and unpublished preview status, while preserving explicit published mode and fixed demo runtime. Add corresponding regression cases and update the existing guide in this group; verify the delivered behavior against this Change’s named modified/added scenarios before continuing.
+- [x] 2.1 Extend the existing example/render checks for explicit qualified candidate archive/revision/digest and unpublished preview status, while preserving explicit published mode and fixed demo runtime. Add corresponding regression cases and update the existing guide in this group; verify the delivered behavior against this Change’s named modified/added scenarios before continuing.
 
 ## 3. Documentation evidence
 

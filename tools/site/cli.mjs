@@ -28,8 +28,10 @@ try {
     finally { await server?.close(); }
   } else if (command === 'demo' && args.length === 0) {
     console.log(JSON.stringify(await (await import('./demo-exercise.mjs')).exerciseDemo()));
-  } else if (command === 'example' && args.length === 0) {
-    await (await import('./example.mjs')).example();
+  } else if (command === 'example') {
+    let candidateBundle;
+    if (args.length) { if (args.length !== 2 || args[0] !== '--candidate-bundle') throw Error('Usage: site.sh example [--candidate-bundle PATH]'); candidateBundle = args[1]; }
+    await (await import('./example.mjs')).example(repository, { candidateBundle });
   } else if (command === 'exercise' && args.length === 0) {
     await (await import('./exercise.mjs')).exercise();
   } else throw Error('Usage: sh tools/site.sh install | build [--prepared DIRECTORY] [--preview BRANCH SHA] | check [--url URL/] [--preview BRANCH SHA] | exercise | example | demo');

@@ -1,3 +1,4 @@
+import { example } from './example.mjs';
 import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, writeFile, rm, readFile, cp, symlink } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
@@ -14,7 +15,7 @@ export async function exercise() {
   const temporary = await mkdtemp(join(repository, '.work/site-exercise-'));
   const results = [];
   async function observe(name, prepared, options) {
-    const result = await build({ prepared, preview: options?.preview, docs: options?.docs ?? !prepared });
+    const result = await build({ prepared, preview: options?.preview, docs: options?.docs ?? !prepared, allowDirtyDocumentation: options?.allowDirtyDocumentation ?? false });
     const server = await serveSite(result.output, result.base);
     try { results.push({ name, ...await checkBrowser(server.url, options), runtime: result.runtime }); }
     finally { await server.close(); }
@@ -116,12 +117,13 @@ This is an integration fixture, not the emoji demo.
     try {
       const realBefore = await observe('real-documentation-with-demo', demo, { docs: true, demoFixture: 'fixture-runtime-2' });
       await writeFile(readmePath, readme + '\nDocumentation edit exercise marker.\n');
-      const realAfter = await observe('real-documentation-update', demo, { docs: true, demoFixture: 'fixture-runtime-2' });
+      if (process.env.SITE_CANDIDATE_BUNDLE) await example(repository);
+      const realAfter = await observe('real-documentation-update', demo, { docs: true, demoFixture: 'fixture-runtime-2', allowDirtyDocumentation: true });
       assert.deepEqual(realAfter.runtime, realBefore.runtime);
       assert.match(await readFile(join(realAfter.source, 'index.md'), 'utf8'), /Documentation edit exercise marker/);
-      await observe('real-documentation-preview', demo, { docs: true, preview, demoFixture: 'fixture-runtime-2',
+      await observe('real-documentation-preview', demo, { docs: true, preview, demoFixture: 'fixture-runtime-2', allowDirtyDocumentation: true,
         screenshot: join(repository, '.work/site/docs-mobile.png') });
-    } finally { await writeFile(readmePath, readme); }
+    } finally { await writeFile(readmePath, readme); if (process.env.SITE_CANDIDATE_BUNDLE) await example(repository); }
 
     await writeFile(join(demo, 'public/demo-runtime/fixture.mjs'), 'corrupt fixture');
     await assert.rejects(build({ prepared: demo }), /checksum mismatch/);
