@@ -22,6 +22,7 @@ jobs:
         id: active
         run: |
           if test -f .42p/openspec/changes/prepare-release-package-docs/tasks.md ||
+             test -f .42p/openspec/changes/bind-release-documentation/tasks.md ||
              test -f .42p/openspec/changes/publish-distribution/tasks.md ||
              test -f .42p/openspec/changes/scope-npm-distribution-identity/tasks.md ||
              test -f .42p/openspec/changes/release-sqlite-vector-product/tasks.md; then

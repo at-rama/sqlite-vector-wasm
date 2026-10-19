@@ -3,6 +3,7 @@ import { channelFor, commitPattern } from './policy.mjs';
 import { selectedEngine } from '../build/build.mjs';
 import { vectorLock } from '../acceptance/contracts.mjs';
 import { pages, repositoryName } from './state.mjs';
+import { reviewedDocumentation } from './documentation.mjs';
 
 export function descriptor(value, lock) {
   const key = value?.schemaVersion === 2 ? 'sqliteVector' : 'sqliteVec';
@@ -25,7 +26,7 @@ export async function candidateDescriptorChanged({ repository, pullRequest, get 
   assert.equal(files.length, pullRequest.changed_files, 'Truncated candidate file list');
   return files.some(file => file.filename === 'inputs/release.json' && ['added','modified'].includes(file.status));
 }
-export async function integratedContext({ repository, event, get, readAt }) {
+export async function integratedContext({ repository, event, get, readAt, siteRunId, review = reviewedDocumentation }) {
   repositoryName(repository);
   assert.equal(event.action, 'closed');
   assert.equal(event.repository?.full_name, repository);
@@ -51,5 +52,6 @@ export async function integratedContext({ repository, event, get, readAt }) {
   assert.equal(run.data?.id, selected.preparation.runId, 'Preparation run mismatch');
   assert.equal(run.data?.html_url, selected.preparation.url, 'Preparation run URL mismatch');
   assert.equal(run.data?.repository?.full_name, repository, 'Preparation run repository mismatch');
-  return { ...selected, commit: pr.merge_commit_sha, repository, pullRequest: number };
+  const documentation = await review({ repository, pr, selected, readAt, get, siteRunId });
+  return { ...selected, commit: pr.merge_commit_sha, repository, pullRequest: number, documentation };
 }

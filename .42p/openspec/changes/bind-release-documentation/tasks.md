@@ -2,11 +2,11 @@
 
 ## 1. Final identity binding
 
-- [ ] 1.1 Require matching reviewed candidate documentation context at authorized integration; apply definitive shared calculation and explicit Vector qualification, render final identity and renew affected package/example/link evidence before tagging/publication. Add corresponding regression cases and update the existing guide in this group; verify the delivered behavior against this Change’s named modified/added scenarios before continuing.
+- [x] 1.1 Require matching reviewed candidate documentation context at authorized integration; apply definitive shared calculation and explicit Vector qualification, render final identity and renew affected package/example/link evidence before tagging/publication. Add corresponding regression cases and update the existing guide in this group; verify the delivered behavior against this Change’s named modified/added scenarios before continuing.
 
 ## 2. Complete publication handoff
 
-- [ ] 2.1 Retain exact final document/archive/revision evidence and emit or expose the existing complete matching GitHub/npm result for Site; preserve explicit partial failure and initial npm-pending outcomes without extra publication side effects. Add corresponding regression cases and update the existing guide in this group; verify the delivered behavior against this Change’s named modified/added scenarios before continuing.
+- [x] 2.1 Retain exact final document/archive/revision evidence and emit or expose the existing complete matching GitHub/npm result for Site; preserve explicit partial failure and initial npm-pending outcomes without extra publication side effects. Add corresponding regression cases and update the existing guide in this group; verify the delivered behavior against this Change’s named modified/added scenarios before continuing.
 
 ## 3. Release verification
 
