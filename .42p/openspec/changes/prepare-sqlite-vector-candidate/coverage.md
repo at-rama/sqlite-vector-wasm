@@ -1,0 +1,44 @@
+# A-updates planning coverage
+
+## Scope and source identities
+
+Start: current instituted Distribution/Release-Watch Capture portions attributed to **A-updates**, through the complete unit and qualified references in the [Allocation](../../../engineering/2026-10-04_sqlite-vec-wasm_allocation_edit-0.1.md). End: proposal, delta, design, tasks and the retained baseline requirement of this Change. This is the entire selected unit, not all twelve realization responsibilities or an audit of original sources to Capture.
+
+Snapshot: main `17d42d1976b8f3235c59fb499613a8cff89f7fc1`. Allocation SHA-256 `00ab76dd9cd370ca1cf6e5cf6a8943efbf5076500bcd583b7c38932c7ff39840`. Its [Distribution Capture](../../../engineering/2026-10-04_sqlite-vec-wasm_capture_edit-0.1.md) SHA-256 is `a61f58135f68d9b1cc9288992ada88780203d121ffb64d7cc83acdc85e14a6da`; [Release/Watch Capture](../../../engineering/2026-10-09_sqlite-vec-wasm_release-watch_capture_edit-0.1.md) SHA-256 is `4ec6952d718fda29fdebbb238beea72a00ea0228753fe370b8454c7d9b3efff6`. Authority is the human institution recorded in AGENTS.md, including adopted sole-engine/transition/reference revisions; these hashes and projections do not corroborate original history.
+
+The synchronized baseline is distribution-candidates at that exact main revision: eight requirements / 37 scenarios. This delta carries seven complete MODIFIED blocks; **Human integration and publication boundary** and all its scenarios remain binding unchanged. The effective Change has eight requirements / 43 scenarios; all original scenario names are retained. Two historical sqlite-vec titles are retained for native full-block traceability, with Vector WHEN/THEN clauses; no legacy current-candidate duty is inferred from them. Its old missing-license fallback is not transferred to the new engine: Vector license content is mandatory in the already adopted A-inputs path, and the failure bound remains intact.
+
+## Capture/Allocation to effective Change
+
+| Complete attributed portion | Contract disposition | Design / tasks |
+| --- | --- | --- |
+| D/C-purpose via product scope; W/C-dispatch; D/C-autonomy: human exact fixed-Vector selection, optional canonical comment, watch/history independence, no channel/version/AI override | Exact human dispatch; Release descriptor handoff; Human integration and publication boundary | Decisions 1/2/5; 1.1–1.2, 3.2 |
+| D/C-inputs: official published non-draft inputs, stable/published alpha/beta/rc, sufficient integrity, retained pins, no development snapshots, clean reproduction and no vendoring | Official pinned candidate inputs; Clean revision-bound candidate qualification | Decisions 2/3/4; 1.2, 2.1–2.2, 4.1 |
+| D/C-nonmodification: no upstream repair, SQL/API abstractions or custom semantics; required incompatibility stop under D/C-failure | Official pinned candidate inputs; Human integration and publication boundary | Decisions 2/3/4; 1.2, 2.1–2.2, 3.2 |
+| W/C-determinism; W/C-semver; W/C-channels: common actual-state calculation, component reference/rollback/transition/alpha rules, stable initial case, no manual routing, reservation, second policy or rebootstrap | Shared forecast and rollback policy; Release descriptor handoff; Human integration and publication boundary | Decisions 2/4; 1.1–1.2, 3.1 |
+| W/C-dispatch: exact older/unlisted/rebuild/prerelease selections outside ordinary Watch filters, with applicable comparable-rollback comment | Exact human dispatch; Official pinned candidate inputs; Shared forecast and rollback policy | Decisions 1/2/4; 1.1–1.2, 2.1, 3.1 |
+| D/C-autonomy; W/C-candidate; D/C-failure: complete automatic preparation/checks, exact coherent committed input/notice snapshot, no eligible candidate on failed/missing checks, no human waiver | Official pinned candidate inputs; Clean revision-bound candidate qualification; Human integration and publication boundary | Decisions 3/4/6; 2.1–2.2, 3.1, 4.1–4.2 |
+| W/C-version-identity: exact commit, sole permanent main, temporary candidate branches, one distribution version domain, no code version/counter | Shared forecast and rollback policy; Qualified temporary candidate PR; Retained candidate provenance and diagnostics | Decisions 4/5; 3.1–3.2 |
+| W/C-provenance: selected engine/versions/origins/digests, build tools/options/environment, candidate/forecast/artifacts and dispatch context; source/notice material remains uncommitted except controlled records | Official pinned candidate inputs; Release descriptor handoff; Retained candidate provenance and diagnostics | Decisions 2/3/4/5; 1.2, 2.1–2.2, 3.1–3.2 |
+| W/C-candidate; D/C-autonomy: qualified PR for human review/adoption; independent preparations and honest partial remote outcomes, no silent replacement | Qualified temporary candidate PR; Retained candidate provenance and diagnostics; Human integration and publication boundary | Decisions 5/6; 3.2, 4.1 |
+| D/R-updates; W/R-frugality: mechanical bounded workflow, no AI adoption, reservation/lock, refusal registry or unnecessary coordination | Exact human dispatch; Shared forecast and rollback policy; Qualified temporary candidate PR; Human integration and publication boundary | Decisions 1/4/5; 1.1, 3.1–3.2 |
+| Unit dependency on A-inputs/A-build/A-package/A-acceptance: complete actual selected production and exact payload; consumed capabilities, not another implementation of those units | Official pinned candidate inputs; Clean revision-bound candidate qualification; Retained candidate provenance and diagnostics | Decisions 2/3/4/6; 1.2, 2.1–2.2, 4.1–4.2 |
+| Unit handoff to A-release: exact integrated selection/comment/preparation; candidate evidence cannot replace definitive main/payload qualification | Release descriptor handoff; Human integration and publication boundary | Decisions 1/4/5; 1.1, 2.2, 3.1–3.2 |
+| Unit handoff to A-watch: actual current candidate/run/PR/selection/commit evidence, independent manual preparation | Qualified temporary candidate PR; Release descriptor handoff; Retained candidate provenance and diagnostics | Decision 5; 1.1, 3.2; Watch parser/discovery remains its separate allocated work |
+
+The absence of actual upstream alpha releases is an observation, not a new source rule or an excuse to waive real stable production. Synthetic admissibility tests and an actual stable-pair rehearsal are distinct evidence. The proposed fixture correction preserves mandatory checks for changed pins rather than creating an unrelated test-refactor unit. FP16 verification consumes existing package/input provenance; it does not assign automatic dependency upgrades to preparation.
+
+## Effective Change to Allocation
+
+| Effective requirement | Disposition and grounding | Scenarios / tasks |
+| --- | --- | --- |
+| Exact human dispatch | MODIFIED; D/C-autonomy, W/C-dispatch, D/R-updates | Existing exact-pair/comments/blank/invalid cases plus legacy/mixed rejection; 1.1 |
+| Official pinned candidate inputs | MODIFIED; D/C-inputs/C-nonmodification/C-failure, W/C-candidate/provenance | All original source/notice cases re-expressed for selected Vector; observed-publication and FP16 failures added; 1.2, 2.1 |
+| Shared forecast and rollback policy | MODIFIED; W/C-determinism/semver/channels/dispatch, D/R-updates | Initial/experimental/rollback/state cases plus consumed first-transition rule; 1.1–1.2, 3.1 |
+| Clean revision-bound candidate qualification | MODIFIED; D/C-autonomy/C-failure, W/C-candidate, allocated production/acceptance handoff | All exact-commit/failed/unavailable cases plus cross-engine rejection and real nonpublishing rehearsal; 2.2, 3.1, 4.1–4.2 |
+| Release descriptor handoff | MODIFIED; W/C-dispatch/provenance, D/C-autonomy and A-release dependency | Exact schema-2 selected lock/comment/preparation, invalid run identity; 1.1, 2.2, 3.1 |
+| Qualified temporary candidate PR | MODIFIED; W/C-candidate/version-identity, D/C-autonomy, A-watch handoff | Evaluated PR head, repeated preparation and partial push/PR outcomes; 3.2 |
+| Retained candidate provenance and diagnostics | MODIFIED; W/C-provenance, D/C-inputs/C-failure, W/C-candidate | Success/failure/notice traces and honest retained provenance; 2.1–2.2, 3.1–3.2, 4.1–4.2 |
+| Human integration and publication boundary | Retained baseline in full, unchanged; D/C-autonomy/C-failure/C-nonmodification, W/C-candidate/dispatch | All checks-before-merge, forecast-change and incompatibility-stop scenarios remain; 3.1–3.2, 4.1–4.2 |
+
+Every task realizes or verifies a portion above; no source-processing, discovery, notification, publication, site, engine integration or account duty is added. Intended coverage is **100% allocation unit → Change** and **100% Change → allocation unit**, to be independently assessed after proposition. This planning map is not implementation acceptance, test execution evidence, a derivation verdict or authority to Apply.
