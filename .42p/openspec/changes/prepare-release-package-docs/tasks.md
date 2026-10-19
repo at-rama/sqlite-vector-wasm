@@ -10,8 +10,8 @@
 
 ## 3. Package verification
 
-- [ ] 3.1 Exercise changed-version/upstream, fixture/production, missing/wrong-engine docs and final archive inspection cases; run applicable package suites and canonical check, retaining exact evidence for subsequent 42P Verification.
+- [x] 3.1 Exercise changed-version/upstream, fixture/production, missing/wrong-engine docs and final archive inspection cases; run applicable package suites and canonical check, retaining exact evidence for subsequent 42P Verification.
 
 ## 4. 42P Verification and completion
 
-- [ ] 4.1 Reconfirm complete bidirectional unit/effective-Change coverage, run post-Apply `42p-verify-change` with applicable real execution evidence, and record its genuine verdict. Do not archive before satisfactory Verification; integration/publication remain human-controlled lifecycle actions.
+- [x] 4.1 Reconfirm complete bidirectional unit/effective-Change coverage, run post-Apply `42p-verify-change` with applicable real execution evidence, and record its genuine verdict. Do not archive before satisfactory Verification; integration/publication remain human-controlled lifecycle actions.
