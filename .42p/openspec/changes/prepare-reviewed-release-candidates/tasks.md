@@ -2,11 +2,11 @@
 
 ## 1. Joint candidate snapshot
 
-- [ ] 1.1 Compose deterministic package/public documentation preparation from the exact dispatch/lock/shared policy before committing the same candidate source revision; keep notices, provenance and explicit file boundaries. Add corresponding regression cases and update the existing guide in this group; verify the delivered behavior against this Change’s named modified/added scenarios before continuing.
+- [x] 1.1 Compose deterministic package/public documentation preparation from the exact dispatch/lock/shared policy before committing the same candidate source revision; keep notices, provenance and explicit file boundaries. Add corresponding regression cases and update the existing guide in this group; verify the delivered behavior against this Change’s named modified/added scenarios before continuing.
 
 ## 2. Qualified preview handoff
 
-- [ ] 2.1 Bind qualified archive identity/evidence to the PR head and expose documented preview/check links and unpublished status in the candidate PR; distinguish PR creation from integration eligibility without auto-merge or publication. Add corresponding regression cases and update the existing guide in this group; verify the delivered behavior against this Change’s named modified/added scenarios before continuing.
+- [x] 2.1 Bind qualified archive identity/evidence to the PR head and expose documented preview/check links and unpublished status in the candidate PR; distinguish PR creation from integration eligibility without auto-merge or publication. Add corresponding regression cases and update the existing guide in this group; verify the delivered behavior against this Change’s named modified/added scenarios before continuing.
 
 ## 3. Candidate verification
 

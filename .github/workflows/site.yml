@@ -12,6 +12,10 @@ on:
       - 'README.md'
       - 'docs/usage.md'
       - 'docs/site.md'
+      - 'inputs/release.json'
+      - 'inputs/sqlite-vector.sources.lock.json'
+      - 'docs/sqlite-vector/**'
+      - 'docs/common/browser.md'
       - '.github/workflows/site.yml'
   push:
     branches: [main]

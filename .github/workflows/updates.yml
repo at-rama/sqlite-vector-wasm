@@ -44,7 +44,8 @@ jobs:
       - name: Select implementation rehearsal
         id: select
         run: |
-          if test -f .42p/openspec/changes/prepare-sqlite-vector-candidate/tasks.md; then
+          if test -f .42p/openspec/changes/prepare-sqlite-vector-candidate/tasks.md ||
+             test -f .42p/openspec/changes/prepare-reviewed-release-candidates/tasks.md; then
             echo 'active=true' >> "$GITHUB_OUTPUT"
           fi
       - name: Install production browser prerequisites

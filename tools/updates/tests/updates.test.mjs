@@ -7,6 +7,7 @@ import { command } from '../../acceptance/run.mjs';
 import { calculate } from '../../release/policy.mjs';
 import { invocation, candidateDescriptor, candidateBody } from '../context.mjs';
 import { prepareCandidate, resolveSources } from '../run.mjs';
+import { candidateDocumentPaths, documentSnapshot } from '../documentation.mjs';
 import { candidateServices } from '../services.mjs';
 import { reconcileNotices } from '../notices.mjs';
 import { noticeInputs, root, hash } from '../../package/package.mjs';
@@ -53,6 +54,7 @@ async function fixture(t, options={}) {
   const baselineNotices=JSON.parse(await readFile(baselineNoticesPath));
   for(const record of baselineNotices.notices)if(pair[record.project]) {record.version=pair[record.project];if(record.project==='sqlite'){record.origin='controlled offline fixture';delete record.source;}else{record.source.commit=baselineLock.sqliteVector.commit;record.origin=`https://github.com/sqliteai/sqlite-vector/blob/${baselineLock.sqliteVector.commit}/LICENSE.md`;}}
   await writeFile(baselineNoticesPath,JSON.stringify(baselineNotices,null,2)+'\n');
+  for (const path of candidateDocumentPaths) { await mkdir(join(repository,path,'..'),{recursive:true}); await cp(join(root,path),join(repository,path)); }
   const git=args=>command('git',args,{cwd:repository});await git(['init','-b','main']);await git(['add','.']);await git(['-c','user.name=Fixture','-c','user.email=fixture@example.invalid','commit','-m','fixture']);
   const calls=[];let reads=0;const c={...context(),...options.context};
   const run=async (cmd,args,opts)=>{if(cmd==='sh'){await noticeInputs({inputs:lock(c.selection)},repository);assert.equal(await git(['status','--porcelain','--untracked-files=all']),'');calls.push(args[0]);if(options.failure===args[0])throw Error('mandatory check failed');return '';}if(options.failure==='commit'&&cmd==='git'&&args.includes('commit'))throw Error('commit denied');return command(cmd,args,opts);};
@@ -76,19 +78,36 @@ async function fixture(t, options={}) {
       await writeFile(join(prepared,'tools/package/notices',record.name),bytes);record.sha256=hash(bytes);
     }
     await writeFile(manifestPath,JSON.stringify(manifest,null,2)+'\n');return {prepared};};
-  const execute=()=>prepareCandidate({repository,context:c,run,reconcile,services:c.rehearsal?undefined:services,resolve:async()=>{calls.push('resolve');if(options.failure==='resolve')throw Error('digest drift');return lock(c.selection);},readSnapshot:async()=>{calls.push('state');if(options.failure==='state')throw Error('unavailable');return options.states?.[reads++]||empty();},qualification});
+  const documentation=async({qualified})=>{
+    calls.push('documentation');if(options.failure==='documentation')throw Error('example failed');
+    const record=JSON.parse(await readFile(qualified.evidencePath));
+    const hashes=await documentSnapshot(repository);
+    const result={neighbors:[[1,0],[2,Math.SQRT2]],sqliteVersion:c.selection.sqlite,engineVersion:c.selection.sqliteVector};
+    const example={context:{mode:'candidate',engine:'sqliteVector',commit:record.commit,qualifiedCommit:record.commit,sourceDirty:false,version:qualified.identity.version,upstreams:c.selection,archive:record.archive,sourceHashes:Object.fromEntries(['README.md','docs/usage.md'].map(p=>[p,hashes[p]]))},replayOnly:false,browser:'synthetic fixture only',result,workerResult:result,unchangedRuntime:true};
+    if(options.failure==='docs-head')example.context.commit='b'.repeat(40);
+    if(options.failure==='docs-archive')example.context.archive={...record.archive,sha256:'0'.repeat(64)};
+    if(options.failure==='docs-sources')example.context.sourceHashes['README.md']='0'.repeat(64);
+    if(options.failure==='docs-forecast')example.context.version='99.0.0';
+    if(options.failure==='docs-replay')example.replayOnly=true;
+    if(options.failure==='docs-changed')await writeFile(join(repository,'README.md'),'changed after qualification');
+    return example;
+  };
+  const execute=()=>prepareCandidate({repository,context:c,run,reconcile,documentation,services:c.rehearsal?undefined:services,resolve:async()=>{calls.push('resolve');if(options.failure==='resolve')throw Error('digest drift');return lock(c.selection);},readSnapshot:async()=>{calls.push('state');if(options.failure==='state')throw Error('unavailable');return options.states?.[reads++]||empty();},qualification});
   return {repository,git,calls,execute};
 }
 
 test('qualified committed pair precedes push/PR; diagnostics stay ignored',async t=>{
   // Candidate preparation consumes the release-owned npm identity.
-  const f=await fixture(t);const result=await f.execute();assert.equal(result.status,'candidate-ready');assert.equal(result.identity.version,'0.1.0');assert.deepEqual(f.calls,['resolve','state','notices','tools/check-repository.sh','tools/test-repository.sh','qualify','state','push','pr']);
+  const f=await fixture(t);const result=await f.execute();assert.equal(result.status,'candidate-ready');assert.equal(result.identity.version,'0.1.0');assert.deepEqual(f.calls,['resolve','state','notices','tools/check-repository.sh','tools/test-repository.sh','qualify','state','documentation','push','pr']);
   assert.equal(result.preflight.name,'@at-rama/sqlite-vector-wasm');assert.equal(result.identity.name,'@at-rama/sqlite-vector-wasm');
   assert.equal(await f.git(['status','--porcelain','--untracked-files=all']),'');assert.deepEqual((await f.git(['diff-tree','--no-commit-id','--name-only','-r',result.commit])).split('\n'),['inputs/release.json']);
   const descriptor=JSON.parse(await readFile(join(f.repository,'inputs/release.json')));assert.equal(descriptor.releaseComment,context().comment);
   assert.deepEqual(Object.keys(descriptor).sort(),['preparation','releaseComment','schemaVersion','sqlite','sqliteVector']);
   assert.equal(await readFile(join(result.directory,'release.json'),'utf8'),await f.git(['show',`${result.commit}:inputs/release.json`])+'\n');
   assert.match(candidateBody(result),/attempt 2/);
+  assert.equal(result.documentation.integrationEligible,false);assert.equal(result.documentation.previewState,'pending');
+  assert.match(candidateBody(result),/NOT yet eligible/);assert.match(candidateBody(result),new RegExp(result.commit+'/checks'));
+  assert.deepEqual(result.documentSources,await documentSnapshot(f.repository));
 });
 for(const failure of ['resolve','state','notices','commit','tools/check-repository.sh','tools/test-repository.sh','qualify','revision','push','pr','head']) test(`mandatory ${failure} failure stops and retains truthful evidence`,async t=>{
   const f=await fixture(t,{failure});let path;await assert.rejects(f.execute(),error=>{path=error.message.split('evidence: ')[1];return !!path;});const evidence=JSON.parse(await readFile(path));assert.equal(evidence.status,'failed');assert.ok(evidence.diagnostic);
@@ -177,7 +196,7 @@ test('real reconciliation rejects invalid helper output before tracked promotion
   assert.equal(JSON.parse(await readFile(join(directory,'notices.json'))).status,'failed');
 });
 
-for (const failure of ['engine','sources','lock-digest','repository','comment','preparation','pushed-head','archive']) test(`qualification/presentation rejects ${failure} mismatch`, async t => {
+for (const failure of ['engine','sources','lock-digest','repository','comment','preparation','pushed-head','archive','documentation','docs-head','docs-archive','docs-sources','docs-forecast','docs-replay','docs-changed']) test(`qualification/presentation rejects ${failure} mismatch`, async t => {
   const f=await fixture(t,{failure});
   await assert.rejects(f.execute());
   assert.ok(!f.calls.includes('pr'));
