@@ -6,10 +6,10 @@ Start: complete current Capture portions assigned to **A-watch**, through its Al
 
 Base main: `a1ea5e39afb2ca4aa9df5bd138e240d351df8dad`. The accompanying design-only reconciliation records the explicit 2026-10-19 human validation of the fixed inclusive Vector 1.1.0 floor before deriving this Change. Earlier hashes/archives retain their historical meaning. Exact current direct inputs:
 
-- Allocation: [2026-10-04_sqlite-vec-wasm_allocation_edit-0.1.md](../../../engineering/2026-10-04_sqlite-vec-wasm_allocation_edit-0.1.md), SHA-256 `29cbc8358d52bf1947f445643fe6e15450786752876437ef9fb56f22c0d70cd9`.
-- Distribution: [2026-10-04_sqlite-vec-wasm_capture_edit-0.1.md](../../../engineering/2026-10-04_sqlite-vec-wasm_capture_edit-0.1.md), SHA-256 `4b8beb1ab4d6ef74fb2a133842c886863631b7edddf9e315b5a3cd9a30d69d7e`.
-- Release/Watch: [2026-10-09_sqlite-vec-wasm_release-watch_capture_edit-0.1.md](../../../engineering/2026-10-09_sqlite-vec-wasm_release-watch_capture_edit-0.1.md), SHA-256 `1ab64fae1effc87a01d475f2ea201fc667f138b04cd58096005857f6c3cad4c9`.
-- Notifications: [2026-10-14_sqlite-vector-wasm_workflow-notifications_capture_edit-0.1.md](../../../engineering/2026-10-14_sqlite-vector-wasm_workflow-notifications_capture_edit-0.1.md), SHA-256 `8a1bbf9c2582af1ee99e1d6188aeb7c5ea7a6874bae8a34190cf33339b2f6943`.
+- Allocation: [2026-10-04_sqlite-vec-wasm_allocation_edit-0.1.md](../../../../engineering/2026-10-04_sqlite-vec-wasm_allocation_edit-0.1.md), SHA-256 `29cbc8358d52bf1947f445643fe6e15450786752876437ef9fb56f22c0d70cd9`.
+- Distribution: [2026-10-04_sqlite-vec-wasm_capture_edit-0.1.md](../../../../engineering/2026-10-04_sqlite-vec-wasm_capture_edit-0.1.md), SHA-256 `4b8beb1ab4d6ef74fb2a133842c886863631b7edddf9e315b5a3cd9a30d69d7e`.
+- Release/Watch: [2026-10-09_sqlite-vec-wasm_release-watch_capture_edit-0.1.md](../../../../engineering/2026-10-09_sqlite-vec-wasm_release-watch_capture_edit-0.1.md), SHA-256 `1ab64fae1effc87a01d475f2ea201fc667f138b04cd58096005857f6c3cad4c9`.
+- Notifications: [2026-10-14_sqlite-vector-wasm_workflow-notifications_capture_edit-0.1.md](../../../../engineering/2026-10-14_sqlite-vector-wasm_workflow-notifications_capture_edit-0.1.md), SHA-256 `8a1bbf9c2582af1ee99e1d6188aeb7c5ea7a6874bae8a34190cf33339b2f6943`.
 
 The synchronized upstream-watch baseline has 15 requirements / 41 scenarios. Effective contract: 15 requirements / 53 scenarios. All original scenario names survive; none is removed or silently narrowed. The fixed floor is a separate adopted source decision, not authority inferred from code, a checksum or upstream release history.
 

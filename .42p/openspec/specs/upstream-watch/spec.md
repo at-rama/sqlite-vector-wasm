@@ -10,7 +10,7 @@ Realize A-watch by presenting eligible official upstream combinations and curren
 
 ### Requirement: Official released upstream discovery
 
-The watch SHALL discover exact published stable and prerelease versions from SQLite's official Fossil publications and sqlite-vec's official GitHub Releases, applying A-inputs' admissibility criteria. Drafts, development snapshots and ambiguous release identities SHALL NOT be treated as releases. Exact suffixes SHALL be preserved; source uncertainty SHALL NOT be silently converted into a complete inventory.
+The watch SHALL discover exact official published stable/prerelease SQLite and SQLite-Vector identities under A-inputs' admissibility, preserving suffixes and released tag/commit/source binding. It SHALL NOT discover prospective sqlite-vec candidates, acquire candidate sources or require an upstream-published Vector archive checksum where preparation legitimately establishes it. Drafts, snapshots, aliases, ambiguous or incomplete evidence SHALL fail or be excluded under the existing admissibility rules without a fabricated complete inventory.
 
 #### Scenario: Stable and experimental publications
 - **WHEN** official published versions have unambiguous admissible identities, including alpha, beta or release-candidate suffixes
@@ -24,21 +24,37 @@ The watch SHALL discover exact published stable and prerelease versions from SQL
 - **WHEN** a required source is unavailable, truncated, contradictory or exposes an unresolved release identity
 - **THEN** the watch reports unsuccessful discovery without presenting the result as an empty or complete plan
 
+#### Scenario: Released Vector binding without a published archive checksum
+- **WHEN** an official non-draft Vector release has unambiguous exact release/tag/commit source metadata but no published archive checksum
+- **THEN** discovery can retain its admissible metadata without downloading the source archive or rejecting A-inputs' preparation-time pin policy; build and integrity qualification remain subsequent controls
+
+#### Scenario: Development header does not establish a release
+- **WHEN** a prospective alpha appears only in a branch, header or artifact
+- **THEN** it is not proposed as a published release, regardless of an official host or npm alias
+
 ### Requirement: Ordinary discovery baselines
 
-Ordinary planning SHALL include only SQLite versions at least `3.53.4` and sqlite-vec versions at least `0.1.9`, compared with prerelease ordering. These discovery baselines SHALL NOT change manual preparation's ability to select older admissible inputs or explicit rollback.
+Ordinary planning SHALL include only SQLite versions at least `3.53.4` and SQLite-Vector versions at least `1.1.0`, including prerelease ordering. The inclusive Vector floor SHALL be fixed; future source-pin or upstream release changes SHALL NOT recompute N−1. Discovery floors SHALL remain separate from published references and SHALL NOT prohibit manual older admissible selections or guarantee a nonempty plan or notification.
 
 #### Scenario: Versions around the baseline
-- **WHEN** discovery includes sqlite-vec `0.1.9-alpha.1`, `0.1.9` and `0.1.10-alpha.1`
+- **WHEN** discovery includes SQLite-Vector `1.1.0-alpha.1`, `1.1.0` and `1.1.3-alpha.1`
 - **THEN** ordinary planning excludes the first and retains the latter two for eligibility assessment
 
 #### Scenario: Manual older selection
 - **WHEN** the maintainer dispatches an admissible pair below an ordinary watch baseline
 - **THEN** the watch's discovery limits supply no dispatch prohibition or mandatory watch-history prerequisite
 
+#### Scenario: Inclusive predecessor floor
+- **WHEN** official stable Vector 1.1.0 and 1.1.2 satisfy the remaining publication-reference and candidate conditions
+- **THEN** both are eligible for enumeration from the inclusive 1.1.0 floor; the floor neither prioritizes the newer version nor forces an email
+
+#### Scenario: Source pins later advance
+- **WHEN** a source pin or new official release advances beyond 1.1.2
+- **THEN** ordinary Vector discovery retains the fixed 1.1.0 floor without recomputing a moving predecessor
+
 ### Requirement: Coherent publication references
 
-The watch SHALL read Git distribution tags, scoped npm versions, published provenance and separate `latest`/`next` HEADs using A-release's state interpretation. Historical published compositions SHALL remain available for selection exclusions. Required unavailable or inconsistent state SHALL fail rather than become empty history; placeholder metadata SHALL supply no distribution reference.
+The watch SHALL read actual Git distribution tags, scoped npm versions, published provenance and latest/next HEADs through A-release's existing interpretation, retaining exact engine identity. Historical sqlite-vec publications SHALL remain readable for numbering, occupied identities and corresponding-history exclusions without becoming numerical Vector references or prospective candidates. Missing/inconsistent state SHALL fail; placeholder metadata SHALL supply no reference.
 
 #### Scenario: Complete channel state
 - **WHEN** published Git/npm identities and provenance are coherent
@@ -48,41 +64,57 @@ The watch SHALL read Git distribution tags, scoped npm versions, published prove
 - **WHEN** a required page or provenance is unreadable, a HEAD conflicts with its publication or npm contains only an unready placeholder
 - **THEN** planning fails without inventing a bootstrap reference or claiming no work exists
 
+#### Scenario: Historical latest is from the other engine
+- **WHEN** latest still contains an exact historical sqlite-vec composition
+- **THEN** the shared state remains valid for numbering and applicable SQLite references, with no invented Vector version reference
+
 ### Requirement: Stable pair eligibility
 
-For `latest`, the watch SHALL enumerate stable-only pairs strictly later than its published pair component by component: neither component regresses and at least one progresses. A more advanced `next` SHALL NOT block stable maintenance. Enumeration SHALL consider combinations, including eligible pairs containing no newly discovered individual version.
+For latest, the watch SHALL enumerate every unpublished stable SQLite/SQLite-Vector pair under the adopted component references: SQLite uses the channel HEAD or latest, and Vector uses that channel's Vector composition, otherwise latest if Vector, otherwise no numerical Vector reference. Without a Vector reference the engine identity change permits eligibility without fabricated vector progression; applicable SQLite no-regression remains. With comparable references, require no component regression and strict progression. An advanced next SHALL NOT block stable maintenance.
 
 #### Scenario: Stable maintenance alongside next
-- **WHEN** `latest` is `(3.54.0, 0.1.9)`, `next` is more advanced and stable `(3.54.1, 0.1.9)` is available
+- **WHEN** `latest` is `(3.54.0, 1.1.2)`, `next` is more advanced and stable `(3.54.1, 1.1.2)` is available
 - **THEN** the stable pair remains eligible subject to published-pair exclusion
 
 #### Scenario: One component regresses
-- **WHEN** a stable pair increases sqlite-vec but decreases SQLite relative to `latest`
+- **WHEN** a stable pair increases SQLite-Vector but decreases SQLite relative to `latest`
 - **THEN** it is excluded from ordinary stable planning
 
 #### Scenario: Existing versions form new work
 - **WHEN** already known individual versions form an unpublished eligible pair
 - **THEN** that pair is considered without requiring a newly detected upstream release
 
+#### Scenario: First Vector composition retains SQLite
+- **WHEN** latest contains sqlite-vec and an admissible stable Vector selection retains latest's SQLite version
+- **THEN** engine identity change permits the Vector composition to enter eligibility, subject to the discovery floor and publication/candidate rules, without requiring a numerical comparison with sqlite-vec
+
+#### Scenario: Existing Vector reference governs progression
+- **WHEN** the target channel already supplies a published Vector reference
+- **THEN** ordinary stable eligibility uses same-engine no-regression/strict-progression rather than the discovery floor as a substitute reference
+
 ### Requirement: Experimental pair eligibility
 
-For `next`, the watch SHALL enumerate pairs containing a prerelease that strictly progress component by component from its HEAD and are at least as recent as `latest` on both components. Without a `next` publication, `latest` SHALL supply the initial comparison reference. Eligibility SHALL preserve suffix ordering independently of numerical forecast increments.
+For next, the watch SHALL enumerate all admissible pairs containing a prerelease, progressing from its applicable channel/latest references without component regression and remaining at least as recent as latest on comparable components. It SHALL consume A-release's same-engine reference selection; no foreign-engine ordering or imaginary Vector reference is allowed. Without next, latest supplies applicable references. Suffix order SHALL remain distinct from numerical forecast signals; no newest-alpha-only selection is introduced.
 
 #### Scenario: Next is behind latest on one component
-- **WHEN** `latest=(3.54.0, 0.1.9)`, `next=(3.53.5, 0.1.10-alpha.1)` and `(3.53.6, 0.1.10-alpha.2)` is available
+- **WHEN** `latest=(3.54.0, 1.1.2)`, `next=(3.53.5, 1.1.3-alpha.1)` and `(3.53.6, 1.1.3-alpha.2)` is available
 - **THEN** the pair is excluded despite progression from `next`, because SQLite remains behind `latest`
 
 #### Scenario: Several experimental pairs are eligible
-- **WHEN** those references apply and `(3.54.0, 0.1.10-alpha.1)` and `(3.54.0, 0.1.10-alpha.2)` are available
+- **WHEN** those references apply and `(3.54.0, 1.1.3-alpha.1)` and `(3.54.0, 1.1.3-alpha.2)` are available
 - **THEN** both pairs remain candidates for the plan rather than only the newest alpha
 
 #### Scenario: Next has not been published
 - **WHEN** coherent state has `latest` and no `next`
 - **THEN** an experimental pair is compared component by component against `latest` before its shared forecast is calculated
 
+#### Scenario: Applicable Vector channel and latest references
+- **WHEN** next and latest contain different engine identities or one has no Vector composition
+- **THEN** eligibility consumes the adopted same-engine fallback and latest lower-bound rules only where comparable, without constructing a baseline publication or ordering foreign-engine numbers
+
 ### Requirement: Published pair exclusion
 
-The watch SHALL exclude a pair already published in the corresponding status, using published composition history rather than only current HEADs. Stable and experimental references SHALL remain distinct. Publication version changes without composition changes SHALL NOT make the same pair newly eligible for ordinary watch planning.
+The watch SHALL exclude compositions already published in the corresponding stable/experimental status, keyed by exact SQLite version, engine identity and engine version. It SHALL use published history, not only current HEADs. A rollback or packaging-only publication SHALL NOT reintroduce an already published same-engine composition; identical numbers from different engines SHALL NOT exclude the new Vector composition.
 
 #### Scenario: Rollback reveals an earlier published pair
 - **WHEN** a manual rollback moves a channel HEAD behind a pair already published in that status
@@ -92,9 +124,13 @@ The watch SHALL exclude a pair already published in the corresponding status, us
 - **WHEN** a packaging correction publishes another version with the same upstream pair
 - **THEN** both publications establish the same pair exclusion without creating extra upstream jobs
 
+#### Scenario: Equal version strings identify different engines
+- **WHEN** a historical foreign-engine publication happens to share a version string with a Vector candidate
+- **THEN** that history is retained truthfully and does not count as the candidate's already-published Vector composition
+
 ### Requirement: Current candidate awareness
 
-For each eligible pair, the watch SHALL identify current queued/running preparation and open candidate PRs, preserving exact selection and run/PR links. Existing candidates SHALL be signaled without suggesting duplicate preparation. Several existing candidates SHALL remain distinguishable. Candidate reads SHALL NOT merge, update, cancel or dispatch anything.
+For each eligible Vector pair, the watch SHALL identify current queued/active Updates runs and open candidate PRs from their exact engine/selection/run/attempt and schema-2 descriptor matching the head's recorded Vector lock. It SHALL preserve distinct candidates and prohibit duplicate-preparation recommendations, without remote writes. Clearly historical sqlite-vec records SHALL NOT establish current Vector candidates; unknown or contradictory relevant identities SHALL fail rather than imply no candidate.
 
 #### Scenario: Preparation precedes its PR
 - **WHEN** an Updates preparation is queued or active for an eligible pair and has no PR yet
@@ -108,9 +144,17 @@ For each eligible pair, the watch SHALL identify current queued/running preparat
 - **WHEN** relevant candidate metadata is unavailable or contradicts the descriptor or repository identity
 - **THEN** the watch reports the unresolved read rather than falsely declaring no existing candidate
 
+#### Scenario: New Updates producer handoff
+- **WHEN** an active run exposes the Vector title/parameters or a candidate head contains its coherent schema-2 descriptor and inputs/sqlite-vector.sources.lock.json
+- **THEN** the exact selection, run/attempt and PR head are recognized and joined without reading the unused vec lock as the selected product
+
+#### Scenario: Historical or ambiguous candidate metadata
+- **WHEN** a candidate-like record is clearly an old sqlite-vec preparation, or a relevant prospective Vector record is mixed, malformed or unreadable
+- **THEN** the historical record supplies no current Vector candidate while the ambiguous relevant record causes explicit failure, not a false absence claim
+
 ### Requirement: Shared nonreserving forecasts
 
-Each eligible pair SHALL use A-release's common deterministic calculation for channel, increment and distribution version from the same acquired publication state. The watch SHALL add no numbering override, alternative policy, AI heuristic or reservation. Changed later state SHALL permit changed final results; watch forecasts SHALL NOT waive publication or compatibility controls.
+Each eligible Vector pair SHALL use A-release's existing deterministic channel, increment, transition/component-reference and alpha-series calculation from one acquired actual publication state. No separate policy, manual override, foreign-engine version comparison, reservation or AI heuristic is allowed. Identical inputs/state SHALL agree with preparation; changed later state permits recalculation. A collision SHALL fail without an alternate-number retry; forecasts waive no mandatory publication or compatibility control.
 
 #### Scenario: Forecasts share a snapshot
 - **WHEN** watch and preparation calculate the same exact pair against the same publication state
@@ -126,11 +170,11 @@ Each eligible pair SHALL use A-release's common deterministic calculation for ch
 
 ### Requirement: Actionable human job plan
 
-The directly consultable execution summary SHALL contain every eligible pair with exact upstream versions, exact Updates parameters, a GitHub Actions link and existing candidate state. A central Forecast section SHALL associate each pair with its channel/increment/version without repetition in pair blocks or information loss. Pairs SHALL retain their current order under latest and next. The maintainer SHALL remain able to choose zero, one or several jobs. A plan SHALL NOT assert build or publication acceptance.
+The reference GitHub Summary SHALL present every eligible SQLite/SQLite-Vector pair, exact Updates parameters, Actions link and candidate state. A central Forecast section SHALL associate each pair with channel/increment/version without repetition or loss, retaining latest/next ordering. Engine identities and historical reference compositions SHALL remain truthful. The maintainer chooses zero, one or several jobs. Optional release-comment guidance SHALL target native Vector fields, remain separate from nominal operation and imply no build/publication acceptance.
 
 #### Scenario: Pair has no existing candidate
 - **WHEN** a nonempty plan contains an eligible pair without current preparation
-- **THEN** its entry supplies exact `sqlite_version`, `sqlite_vec_version`, empty `sqlite_comment`, `sqlite_vec_comment` and `misc_comment`, and the Updates Actions link for human initiation, with no channel/version override
+- **THEN** its entry supplies exact `sqlite_version`, `sqlite_vector_version`, empty `sqlite_comment`, `sqlite_vector_comment` and `misc_comment`, and the Updates Actions link for human initiation, with no channel/version override
 
 #### Scenario: Pair already has preparation
 - **WHEN** an eligible pair has an active run or open candidate PR
@@ -156,6 +200,9 @@ The directly consultable execution summary SHALL contain every eligible pair wit
 - **WHEN** every eligible pair is associated with current preparation or an open candidate PR
 - **THEN** all entries and their distinct candidate states remain in the complete nonempty plan, without reclassifying the result as empty or proposing duplicate preparation
 
+#### Scenario: Optional comments respect the selected engine
+- **WHEN** the maintainer invokes the separate release-comments aid for a selected Vector pair
+- **THEN** guidance uses sqlite_vector_version/sqlite_vector_comment, official Vector release notes and same-engine comparison only when a reference exists, explicitly describing a first engine transition without fabricating a cumulative sqlite-vec-to-Vector numerical changelog
 ### Requirement: Readable execution outcomes
 
 The watch SHALL present its result directly in the GitHub Actions execution summary without requiring raw-log inspection. A complete nonempty plan, a complete empty plan and a discovery/state/calculation failure SHALL have distinct readable outcomes. The simplified Summary and associated artifacts SHALL remain the reference for results and diagnostics. An empty plan SHALL be normal; errors SHALL remain unsuccessful executions rather than fabricated empty plans.

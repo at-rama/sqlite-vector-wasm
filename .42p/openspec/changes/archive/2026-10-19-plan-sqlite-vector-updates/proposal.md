@@ -24,7 +24,7 @@ None.
 
 ## Impact
 
-Exactly one realization unit: **A-watch**, in the [Allocation](../../../engineering/2026-10-04_sqlite-vec-wasm_allocation_edit-0.1.md), SHA-256 `29cbc8358d52bf1947f445643fe6e15450786752876437ef9fb56f22c0d70cd9`, including all qualified Distribution, Release/Watch and Notifications passages. Base main: `a1ea5e39afb2ca4aa9df5bd138e240d351df8dad` (merged #73). See [coverage](coverage.md).
+Exactly one realization unit: **A-watch**, in the [Allocation](../../../../engineering/2026-10-04_sqlite-vec-wasm_allocation_edit-0.1.md), SHA-256 `29cbc8358d52bf1947f445643fe6e15450786752876437ef9fb56f22c0d70cd9`, including all qualified Distribution, Release/Watch and Notifications passages. Base main: `a1ea5e39afb2ca4aa9df5bd138e240d351df8dad` (merged #73). See [coverage](coverage.md).
 
 Expected realization paths: tools/watch discovery/state/plan and tests/fixtures, docs/watch.md, the obsolete pending-Watch note in docs/candidates.md and the optional release-comments skill. Existing run/CLI, schedule and notification envelope are preserved or adjusted only where an exact producer handoff requires it. Notification policy/transport, production inputs, A-inputs/build/package/acceptance, release policy, Updates producer, public Site and synchronized specs are not implemented or changed by this proposition.
 

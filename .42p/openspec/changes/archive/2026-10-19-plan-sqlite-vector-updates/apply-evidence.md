@@ -38,7 +38,7 @@ Raw responses and the URL/time/status/body-hash manifest remain only in ignored 
 
 ## Evidence boundaries and final review
 
-The read-only rehearsal establishes the observed public planning result on this code and state. Queued/open candidates, mixed references, prereleases, collisions, malformed data and write failures use separately constructed synthetic fixtures; captured official metadata is identified in the [fixture provenance](../../../../tools/watch/tests/fixtures/README.md). Tests and implementation share repository authorship and policy/transport code; passing tests do not eliminate correlated interpretation errors.
+The read-only rehearsal establishes the observed public planning result on this code and state. Queued/open candidates, mixed references, prereleases, collisions, malformed data and write failures use separately constructed synthetic fixtures; captured official metadata is identified in the [fixture provenance](../../../../../tools/watch/tests/fixtures/README.md). Tests and implementation share repository authorship and policy/transport code; passing tests do not eliminate correlated interpretation errors.
 
 Both triggers, recurring plans, all-existing-candidate plans, empty/failure and output failures were exercised through actual Vector producer records and the unchanged sender CLI with injected transport. No live Resend request, Gmail receipt, Android notification or hosted dispatch was exercised. Schedule/timezone and read-only permissions were checked from the unchanged workflow and invocation tests.
 
