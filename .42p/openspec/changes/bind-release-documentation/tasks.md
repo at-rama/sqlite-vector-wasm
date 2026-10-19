@@ -10,8 +10,8 @@
 
 ## 3. Release verification
 
-- [ ] 3.1 Exercise changed forecast, changed merge revision/content, wrong archive/engine, missing docs evidence, one-destination failure and complete matching outcome; retain all current policy/uniqueness/bootstrap/trusted-publishing controls and run canonical/applicable release checks.
+- [x] 3.1 Exercise changed forecast, changed merge revision/content, wrong archive/engine, missing docs evidence, one-destination failure and complete matching outcome; retain all current policy/uniqueness/bootstrap/trusted-publishing controls and run canonical/applicable release checks.
 
 ## 4. 42P Verification and completion
 
-- [ ] 4.1 Reconfirm complete bidirectional unit/effective-Change coverage, run post-Apply `42p-verify-change` with applicable real execution evidence, and record its genuine verdict. Do not archive before satisfactory Verification; integration/publication remain human-controlled lifecycle actions.
+- [x] 4.1 Reconfirm complete bidirectional unit/effective-Change coverage, run post-Apply `42p-verify-change` with applicable real execution evidence, and record its genuine verdict. Do not archive before satisfactory Verification; integration/publication remain human-controlled lifecycle actions.
