@@ -10,8 +10,8 @@
 
 ## 3. Documentation evidence
 
-- [ ] 3.1 Exercise both modes in a real browser, wrong digest/composition/revision, unavailable source, stale preview and published final identity cases; verify source/link/mobile/Pages identity under existing rules; preserve evidence and run canonical/applicable checks.
+- [x] 3.1 Exercise both modes in a real browser, wrong digest/composition/revision, unavailable source, stale preview and published final identity cases; verify source/link/mobile/Pages identity under existing rules; preserve evidence and run canonical/applicable checks.
 
 ## 4. 42P Verification and completion
 
-- [ ] 4.1 Reconfirm complete bidirectional unit/effective-Change coverage, run post-Apply `42p-verify-change` with applicable real execution evidence, and record its genuine verdict. Do not archive before satisfactory Verification; integration/publication remain human-controlled lifecycle actions.
+- [x] 4.1 Reconfirm complete bidirectional unit/effective-Change coverage, run post-Apply `42p-verify-change` with applicable real execution evidence, and record its genuine verdict. Do not archive before satisfactory Verification; integration/publication remain human-controlled lifecycle actions.
