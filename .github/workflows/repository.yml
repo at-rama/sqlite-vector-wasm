@@ -38,6 +38,10 @@ jobs:
           sh tools/openspec.sh check
           sh tools/openspec.sh exec list --json
           sh tools/openspec.sh exec validate --all --strict
+          if test -f .42p/openspec/changes/publish-site-after-distribution/tasks.md; then
+              sh tools/openspec.sh exec status --change publish-site-after-distribution --json
+              sh tools/openspec.sh exec instructions apply --change publish-site-after-distribution --json
+          fi
 
   verification:
     runs-on: ubuntu-24.04

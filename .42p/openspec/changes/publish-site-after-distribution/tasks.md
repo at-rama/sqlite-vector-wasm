@@ -2,7 +2,7 @@
 
 ## 1. Stable eligibility and preview
 
-- [ ] 1.1 Extend existing publication context/assembly guards to choose published matching stable documentation for candidate previews and prevent unpublished main exposure; preserve exact preview identity, fork checks and demo selection/assets. Add corresponding regression cases and update the existing guide in this group; verify the delivered behavior against this Change’s named modified/added scenarios before continuing.
+- [x] 1.1 Extend existing publication context/assembly guards to choose published matching stable documentation for candidate previews and prevent unpublished main exposure; preserve exact preview identity, fork checks and demo selection/assets. Add corresponding regression cases and update the existing guide in this group; verify the delivered behavior against this Change’s named modified/added scenarios before continuing.
 
 ## 2. Publication ordering
 

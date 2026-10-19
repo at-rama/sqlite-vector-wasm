@@ -61,15 +61,6 @@ jobs:
         run: node tools/site/eligibility.mjs select
       - name: Install locked site dependencies
         run: sh tools/site.sh install
-      - name: Inspect active OpenSpec apply progress
-        if: hashFiles('candidate/.42p/openspec/changes/publish-site-after-distribution/tasks.md') != ''
-        env:
-          OPENSPEC_TELEMETRY: '0'
-        run: |
-          sh tools/openspec.sh install
-          sh tools/openspec.sh exec list --json
-          sh tools/openspec.sh exec status --change publish-site-after-distribution --json
-          sh tools/openspec.sh exec instructions apply --change publish-site-after-distribution --json
       - name: Run offline shell tests
         run: |
           node --test tools/site/tests/*.test.mjs
