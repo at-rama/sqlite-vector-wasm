@@ -75,6 +75,8 @@ export async function prepareCandidate({ context, readSnapshot, services, reposi
         'commit', '-m', 'chore: prepare distribution candidate'], { cwd: repository });
       const commit = await run('git', ['rev-parse', 'HEAD'], { cwd: repository }); assert.match(commit, commitPattern);
       assert.equal(await run('git', ['status', '--porcelain', '--untracked-files=all'], { cwd: repository }), '');
+      // Retain the exact committed handoff even when the temporary checkout disappears.
+      await writeFile(join(directory, 'release.json'), await regularBytes(join(repository, 'inputs/release.json')));
       return commit;
     });
     await step('repository', async () => {

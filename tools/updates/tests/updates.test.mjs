@@ -10,7 +10,7 @@ import { prepareCandidate, resolveSources } from '../run.mjs';
 import { candidateServices } from '../services.mjs';
 import { reconcileNotices } from '../notices.mjs';
 import { noticeInputs, root, hash } from '../../package/package.mjs';
-const baselineLock = JSON.parse(await readFile(new URL('../../../inputs/sqlite-vector.sources.lock.json', import.meta.url), 'utf8'));
+const baselineLock = JSON.parse(await readFile(new URL('../../release/tests/vector-lock.json', import.meta.url), 'utf8'));
 const pair = { sqlite:'3.54.0',sqliteVector:'1.1.2' };
 const empty = () => ({schemaVersion:1,tags:[],releaseTags:[],npmVersions:[],heads:{latest:null,next:null}});
 const event = () => ({repository:{full_name:'a/b'},sender:{type:'User'},inputs:{sqlite_version:pair.sqlite,sqlite_vector_version:pair.sqliteVector,sqlite_comment:'  SQLite line 1\nSQLite line 2  ',sqlite_vector_comment:'$(touch BAD); `echo data`\n"quoted"',misc_comment:'  Misc note  '}});
@@ -20,7 +20,7 @@ const lock = selection => {
   const value=structuredClone(baselineLock);
   const code=selection.sqlite.split('.').map((n,i)=>i?String(n).padStart(2,'0'):n).join('')+'00';
   value.sqlite={...value.sqlite,version:selection.sqlite,archiveUrl:`https://sqlite.org/2026/sqlite-src-${code}.zip`,releaseUrl:`https://sqlite.org/releaselog/${selection.sqlite.replaceAll('.','_')}.html`};
-  value.sqliteVector={...value.sqliteVector,version:selection.sqliteVector,tag:selection.sqliteVector,releaseUrl:`https://github.com/sqliteai/sqlite-vector/releases/tag/${selection.sqliteVector}`};
+  value.sqliteVector={...value.sqliteVector,version:selection.sqliteVector,tag:selection.sqliteVector,releaseUrl:`https://github.com/sqliteai/sqlite-vector/releases/tag/${selection.sqliteVector}`,tagUrl:`https://api.github.com/repos/sqliteai/sqlite-vector/git/ref/tags/${selection.sqliteVector}`};
   return value;
 };
 const published = version => {const s=empty();s.heads.latest={version,commit:'a'.repeat(40),upstreams:pair};s.tags=[`dist/v${version}`];s.releaseTags=[`dist/v${version}`];s.npmVersions=[version];return s;};
@@ -51,7 +51,7 @@ async function fixture(t, options={}) {
   for(const name of ['tools/package/notices.json','tools/package/notices','tools/package/NOTICE-vector.txt','LICENSE']) await cp(join(root,name),join(repository,name),{recursive:true});
   const baselineNoticesPath=join(repository,'tools/package/notices.json');
   const baselineNotices=JSON.parse(await readFile(baselineNoticesPath));
-  for(const record of baselineNotices.notices)if(pair[record.project]) {record.version=pair[record.project];if(record.project==='sqlite'){record.origin='controlled offline fixture';delete record.source;}}
+  for(const record of baselineNotices.notices)if(pair[record.project]) {record.version=pair[record.project];if(record.project==='sqlite'){record.origin='controlled offline fixture';delete record.source;}else{record.source.commit=baselineLock.sqliteVector.commit;record.origin=`https://github.com/sqliteai/sqlite-vector/blob/${baselineLock.sqliteVector.commit}/LICENSE.md`;}}
   await writeFile(baselineNoticesPath,JSON.stringify(baselineNotices,null,2)+'\n');
   const git=args=>command('git',args,{cwd:repository});await git(['init','-b','main']);await git(['add','.']);await git(['-c','user.name=Fixture','-c','user.email=fixture@example.invalid','commit','-m','fixture']);
   const calls=[];let reads=0;const c={...context(),...options.context};
@@ -87,6 +87,7 @@ test('qualified committed pair precedes push/PR; diagnostics stay ignored',async
   assert.equal(await f.git(['status','--porcelain','--untracked-files=all']),'');assert.deepEqual((await f.git(['diff-tree','--no-commit-id','--name-only','-r',result.commit])).split('\n'),['inputs/release.json']);
   const descriptor=JSON.parse(await readFile(join(f.repository,'inputs/release.json')));assert.equal(descriptor.releaseComment,context().comment);
   assert.deepEqual(Object.keys(descriptor).sort(),['preparation','releaseComment','schemaVersion','sqlite','sqliteVector']);
+  assert.equal(await readFile(join(result.directory,'release.json'),'utf8'),await f.git(['show',`${result.commit}:inputs/release.json`])+'\n');
   assert.match(candidateBody(result),/attempt 2/);
 });
 for(const failure of ['resolve','state','notices','commit','tools/check-repository.sh','tools/test-repository.sh','qualify','revision','push','pr','head']) test(`mandatory ${failure} failure stops and retains truthful evidence`,async t=>{

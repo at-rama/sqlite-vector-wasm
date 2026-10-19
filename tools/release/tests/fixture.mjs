@@ -32,9 +32,9 @@ export async function releaseFixture(t, { version = '0.1.0', name = '@at-rama/sq
   // the real notice hashes and byte-integrity checks intact.
   const noticesPath = join(repository,'tools/package/notices.json');
   const notices = JSON.parse(await readFile(noticesPath));
-  for (const notice of notices.notices.filter(item => item.project === 'sqliteVec')) {
-    notice.version = lock.sqliteVec.version;
-    notice.origin = notice.origin.replace(/\/blob\/v[^/]+\//, '/blob/v0.1.9/');
+  for (const notice of notices.notices.filter(item => ['sqlite','sqliteVec'].includes(item.project))) {
+    notice.version = lock[notice.project].version;
+    if (notice.project === 'sqliteVec') notice.origin = notice.origin.replace(/\/blob\/v[^/]+\//, '/blob/v0.1.9/');
   }
   await writeFile(noticesPath,JSON.stringify(notices,null,2)+'\n');
   const inputs = {lockDigest:{algorithm:'sha256',value:hash(lockBytes)}};

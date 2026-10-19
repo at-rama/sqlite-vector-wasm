@@ -26,7 +26,8 @@ class NoticesTest(unittest.TestCase):
             out.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(ROOT / name, out)
         shutil.copytree(ROOT / 'tools/package/notices', self.repo / 'tools/package/notices')
-        self.baseline = json.loads((self.repo / 'inputs/sqlite-vector.sources.lock.json').read_text())
+        self.baseline = json.loads((ROOT / 'tools/release/tests/vector-lock.json').read_text())
+        (self.repo / 'inputs/sqlite-vector.sources.lock.json').write_text(json.dumps(self.baseline))
         self.selected = copy.deepcopy(self.baseline)
         self.selected['sqlite'].update(version='3.55.0', archiveUrl='https://sqlite.org/2026/sqlite-src-3550000.zip', releaseUrl='https://sqlite.org/releaselog/3_55_0.html')
         self.selected['sqliteVector'].update(version='1.1.3-alpha.1', tag='1.1.3-alpha.1', releaseUrl='https://github.com/sqliteai/sqlite-vector/releases/tag/1.1.3-alpha.1')
@@ -36,6 +37,9 @@ class NoticesTest(unittest.TestCase):
         # Independent synthetic dependency bytes and expectations; not an upstream build.
         self.headers = {name: ('synthetic header ' + name + '\n').encode() for name in ['fp16.h', 'bitcasts.h', 'macros.h']}
         records = json.loads((self.repo / 'tools/package/notices.json').read_text())
+        for record in records['notices']:
+            if record['project'] in self.baseline:
+                record['version'] = self.baseline[record['project']]['version']
         dependency = next(r for r in records['notices'] if r['project'] == 'fp16')
         dependency['incorporatedHeaders'] = {name: hashlib.sha1(b'blob ' + str(len(raw)).encode() + b'\0' + raw).hexdigest() for name, raw in self.headers.items()}
         (self.repo / 'tools/package/notices.json').write_text(json.dumps(records) + '\n')
