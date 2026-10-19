@@ -53,7 +53,7 @@ test('component references preserve SQLite channel and same-engine Vector fallba
 });
 
 test('integrated Vector descriptor is fixed to recorded lock and exact human/run/repository/revision evidence',async()=>{
- const lock=JSON.parse(await readFile(new URL('../../../inputs/sqlite-vector.sources.lock.json',import.meta.url)));
+ const lock=JSON.parse(await readFile(new URL('./vector-lock.json',import.meta.url)));
  const d={schemaVersion:2,...vector(),releaseComment:'$(data)',preparation:{runId:17,url:'https://github.com/a/b/actions/runs/17'}};
  assert.equal(descriptor(d,lock).comment,'$(data)');
  const pr={number:1,merged:true,state:'closed',merged_by:{type:'User'},base:{ref:'main',repo:{full_name:'a/b'}},merge_commit_sha:commit,changed_files:1};

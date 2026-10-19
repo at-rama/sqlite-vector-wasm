@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Prepare controlled upstream notices; never write candidate tracked inputs."""
 import argparse
-import base64
 import copy
 import hashlib
 import json
@@ -16,10 +15,8 @@ import inputs
 
 FILES = {'SQLite-LICENSE.txt': ('sqlite', 'LICENSE.md'),
          'SQLite-WASM-NOTICE.txt': ('sqlite', 'ext/wasm/api/sqlite3-license-version-header.js'),
-         'sqlite-vec-MIT.txt': ('sqliteVec', 'LICENSE-MIT'),
-         'sqlite-vec-APACHE.txt': ('sqliteVec', 'LICENSE-APACHE')}
+         'sqlite-vector-APACHE.txt': ('sqliteVector', 'LICENSE.md')}
 NORMALIZATION = 'Trailing horizontal whitespace and blank EOF lines removed; notice wording preserved.'
-API = 'https://api.github.com/repos/asg017/sqlite-vec'
 
 
 def sha256(data):
@@ -51,70 +48,6 @@ def derive(raw, header=False):
     return ('\n'.join(lines) + '\n').encode('utf-8')
 
 
-class GitNotices:
-    def __init__(self, version, directory, fetch=inputs.fetch_file):
-        self.version, self.directory, self.fetch = version, directory, fetch
-        self.commit = None
-        self.entries = None
-        self.count = 0
-
-    def get(self, path):
-        destination = self.directory / f'git-{self.count:03}.json'
-        self.count += 1
-        # Endpoints are constructed locally; error reports never retain response bodies.
-        try:
-            self.fetch(API + path, destination)
-            return inputs.read_json(destination)
-        except Exception:
-            raise inputs.InputError(f'sqliteVec {self.version}: canonical Git request failed for {path}') from None
-        finally:
-            destination.unlink(missing_ok=True)
-
-    @staticmethod
-    def oid(value):
-        inputs.require(isinstance(value, str) and re.fullmatch(r'[0-9a-f]{40}', value), 'Invalid canonical Git object identity')
-        return value
-
-    def resolve(self):
-        tag = 'v' + inputs.version(self.version, 'sqliteVec')
-        reference = self.get('/git/ref/tags/' + tag)
-        inputs.require(reference.get('ref') == 'refs/tags/' + tag, 'Wrong canonical release tag')
-        obj = reference.get('object', {})
-        seen = set()
-        while obj.get('type') == 'tag':
-            oid = self.oid(obj.get('sha'))
-            inputs.require(oid not in seen and len(seen) < 16, 'Invalid canonical tag chain')
-            seen.add(oid)
-            annotated = self.get('/git/tags/' + oid)
-            inputs.require(annotated.get('sha') == oid, 'Annotated tag identity mismatch')
-            obj = annotated.get('object', {})
-        inputs.require(obj.get('type') == 'commit', 'Release tag does not identify a commit')
-        self.commit = self.oid(obj.get('sha'))
-        commit = self.get('/git/commits/' + self.commit)
-        inputs.require(commit.get('sha') == self.commit, 'Canonical commit identity mismatch')
-        tree_id = self.oid(commit.get('tree', {}).get('sha'))
-        tree = self.get('/git/trees/' + tree_id)
-        inputs.require(tree.get('sha') == tree_id and tree.get('truncated') is False and isinstance(tree.get('tree'), list), 'Invalid canonical Git tree')
-        self.entries = tree['tree']
-
-    def read(self, name):
-        if self.entries is None:
-            self.resolve()
-        entries = [entry for entry in self.entries if entry.get('path') == name]
-        inputs.require(len(entries) == 1 and entries[0].get('type') == 'blob'
-                       and entries[0].get('mode') in ('100644', '100755'), f'Missing/nonregular canonical {name}')
-        blob_id = self.oid(entries[0].get('sha'))
-        blob = self.get('/git/blobs/' + blob_id)
-        inputs.require(blob.get('sha') == blob_id and blob.get('encoding') == 'base64', 'Canonical blob identity/encoding mismatch')
-        encoded = blob.get('content')
-        inputs.require(isinstance(encoded, str), 'Missing canonical blob content')
-        raw = base64.b64decode(encoded.replace('\n', ''), validate=True)
-        observed = hashlib.sha1(b'blob ' + str(len(raw)).encode() + b'\0' + raw).hexdigest()
-        inputs.require(observed == blob_id and blob.get('size') == len(raw), 'Canonical blob bytes mismatch')
-        (self.directory / ('git-' + name + '.txt')).write_bytes(raw)
-        return raw, {'kind': 'git', 'repository': 'asg017/sqlite-vec', 'tag': 'v' + self.version,
-                     'commit': self.commit, 'path': name, 'blobSha': blob_id, 'sha256': sha256(raw)}
-
 
 def reconcile(repository, selected, directory, acquire=inputs.acquire_lock, fetch=inputs.fetch_file):
     repository, directory = Path(repository), Path(directory)
@@ -129,26 +62,34 @@ def reconcile(repository, selected, directory, acquire=inputs.acquire_lock, fetc
     current_name = None
     current_project = None
     try:
-        baseline = inputs.read_json(repository / 'inputs/sources.lock.json')
+        baseline = inputs.read_json(repository / 'inputs/sqlite-vector.sources.lock.json')
         selected = inputs.validate_lock(selected)
-        report['selection'] = {key: selected[key]['version'] for key in ('sqlite', 'sqliteVec')}
+        report['selection'] = {key: selected[key]['version'] for key in ('sqlite', 'sqliteVector')}
         manifest_raw = regular(repository / 'tools/package/notices.json')
         manifest = json.loads(manifest_raw, object_pairs_hook=inputs.unique_object)
-        changed = {key for key in ('sqlite', 'sqliteVec') if selected[key]['version'] != baseline[key]['version']}
+        changed = {key for key in ('sqlite', 'sqliteVector') if selected[key]['version'] != baseline[key]['version']}
         handoff = None
         if changed:
             report['acquisition'] = {'status': 'in-progress', 'inputs': selected}
             save()
             def acquisition_fetch(url, destination):
                 nonlocal current_project
-                current_project = next(key for key in ('sqlite', 'sqliteVec') if selected[key]['archiveUrl'] == url)
+                current_project = next(key for key in ('sqlite', 'sqliteVector') if selected[key]['archiveUrl'] == url)
                 report['acquisition']['currentProject'] = current_project
                 save()
                 return fetch(url, destination)
 
             handoff = acquire((json.dumps(selected, indent=2) + '\n').encode(), directory / 'notice-inputs', fetch=acquisition_fetch)
             report['acquisition']['status'] = 'passed'
-        git = GitNotices(selected['sqliteVec']['version'], directory, fetch)
+        if handoff:
+            dependency = next(record for record in manifest['notices'] if record['project'] == 'fp16')
+            headers = {}
+            for name in dependency['incorporatedHeaders']:
+                raw = regular(Path(handoff['sqliteVector']['sourcePath']) / 'libs/fp16' / name)
+                headers[name] = hashlib.sha1(b'blob ' + str(len(raw)).encode() + b'\0' + raw).hexdigest()
+            inputs.require(headers == dependency['incorporatedHeaders'], 'Pinned FP16 incorporated headers drift')
+            report['dependency'] = {'project': 'fp16', 'commit': dependency['version'],
+                                    'incorporatedHeaders': headers, 'status': 'passed'}
         staged = directory / 'prepared'
         staged.mkdir()  # Run-local and create-only: stale prepared inputs cannot be reused.
         texts = {}
@@ -170,27 +111,18 @@ def reconcile(repository, selected, directory, acquire=inputs.acquire_lock, fetc
             report['notices'].append({'name': current_name, 'project': project, 'disposition': 'refreshed', 'status': 'in-progress'})
             save()
             source_root = Path(handoff[project]['sourcePath'])
-            if project == 'sqlite':
-                source = source_root / member
-                raw = regular(source)
-                relative = source.relative_to(Path(handoff['workspace']) / project).as_posix()
-            else:
-                # Search only the verified archive's extracted tree, not the acquisition workspace.
-                extracted = Path(handoff['workspace']) / project
-                matches = list(extracted.rglob(member))
-                inputs.require(len(matches) <= 1, f'{current_name}: ambiguous archive notice')
-                source = matches[0] if matches else None
-                if source is not None:
-                    raw = regular(source)
-                    relative = source.relative_to(extracted).as_posix()
-            if project == 'sqliteVec' and source is None:
-                raw, origin = git.read(member)
-                url = f'https://github.com/asg017/sqlite-vec/blob/{origin["commit"]}/{member}'
-            else:
-                pin = selected[project]
-                origin = {'kind': 'archive', 'archiveUrl': pin['archiveUrl'], 'archiveDigest': pin['digest'],
-                          'path': relative, 'sha256': sha256(raw)}
-                url = pin['archiveUrl'] + '#' + relative
+            source = source_root / member
+            raw = regular(source)
+            relative = source.relative_to(Path(handoff['workspace']) / project).as_posix()
+            pin = selected[project]
+            origin = {'kind': 'archive', 'archiveUrl': pin['archiveUrl'], 'archiveDigest': pin['digest'],
+                      'path': relative, 'sha256': sha256(raw)}
+            url = pin['archiveUrl'] + '#' + relative
+            if project == 'sqliteVector':
+                # Package validation binds the shipped raw Apache text to the selected commit.
+                inputs.require(derive(raw) == raw, 'Unsupported Vector license normalization')
+                origin.update(commit=pin['commit'])
+                url = f'https://github.com/sqliteai/sqlite-vector/blob/{pin["commit"]}/LICENSE.md'
             header = current_name == 'SQLite-WASM-NOTICE.txt'
             data = derive(raw, header)
             record.update(version=selected[project]['version'], origin=url, sha256=sha256(data), source=origin)
@@ -209,7 +141,7 @@ def reconcile(repository, selected, directory, acquire=inputs.acquire_lock, fetc
             output.write_bytes(data)
         (staged / 'tools/package/notices.json').write_bytes(
             (json.dumps(manifest, indent=2) + '\n').encode() if changed else manifest_raw)
-        for name in ('LICENSE', 'tools/package/NOTICE.txt'):
+        for name in ('LICENSE', 'tools/package/NOTICE-vector.txt'):
             output = staged / name
             output.parent.mkdir(parents=True, exist_ok=True)
             output.write_bytes(regular(repository / name))
