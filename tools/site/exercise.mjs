@@ -117,13 +117,13 @@ This is an integration fixture, not the emoji demo.
     try {
       const realBefore = await observe('real-documentation-with-demo', demo, { docs: true, demoFixture: 'fixture-runtime-2' });
       await writeFile(readmePath, readme + '\nDocumentation edit exercise marker.\n');
-      if (process.env.SITE_CANDIDATE_BUNDLE) await example(repository);
+      if (process.env.SITE_CANDIDATE_BUNDLE || process.env.SITE_DOCUMENTATION_SELECTION) await example(repository);
       const realAfter = await observe('real-documentation-update', demo, { docs: true, demoFixture: 'fixture-runtime-2', allowDirtyDocumentation: true });
       assert.deepEqual(realAfter.runtime, realBefore.runtime);
       assert.match(await readFile(join(realAfter.source, 'index.md'), 'utf8'), /Documentation edit exercise marker/);
       await observe('real-documentation-preview', demo, { docs: true, preview, demoFixture: 'fixture-runtime-2', allowDirtyDocumentation: true,
         screenshot: join(repository, '.work/site/docs-mobile.png') });
-    } finally { await writeFile(readmePath, readme); if (process.env.SITE_CANDIDATE_BUNDLE) await example(repository); }
+    } finally { await writeFile(readmePath, readme); if (process.env.SITE_CANDIDATE_BUNDLE || process.env.SITE_DOCUMENTATION_SELECTION) await example(repository); }
 
     await writeFile(join(demo, 'public/demo-runtime/fixture.mjs'), 'corrupt fixture');
     await assert.rejects(build({ prepared: demo }), /checksum mismatch/);

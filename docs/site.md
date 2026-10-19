@@ -160,3 +160,41 @@ It compiles both stable and preview bases, checks the initial 🐱 and four addi
 `.work/site/demo-results.json` and mobile screenshots identify the local runtime/corpus, actual timings, request paths and outcomes. The Site workflow runs this exercise, keeps these artifacts and repeats real searches when observing the identified Pages candidate. Hosted observation compares every served runtime inventory digest and the selected release/corpus identity; it remains distinct from local results. Do not run concurrent site builds/exercises in one checkout.
 
 For a release PR, Site reads the exact preparation run’s qualified artifact. During the active documentation Change it can consume the existing publisher-free qualification exercise for that exact head. It does not build SQLite or publish distributions; the read-only acquisition token is confined to its own step. The demo retains its separate published selection and bytes.
+
+## Publication-ordered documentation
+
+The shared preview still identifies the exact PR branch and commit. Its stable
+root is built from a separately checked-out eligible public source, rather than
+assuming current main is already published. Candidate previews consume the
+original Updates-qualified archive; unpublished tooling PRs consume an exact-head
+publisher-free Release exercise. This selection does not depend on active OpenSpec
+files and does not authorize distribution publication.
+
+For a merged Vector candidate, Site verifies the descriptor, source lock,
+preparation, integrated human PR, exact Release workflow attempt and digest-checked
+publication handoff. Complete matching GitHub and npm destinations, final-archive
+documentation checks and the published provenance are required. An exercise,
+failed or partial publication, an unrelated completion or unknown eligibility
+cannot promote candidate documentation. A read-only visibility recheck can
+complete an already published identity; Site never republishes it.
+
+Pushes, manual main redeployments and stable roots for other PR previews use the
+same selection. While publication is pending, the previous source is resolved
+from the existing Pages publication record and Git ancestry, then its declared
+publication and actual archives are reverified. If no eligible source can be
+established, deployment stops and existing Pages stays unchanged. Ordinary
+documentation-only changes for an already published selected version remain
+deployable. No new version ledger, main-branch write or engine build is involved.
+
+The existing github-pages concurrency group covers selection through observation.
+Immediately before deployment, main/PR freshness and stable publication
+eligibility are checked again. A changed selection rejects a delayed artifact.
+The complete artifact records observed main separately from the stable content
+source and preserves that source's explicit demo selection. A documentation
+promotion never selects a newer demo runtime.
+
+A Distribution release completion triggers Site through workflow_run only after
+this workflow is integrated on main. Qualification-only completions without a
+product publication handoff are ignored. This trigger's event and artifacts are
+inputs to validation, not authority by themselves. Forks and Dependabot retain
+validation without Pages deployment permissions.

@@ -4,6 +4,8 @@ import { join, resolve, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { files, digest } from './prepare.mjs';
 import { previewIdentity } from './options.mjs';
+import { assertStableCurrent, sourceAt } from './eligibility.mjs';
+import { httpReader } from '../release/state.mjs';
 
 export function publicationContext({ eventName, event, ref, sha, repository, actor }) {
   if (!/^[\w.-]+\/[\w.-]+$/.test(repository ?? '') || !/^[a-f0-9]{40}$/.test(sha ?? '')) throw Error('Invalid publication context.');
@@ -14,7 +16,7 @@ export function publicationContext({ eventName, event, ref, sha, repository, act
     return { mode: 'preview', repository, pullRequest: event.number,
       preview: previewIdentity(pr.head.ref, pr.head.sha) };
   }
-  if (!['push', 'workflow_dispatch'].includes(eventName) || ref !== 'refs/heads/main') return null;
+  if (!['push', 'workflow_dispatch', 'workflow_run'].includes(eventName) || ref !== 'refs/heads/main') return null;
   return { mode: 'stable', repository, mainCommit: sha, preview: null };
 }
 
@@ -103,10 +105,12 @@ async function main() {
       event: JSON.parse(await readFile(env.GITHUB_EVENT_PATH, 'utf8')), ref: env.GITHUB_REF,
       sha: env.GITHUB_SHA, repository: env.GITHUB_REPOSITORY, actor: env.GITHUB_ACTOR });
     if (!context) throw Error('Execution is not eligible for Pages publication.');
-    const mainCommit = revision(stableRoot);
-    if (context.mode === 'stable' && mainCommit !== context.mainCommit) throw Error('Main checkout identity mismatch.');
+    const selection = JSON.parse(await readFile('.work/site/selection.json', 'utf8'));
+    if (!selection.publish || selection.repository !== context.repository) throw Error('Ineligible documentation selection.');
+    const mainCommit = selection.mainCommit;
+    if (revision(stableRoot) !== (selection.stable?.sourceCommit ?? mainCommit)) throw Error('Stable checkout identity mismatch.');
     if (context.preview && revision(candidateRoot) !== context.preview.commit) throw Error('PR checkout identity mismatch.');
-    console.log(JSON.stringify(await assemble({ stableRoot, candidateRoot, output, context: { ...context, mainCommit } })));
+    console.log(JSON.stringify(await assemble({ stableRoot, candidateRoot, output, context: { ...context, mainCommit, stableDocumentation: selection.stable } })));
   } else if (command === 'guard' && args.length === 1) {
     const record = JSON.parse(await readFile(args[0], 'utf8'));
     await assertCurrent(record, async path => {
@@ -117,6 +121,10 @@ async function main() {
       if (!response.ok) throw Error(`Publication state unavailable: HTTP ${response.status}`);
       return response.json();
     });
+    const get = httpReader(process.env.GH_TOKEN);
+    const localCommit = revision('.');
+    await assertStableCurrent(record, {get, directory: resolve('.work/site'),
+      readAt: (commit,path,optional=false) => sourceAt({repository:record.repository,commit,path,optional,get,localCommit,directory:resolve('.')})});
     console.log(`Current Pages inputs: ${JSON.stringify(record)}`);
   } else throw Error('Usage: publication.mjs has-site ROOT | assemble STABLE CANDIDATE OUTPUT | guard RECORD');
 }
