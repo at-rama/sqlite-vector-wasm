@@ -2,12 +2,12 @@
 schema_version: 1
 change: prepare-release-package-docs
 allocation_unit: A-package
-checked_commit: 6b80ab08d9f18aba15eb3103e98cbdf220294cdc
-verdict: failed
+checked_commit: a8dfcf65d4f15948c5286c4a0078e5b15d19c7d2
+verdict: passed
 coverage:
   allocation_to_change: 100
   change_to_allocation: 100
-openspec_verify: failed
+openspec_verify: passed
 repository_checks: passed
 applicable_tests: passed
 ---
@@ -15,7 +15,7 @@ applicable_tests: passed
 
 ## Institutional view
 
-**Failed on completion metadata, with supported behavior.** The implementation and applicable execution evidence below pass, but official task completeness is 2/4: tasks 3.1 and 4.1 remain unchecked in the clean reviewed input. Their execution and report must be recorded before this invocation can pass. No behavioral acceptance is inferred from the pending checkboxes. This verifies this package unit, not a new product release or the four later changes. No archive, merge or publication was performed. The release exercise uses an explicit historical-state fixture (0.2.4 legacy reference), not live registry state or a reservation of 0.3.0.
+**Passed for A-package.** All four tasks are complete; both coverage directions and the three Verification controls pass. The actual production/browser execution is bound to 6b80ab08d9f18aba15eb3103e98cbdf220294cdc; the checked commit is a subsequent task/report-only checkpoint with identical implementation, document, lock and harness bytes. That evidence is explicitly reused after checking those identities, not relabeled as execution on the later commit. This verifies this package unit, not a new product release or the four later changes. No archive, merge or publication was performed. The release exercise uses an explicit historical-state fixture (0.2.4 legacy reference), not live registry state or a reservation of 0.3.0.
 
 **Command provenance.** The [reconciled Allocation snapshot](https://github.com/at-rama/sqlite-vector-wasm/blob/41c7d36e2f67118d507deb0005eda887bfa12334/.42p/engineering/2026-10-04_sqlite-vec-wasm_allocation_edit-0.1.md), A-package, and its complete qualified Distribution/Release-Watch passages govern this examination. In particular D/C-release-review adds selected candidate/final documents while D/C-purpose preserves both isolated technical capabilities with Vector production. The [bidirectional mapping](coverage.md) was reread against all eight effective requirements and their boundaries; both directions remain 100%. Original historical source fidelity was not reaudited; the Capture retains immutable S-spec provenance and current scoped human decisions.
 
@@ -33,7 +33,7 @@ applicable_tests: passed
 
 **Clean reconstruction and output boundary.** CI starts from a clean exact checkout and reconstructs the complete path. Locally the canonical check and tracked diff confirm no source vendoring or generated runtime/archive was committed; work outputs remain ignored. Tooling was independently installed in an empty temporary directory under `/tmp`, with pinned identities/deps and smoke passing. Shared repository-authored harnesses and common agentic authorship remain dependencies of these observations; no independent certification is claimed.
 
-**Decision boundary.** Complete the two execution/report task markers after recording these genuinely executed controls, commit that metadata correction, then rerun Verification on the clean resulting candidate. Do not advance to another change yet. Archive remains deliberately unperformed under the mission; overall PR merge gates also cover the four still-pending changes.
+**Decision boundary.** The unit is satisfactory under these scoped results and explicit evidence reuse; the next allocation may now be implemented. Final integration must reconsider any later changes to these source/document/handoff bytes. Archive remains deliberately unperformed under the mission; overall PR merge gates also cover the four still-pending changes.
 
 ## Detailed verification record
 
@@ -43,11 +43,11 @@ The repository-owned composition and unmodified generated verify skills were rea
 
 | Dimension | Executed result |
 | --- | --- |
-| Completeness | 2/4 task markers; 2 CRITICAL completion findings: unchecked 3.1 and 4.1. Both modified requirements have implementation. |
+| Completeness | 4/4 tasks; both modified requirements implemented; all eight effective baseline/delta requirements accounted for. |
 | Correctness | Both modified requirements and all eleven scenarios mapped to selected documents/rendering, archive identity/provenance, malformed-input and retained-byte controls; broader effective requirement evidence is recorded above. No requirement or scenario was skipped. |
 | Coherence | Deterministic identity rendering from existing package/build inputs, one selected engine, readable per-engine sources, source/output provenance and fresh archive generation follow the design. Existing Node/test/fs patterns retained; no new dependency, runtime API or registry. |
 
-CRITICAL: complete task 3.1 and task 4.1 markers after recording their executed controls. No behavior/spec divergence or missing scenario evidence was found in the examined implementation. Correctness/coherence pass does not override failed task completeness.
+No critical issues, warnings or skipped applicable checks remain. Official verification passes; archive-readiness advice does not override this mission’s explicit no-archive boundary.
 
 ### Repository controls and execution
 
@@ -55,4 +55,4 @@ On implementation source 6b80ab08d9f18aba15eb3103e98cbdf220294cdc: `sh tools/che
 
 Full local log `.work/apply76/package-final-all-tests.log`, targeted `.work/apply76/package-controls.log`, and fresh tool/smoke/replay records are temporary primary results; this report summarizes them durably. Hosted acceptance and qualification logs/artifacts above remain accessible with GitHub retention (qualification artifact expires 2026-11-18). Their historical lookup must not later be represented as fresh execution.
 
-The exact clean checked input is 6b80ab08d9f18aba15eb3103e98cbdf220294cdc. Both implementation steps are marked complete; verification execution/report steps are not yet marked complete in this snapshot. No missing-marker finding was silently waived.
+The exact clean checked input is a8dfcf65d4f15948c5286c4a0078e5b15d19c7d2. After the failed administrative completeness finding, only execution evidence/task/report metadata changed before this recheck; current code/document/lock/harness identities were compared to the exercised source. The official task/context inspection and canonical/strict checks were renewed.
