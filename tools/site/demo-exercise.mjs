@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { build, repository } from './build.mjs';
 import { serveSite } from './server.mjs';
 import { checkDemo } from './demo-check.mjs';
+import { example } from './example.mjs';
 
 export async function exerciseDemo() {
   await rm(join(repository, '.work/site/demo-results.json'), { force: true });
@@ -21,11 +22,16 @@ export async function exerciseDemo() {
   const readme = join(repository, 'README.md'), original = await readFile(readme, 'utf8');
   try {
     await writeFile(readme, original + '\nDemo runtime preservation check.\n');
+    if (process.env.SITE_CANDIDATE_BUNDLE) await example(repository);
     // The same explicit pin must survive an actual documentation-only rebuild.
-    const rebuilt = await build();
+    const rebuilt = await build({ allowDirtyDocumentation: true });
     assert.deepEqual(rebuilt.runtime, originalRuntime);
     results.push({ documentationUpdate: 'real runtime inventory unchanged', runtime: rebuilt.runtime });
-  } finally { await writeFile(readme, original); await build(); }
+  } finally {
+    await writeFile(readme, original);
+    if (process.env.SITE_CANDIDATE_BUNDLE) await example(repository);
+    await build();
+  }
   await writeFile(join(repository, '.work/site/demo-results.json'), JSON.stringify(results, null, 2) + '\n');
   return results;
 }
