@@ -6,7 +6,7 @@
 
 ## 2. Publication ordering
 
-- [ ] 2.1 Wire complete matching release outcome to stable deployment while guarding ordinary main pushes, manual redeploys and preview stable-root rebuilds; retain ordinary documentation-only updates and fail closed when no eligible source is established. Add corresponding regression cases and update the existing guide in this group; verify the delivered behavior against this Change’s named modified/added scenarios before continuing.
+- [x] 2.1 Wire complete matching release outcome to stable deployment while guarding ordinary main pushes, manual redeploys and preview stable-root rebuilds; retain ordinary documentation-only updates and fail closed when no eligible source is established. Add corresponding regression cases and update the existing guide in this group; verify the delivered behavior against this Change’s named modified/added scenarios before continuing.
 
 ## 3. Site verification
 

@@ -39,8 +39,10 @@ jobs:
           sh tools/openspec.sh exec list --json
           sh tools/openspec.sh exec validate --all --strict
           if test -f .42p/openspec/changes/publish-site-after-distribution/tasks.md; then
-              sh tools/openspec.sh exec status --change publish-site-after-distribution --json
-              sh tools/openspec.sh exec instructions apply --change publish-site-after-distribution --json
+              for change in prepare-release-package-docs preview-vector-release-docs prepare-reviewed-release-candidates bind-release-documentation publish-site-after-distribution; do
+                  sh tools/openspec.sh exec status --change "$change" --json
+                  sh tools/openspec.sh exec instructions apply --change "$change" --json
+              done
           fi
 
   verification:
