@@ -8,7 +8,7 @@ Realize A-updates by preparing exact human-selected official upstream combinatio
 
 ### Requirement: Exact human dispatch
 
-Candidate preparation SHALL start from human `workflow_dispatch` with exact `sqlite_version`, exact `sqlite_vec_version` and optional free-text `sqlite_comment`, `sqlite_vec_comment` and `misc_comment`. Nonempty comment fields SHALL be trimmed at their edges and joined in that order with one blank line into the single canonical release comment. It SHALL accept no manual channel or distribution-version override and SHALL operate independently of watch plans, polling history and intervening releases. Nominal preparation SHALL be deterministic without AI selection or repair.
+Candidate preparation SHALL start from human `workflow_dispatch` with exact `sqlite_version`, exact `sqlite_vector_version` and optional free-text `sqlite_comment`, `sqlite_vector_comment` and `misc_comment`. The fixed product engine SHALL be SQLite-Vector; retained sqlite-vec support SHALL NOT be a dispatch choice. Nonempty comments SHALL be edge-trimmed and joined in SQLite → SQLite-Vector → miscellaneous order with one blank line into the canonical release comment. Preparation SHALL reject manual channel/version overrides and operate independently of watch plans, polling history and intervening releases, without nominal AI selection or repair.
 
 #### Scenario: Exact pair outside watch suggestions
 - **WHEN** the maintainer selects an admissible pair absent from any watch plan, skipping intermediate releases or rebuilding the recorded pair
@@ -20,19 +20,24 @@ Candidate preparation SHALL start from human `workflow_dispatch` with exact `sql
 
 #### Scenario: Comments aggregate as structured data
 - **WHEN** one or more comment fields contain text, including quotes, real newlines or shell metacharacters
-- **THEN** nonempty trimmed fields are joined in SQLite → sqlite-vec → miscellaneous order with one blank line, retained as data without execution, and do not change selection
+- **THEN** nonempty trimmed fields are joined in SQLite → SQLite-Vector → miscellaneous order with one blank line, retained as data without execution, and do not change selection
 
 #### Scenario: Comments are absent or blank
 - **WHEN** all three comment fields are absent, empty or whitespace-only
 - **THEN** the canonical release comment is empty
 
+#### Scenario: Legacy selection is not a current product choice
+- **WHEN** a dispatch supplies sqlite-vec selection fields, an engine selector or a mixed/ambiguous selection
+- **THEN** preparation fails without translating it into another selection or creating an eligible candidate
+
+
 ### Requirement: Official pinned candidate inputs
 
-Preparation SHALL resolve official published non-draft inputs with recorded origins and digests, retaining established pin integrity and exact prerelease suffixes. It SHALL freeze a coherent set of repository input records, release descriptor and version-associated SQLite/sqlite-vec notices before candidate checks and production, check downloaded bytes before use and consume the existing clean acquisition/build/package path without vendoring sources, committing outputs or patching upstreams.
+Preparation SHALL resolve the exact official published, non-draft SQLite/SQLite-Vector pair with established source identities/digests and exact suffixes. It SHALL freeze one coherent Vector lock, release descriptor and release-associated required notices before checks or production, verify downloaded bytes before use and consume the existing clean acquisition/build/package path. Stable releases and actually published alpha/beta/rc releases are admissible under A-inputs; branches, development snapshots, aliases and fabricated prereleases are not. Required source/license/dependency integrity failures SHALL stop preparation without vendoring, upstream patches, fallback pair selection or silent adoption of a changed established pin.
 
 #### Scenario: New admissible pair
 - **WHEN** selected stable or published prerelease versions have sufficient official source and integrity metadata
-- **THEN** candidate records preserve those exact versions, origins and official digests for verified production
+- **THEN** candidate records preserve those exact released versions, immutable source bindings and recorded digests established under A-inputs for verified production
 
 #### Scenario: Existing pin differs
 - **WHEN** official metadata or downloaded bytes disagree with an established expected digest
@@ -47,20 +52,20 @@ Preparation SHALL resolve official published non-draft inputs with recorded orig
 - **THEN** an unchanged source lock remains valid and preparation still introduces or updates a traceable release descriptor
 
 #### Scenario: Only SQLite identity changes
-- **WHEN** an admissible selection changes SQLite, including a supported older version, while retaining the recorded sqlite-vec version
-- **THEN** both SQLite notices, their version associations, origins and content digests are reconciled to that exact selected release before repository checks, without changing the sqlite-vec notice group
+- **WHEN** an admissible selection changes SQLite, including a supported older version, while retaining the recorded SQLite-Vector version
+- **THEN** both SQLite notices, their version associations, origins and content digests are reconciled to that exact selected release before repository checks, without refreshing the unchanged Vector notice group, while validating its selected identity and pinned dependency
 
 #### Scenario: Only sqlite-vec identity changes
-- **WHEN** an admissible selection changes sqlite-vec, including a published prerelease or rollback, while retaining the recorded SQLite version
-- **THEN** its MIT and Apache notices, exact suffix-bearing version associations, origins and content digests are reconciled before repository checks, without changing the SQLite notice group
+- **WHEN** an admissible selection changes SQLite-Vector, including a published prerelease or rollback, while retaining the recorded SQLite version
+- **THEN** its Apache license notice, exact suffix-bearing version association, immutable selected-commit origin and content digest are reconciled, and its pinned FP16 dependency is validated before repository checks, without changing the SQLite notice group
 
 #### Scenario: Both upstream identities change
 - **WHEN** both selected upstreams differ from the recorded pair
 - **THEN** the committed candidate contains both reconciled notice groups with its source lock and descriptor before any repository check or qualification consumes it
 
 #### Scenario: sqlite-vec notice absent from the selected archive
-- **WHEN** the sqlite-vec notice group is being refreshed and a required license file is absent from its verified selected archive
-- **THEN** preparation obtains it from a canonical upstream origin fixed to the exact selected release and records its immutable source identity and digest before candidate checks, without using a floating branch or another version's text
+- **WHEN** the SQLite-Vector notice group is being refreshed and a required license file is absent from its verified selected archive
+- **THEN** preparation fails under the existing required-content checks without borrowing another release's text, a floating branch or an alternate source bundle
 
 #### Scenario: SQLite notice source absent or unsupported
 - **WHEN** the SQLite notice group is being refreshed and its verified selected archive lacks a required notice source or its license block cannot be extracted by the defined selector
@@ -82,9 +87,18 @@ Preparation SHALL resolve official published non-draft inputs with recorded orig
 - **WHEN** reconciliation succeeds
 - **THEN** one candidate commit contains all changed source identities, release descriptor, notice records and notice texts; raw upstream acquisitions and diagnostic outputs remain uncommitted
 
+#### Scenario: Prospective prerelease is not an observed publication
+- **WHEN** an alpha-like version exists only in a branch, header, npm alias or build artifact without the required exact official release/tag/source binding
+- **THEN** preparation fails without manufacturing a release identity, stripping its suffix or accepting the artifact as a published source
+
+#### Scenario: Recorded FP16 dependency no longer matches
+- **WHEN** the selected Vector archive cannot establish the existing pinned FP16 license and incorporated-header identities
+- **THEN** preparation fails before candidate qualification rather than silently adopting a new dependency or retaining an unverified association
+
+
 ### Requirement: Shared forecast and rollback policy
 
-Preparation SHALL derive its channel, forecast version and rollback classification using the A-release policy and complete actual Git/npm publication state. Forecasts SHALL reserve no identity, introduce no second numbering policy, reservation registry or application lock, and SHALL NOT authorize initial experimental publication. Unavailable state or calculation collisions SHALL fail.
+Preparation SHALL derive channel, forecast and comparable rollback through the existing A-release calculation and complete actual Git/npm state, including historical engine identity, adopted component references and the first-transition MINOR/0.x rule. It SHALL NOT compare foreign-engine version numbers, introduce another numbering policy/registry/lock or reserve a forecast. Comparable regression SHALL require the aggregated comment; engine substitution alone SHALL NOT count as rollback. Unavailable state/collisions SHALL fail; no initial experimental publication or renewed bootstrap exception is authorized.
 
 #### Scenario: Stable initial candidate
 - **WHEN** actual publication state permits the first distribution and both selected upstreams are stable
@@ -99,16 +113,21 @@ Preparation SHALL derive its channel, forecast version and rollback classificati
 - **THEN** preparation cannot present it as an eligible initial publication candidate
 
 #### Scenario: Explicit rollback
-- **WHEN** a selected upstream is older than its channel reference
+- **WHEN** SQLite is older than its normal channel reference or Vector is older than its applicable same-engine channel/latest reference
 - **THEN** a nonempty release comment is required and retained, with the advancing distribution forecast calculated by A-release
 
 #### Scenario: Incomplete or colliding state
 - **WHEN** required publication history is inaccessible, inconsistent or yields an existing identity
 - **THEN** preparation fails without treating the state as empty or trying a replacement identity
 
+#### Scenario: First Vector candidate uses historical product state
+- **WHEN** a Vector selection is prepared while stable latest still contains the pre-transition 0.x sqlite-vec product
+- **THEN** preparation consumes A-release's MINOR transition and current component references without cross-engine ordering, resetting history or reserving a publication number
+
+
 ### Requirement: Clean revision-bound candidate qualification
 
-Preparation SHALL evaluate the clean committed candidate containing its input records and release descriptor, using complete mandatory repository, build, compatibility, packaging, integrity and real-browser acceptance controls. Evidence SHALL identify that exact commit and forecast package/archive. A passing tooling fixture, partial matrix or historical run SHALL NOT establish candidate qualification.
+Preparation SHALL evaluate the clean committed candidate containing its exact Vector source/notice snapshot and schema-2 descriptor with complete mandatory repository, build, compatibility, packaging, integrity and real-browser acceptance controls. Qualification SHALL explicitly consume that Vector lock and calculated scoped package identity; returned engine, sources, revision and payload SHALL agree. Float32, native binary/Hamming, retained SQLite APIs/Workers/FTS5/baseline and all default OPFS restart gates remain mandatory. A fixture, partial matrix, different-engine success or historical run SHALL NOT qualify a candidate.
 
 #### Scenario: Complete candidate qualification
 - **WHEN** all required controls pass on the clean candidate revision and its exact forecast payload
@@ -122,9 +141,18 @@ Preparation SHALL evaluate the clean committed candidate containing its input re
 - **WHEN** a mandatory test, browser prerequisite, persistence case or integrity check fails or cannot execute
 - **THEN** preparation is unsuccessful and creates no eligible candidate PR
 
+#### Scenario: Another engine succeeds for the selected candidate
+- **WHEN** qualification returns a passing sqlite-vec bundle, another source lock/version, or otherwise mismatched engine evidence for a Vector candidate
+- **THEN** preparation fails before remote branch/PR writes rather than treating the passing result as engine-independent
+
+#### Scenario: Nonpublishing real preparation rehearsal
+- **WHEN** preparation is exercised with its exact recorded Vector pair in a fresh isolated candidate checkout and fresh production/tool state
+- **THEN** the complete commit/notice/descriptor/production/browser/evidence path can succeed without a remote write adapter, actual candidate PR, tag or publication, with any fixture state explicitly identified
+
+
 ### Requirement: Release descriptor handoff
 
-The candidate SHALL introduce or update `inputs/release.json` in the format consumed by A-release, with selections matching `inputs/sources.lock.json`, the exact aggregated comment and the real preparation run ID/URL in this repository. Its invocation context SHALL remain retrievable through candidate state. The descriptor SHALL NOT persist a forecast as a reserved final version.
+The candidate SHALL introduce or update `inputs/release.json` in A-release's schemaVersion 2 with exact `sqlite`/`sqliteVector` matching `inputs/sqlite-vector.sources.lock.json`, the aggregated comment and actual preparation run ID/URL in this repository. Its invocation context SHALL remain retrievable through candidate state and PR evidence. Historical formats SHALL NOT authorize a current sqlite-vec candidate. The descriptor SHALL NOT persist a reserved forecast or manually selected channel/version.
 
 #### Scenario: Candidate descriptor is consumed
 - **WHEN** A-release reads the integrated candidate descriptor
@@ -136,7 +164,7 @@ The candidate SHALL introduce or update `inputs/release.json` in the format cons
 
 ### Requirement: Qualified temporary candidate PR
 
-After successful mandatory preparation controls, the system SHALL create or update a candidate PR targeting `main` from a temporary branch carrying the evaluated commit. It SHALL expose exact selection, forecast, preparation reference and qualification evidence for human review and current candidate discovery. It SHALL NOT silently replace another candidate, create permanent distribution branches or use a refusal-history registry.
+After all mandatory preparation controls pass, the system SHALL create or update a temporary candidate PR targeting `main` carrying the evaluated Vector commit. Run/PR presentation SHALL expose exact engine/version selection, unreserved forecast, preparation reference and accessible qualification evidence for human review and subsequent candidate-state consumption. It SHALL NOT silently replace another candidate, create permanent distribution branches or use a refusal-history registry. Supplying the Vector handoff SHALL NOT imply that an unadapted Watch consumer already understands it.
 
 #### Scenario: Successful PR presentation
 - **WHEN** qualification passes and the candidate branch can be pushed
@@ -152,7 +180,7 @@ After successful mandatory preparation controls, the system SHALL create or upda
 
 ### Requirement: Retained candidate provenance and diagnostics
 
-Preparation SHALL retain available reports, logs, candidate provenance and the forecast payload as uncommitted artifacts. Successful evidence SHALL relate the preparation invocation, exact candidate commit, source origins/digests, actual build tools/options/environment, channel/forecast and output digests. Notice reconciliation evidence SHALL identify the selected upstreams and each notice group's refreshed or retained disposition. Refreshed notices SHALL identify immutable origins, raw and recorded digests, normalization and its outcome. Retained notices SHALL identify their existing records and validation outcome without claiming renewed source acquisition or unrecorded historical provenance. Failures SHALL retain available evaluated identities and diagnostics without manufacturing successful evidence.
+Preparation SHALL retain available reports, logs, candidate provenance and forecast payload as uncommitted artifacts. Successful evidence SHALL relate actual engine identity, exact selections/source origins/digests, candidate commit, preparation/run, build tools/options/environment, channel/forecast, aggregated comment and output digests. Notice evidence SHALL distinguish refreshed and retained groups; refreshed records SHALL identify immutable origins, raw/recorded digests, any permitted normalization and outcome. Retained records SHALL report validation and unavailable provenance honestly, without claiming renewed acquisition. Failures SHALL preserve evaluated identities and completed/failed/unexecuted diagnostics without manufacturing success.
 
 #### Scenario: Traceable candidate
 - **WHEN** the maintainer inspects a successful candidate and its linked run artifacts
@@ -169,7 +197,6 @@ Preparation SHALL retain available reports, logs, candidate provenance and the f
 #### Scenario: Retained legacy notice provenance
 - **WHEN** a notice group remains unchanged, including same-pair reconstruction, and its existing valid record lacks a raw digest or immutable Git commit
 - **THEN** evidence identifies the retained record and checked recorded-byte digest, explicitly marks unavailable raw or immutable-source information as not established, preserves the record without a new notice download, and does not claim fresh source verification
-
 ### Requirement: Human integration and publication boundary
 
 Preparation SHALL stop at the qualified candidate PR. It SHALL NOT merge, enable automatic merge, create release tags or publish GitHub/npm distributions. Human integration and all mandatory gates remain prerequisites; passing candidate evidence SHALL NOT waive A-release's definitive recalculation and authoritative-revision/exact-payload qualification. Bootstrap SHALL NOT bypass this boundary.

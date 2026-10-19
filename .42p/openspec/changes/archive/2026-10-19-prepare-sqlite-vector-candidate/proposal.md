@@ -24,7 +24,7 @@ None.
 
 ## Impact
 
-Exactly one realization unit: **A-updates**. Source: [current Allocation](../../../engineering/2026-10-04_sqlite-vec-wasm_allocation_edit-0.1.md), SHA-256 `00ab76dd9cd370ca1cf6e5cf6a8943efbf5076500bcd583b7c38932c7ff39840`, with its qualified Distribution and Release/Watch Capture passages. Comparison baseline is main `17d42d1976b8f3235c59fb499613a8cff89f7fc1` (merged #72). See [coverage](coverage.md) for the complete unit and retained baseline obligations.
+Exactly one realization unit: **A-updates**. Source: [current Allocation](../../../../engineering/2026-10-04_sqlite-vec-wasm_allocation_edit-0.1.md), SHA-256 `00ab76dd9cd370ca1cf6e5cf6a8943efbf5076500bcd583b7c38932c7ff39840`, with its qualified Distribution and Release/Watch Capture passages. Comparison baseline is main `17d42d1976b8f3235c59fb499613a8cff89f7fc1` (merged #72). See [coverage](coverage.md) for the complete unit and retained baseline obligations.
 
 Expected implementation touches tools/updates and its tests, Updates workflow/rehearsal, docs/candidates.md and the narrowly coupled release test fixtures. Existing production and release consumers are reused. Source records/notices/descriptors are future candidate outputs, not edits made by this implementation Change itself; merging the tooling must not create a real publication candidate.
 
