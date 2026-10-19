@@ -1,0 +1,58 @@
+# Préparation de la revue de release — compte rendu pour institution
+
+## Décision proposée
+
+Le corpus est prêt pour décision d'institution des six propositions, avec dérivation documentaire conforme. Les cinq premières forment le workflow de préparation/revue/publication ; la sixième prépare l'adaptation indépendante de la démo. Aucun Apply, merge, archivage, dispatch de release, publication ni déploiement n'a été exécuté. Toutes les tâches restent ouvertes.
+
+La décision humaine attendue porte sur ces propositions et leur ordre d'exécution. Elle ne peut être déduite des checks réussis. La PR reste draft : les gates post-Apply `verification` et `archive` ne peuvent pas passer pour des changes encore proposés ; aucune fausse `verification.md` ni dérogation au cadre n'est créée. Institution des propositions puis implémentation peuvent se faire sur cette même branche, avant sa future intégration.
+
+## État initial et réconciliation réalisée
+
+Base examinée : main `741b26df750b3c1f0f5a00c1dd1e579b4e7c6d9e`. Captures et Allocation réconciliées au commit [`41c7d36`](https://github.com/at-rama/sqlite-vector-wasm/commit/41c7d36e2f67118d507deb0005eda887bfa12334), avant création des propositions.
+
+Les écarts corrigés dans le design et l'attribution étaient : conservation des deux capacités techniques réduite à la simple permission de garder du code ; absence de préparation conjointe des documents publics/embarqués ; exemple documentaire réservé à une publication déjà existante ; absence d'ordre entre publication produit et déploiement public ; comparaison d'impacts datée pouvant être confondue avec l'état courant. Les décisions primaires de cette conversation sont conservées sous S-retained-capability et S-release-review, avec leur portée et l'absence de permalien public.
+
+La cible est explicite : deux capacités isolées conservées pour consommer/tester vec et Vector, une seule production prospective Vector de bout en bout. Aucun changement de défaut générique ou retrait de double CI n'est requis pour ce seul motif. A-watch et A-notifications conservent leurs notes done et leurs preuves datées. A-bootstrap n'est pas rouvert. Les archives, rapports historiques, pins, code, workflows exécutables, standards et spécifications synchronisées sont inchangés.
+
+Les quatre Captures edit-0.1 et l'Allocation globale edit-0.1 restent les documents courants : [Distribution](2026-10-04_sqlite-vec-wasm_capture_edit-0.1.md), [Site](2026-10-08_sqlite-vec-wasm_site_capture_edit-0.1.md), [Release/Watch](2026-10-09_sqlite-vec-wasm_release-watch_capture_edit-0.1.md), [Notifications](2026-10-14_sqlite-vector-wasm_workflow-notifications_capture_edit-0.1.md), [Allocation](2026-10-04_sqlite-vec-wasm_allocation_edit-0.1.md). Les empreintes exactes et la correspondance globale figurent dans le [rapport de dérivation](2026-10-19_release-review_derivation_edit-0.1.md).
+
+## Vérifications réussies et limites
+
+L'examen global complet des quatre Captures vers les douze unités d'Allocation a conclu **PASS** pour couverture, fondement, préservation et cohérence, avant Propose. Chaque relation Allocation → contrat effectif du Change a ensuite été examinée dans les deux sens : **PASS, 100 % / 100 %** dans son périmètre, incluant les exigences/scénarios de base conservés et le delta. Les rapports de chaque Change identifient les entrées et empreintes des artefacts. L'examen final de continuité confirme que tous consomment exactement le même snapshot d'Allocation ; aucun amont n'a changé pendant Propose, donc aucun verdict global n'a été invalidé.
+
+Exécutions concluantes : préflight OpenSpec 1.14.0 et résolution locale `.42p` ; `sh tools/check-repository.sh` ; `openspec validate --all --strict` par le lanceur épinglé, **18 éléments réussis, 0 échec** ; `sh tools/test-repository.sh`, **379 tests réussis**, zéro échec. Les suites Python comptent 44/47/7/11 tests ; Node 44/19/24/50/36/60/37. Aucun test produit, browser ou Pages supplémentaire n'est prétendu par ces suites du dépôt. Le log primaire temporaire est `.work/planning/repository-tests.log`, SHA-256 `dfc64fe412a2c3fc2a2dae47c3a6a2b1742f687a31befb1e76ec1764edf47d70` ; il n'est pas un artefact hébergé pérenne. Le présent relevé conserve le résultat réellement observé et les commandes reproductibles.
+
+Une validation intermédiaire du delta documentaire a échoué car trois scénarios publiés avaient été omis ; ils ont été rétablis, dont le scénario d'exécution qualifié explicitement en mode publié, avant nouvelle validation réussie. L'état CLI « complete » décrit l'existence des artefacts de planning ; il ne prouve pas Apply. Les quatre tâches de chacun des six changes sont décochées. `42p-verify-change` a été lu et jugé non applicable avant Apply : il n'a pas été exécuté ni déclaré réussi.
+
+Le verdict documentaire n'audite pas la fidélité historique aux conversations indisponibles et ne réceptionne aucune implémentation. Les checks de preview/Pages, vrais navigateurs, production et publication prévus dans les propositions restent à exécuter après institution et implémentation. Les gates de merge sont décrits séparément de ces succès, sans les contourner.
+
+## Propositions et ordre recommandé
+
+Chaque ligne porte exactement une unité existante ; aucun parent Change ou composant nouveau n'est ajouté. Chaque dossier contient proposal, design, delta spec, tâches ouvertes, couverture bidirectionnelle et rapport de dérivation.
+
+| Ordre / unité source | Proposition et périmètre | Dérivation |
+| --- | --- | --- |
+| 1 · A-package | [prepare-release-package-docs](../openspec/changes/prepare-release-package-docs/proposal.md) — Documents consommateurs de l’archive liés à la composition et à l’identité fournies, avec provenance des sources et du rendu ; conservation des deux chemins. | [PASS · 100 % / 100 %](../openspec/changes/prepare-release-package-docs/derivation.md) |
+| 2 · A-site_docs | [preview-vector-release-docs](../openspec/changes/preview-vector-release-docs/proposal.md) — README/Usage Vector, adaptation SQL et exemple réel sur archive candidate qualifiée, preview explicitement non publiée ; documents publics cohérents après publication. | [PASS · 100 % / 100 %](../openspec/changes/preview-vector-release-docs/derivation.md) |
+| 3 · A-updates | [prepare-reviewed-release-candidates](../openspec/changes/prepare-reviewed-release-candidates/proposal.md) — Même PR pour locks/notices et documents, qualification du head, transfert d’archive et liens/checks de preview ; éligibilité à l’intégration après ces checks. | [PASS · 100 % / 100 %](../openspec/changes/prepare-reviewed-release-candidates/derivation.md) |
+| 4 · A-release | [bind-release-documentation](../openspec/changes/bind-release-documentation/proposal.md) — Identité documentaire définitive, renouvellement des vérifications affectées, preuve de publication GitHub/npm complète et cohérente destinée au site. | [PASS · 100 % / 100 %](../openspec/changes/bind-release-documentation/derivation.md) |
+| 5 · A-site_shell | [publish-site-after-distribution](../openspec/changes/publish-site-after-distribution/proposal.md) — Preview existante puis promotion publique après publication complète ; protection des pushes, redéploiements manuels et racines stables reconstruites par d’autres previews. | [PASS · 100 % / 100 %](../openspec/changes/publish-site-after-distribution/derivation.md) |
+| 6 · A-site_demo | [adapt-vector-published-demo](../openspec/changes/adapt-vector-published-demo/proposal.md) — SQL/identité Vector et oracles Hamming/cosine, corpus et UI préservés ; rafraîchissement explicite depuis une vraie archive stable publiée, séparément du workflow documentaire. | [PASS · 100 % / 100 %](../openspec/changes/adapt-vector-published-demo/derivation.md) |
+
+## Cohérence et risques résiduels
+
+Package et documentation fournissent leurs préparations à Updates ; Release consomme le candidat intégré et renouvelle l'évidence requise pour la version définitive ; Shell consomme seulement une publication complète correspondant aux documents. Le déploiement n'est pas un second publisher. Les cinq changements doivent être réceptionnés de façon cohérente avant d'utiliser un vrai candidat avec le nouveau workflow. Les responsabilités voisines restent explicitement distinctes dans chaque Change.
+
+Le risque de numéro recalculé est traité avant publication : seuls des champs mécaniques déjà revus peuvent être rendus automatiquement ; si les instructions exigent une modification substantielle, arrêter avant publication et représenter un candidat révisé. Aucun fix documentaire après publication n'est le chemin nominal. Si GitHub réussit mais npm échoue ou reste pending, l'ancien site public reste disponible. Si Pages échoue après publication complète, une reprise du même déploiement est possible sans nouvelle release. Les identités du dépôt/run/head/archive et les contrôles de fraîcheur empêchent de traiter un événement de completion ou une URL de preview comme preuve suffisante.
+
+La démo conserve sa version publiée historique jusqu'à son rafraîchissement explicite. La liste GitHub des releases, relue pendant cette préparation, présente en tête `dist/v0.2.1`, puis 0.2.0/0.1.1/0.1.0 ; aucune archive Vector nouvelle n'a été créée par cette mission. L'exécution/réception de la démo adaptée attend donc une vraie publication stable Vector. Cette dépendance externe est identifiée et n'est ni un blocage de dérivation de sa proposition ni un prérequis de la première publication Vector. Aucun couple exact, numéro 0.3.0 ou démarrage de release n'est autorisé par ce compte rendu.
+
+## Suite opératoire soumise à décision
+
+1. Instituer les propositions voulues, sur leurs sources et limites explicites ; conserver la PR en cours, sans la fusionner au stade de planning.
+2. Exécuter `openspec-apply-change` pour package, docs, Updates, Release puis Shell dans cet ordre ; réexaminer l'amont et la couverture si un diagnostic exige une révision sémantique.
+3. Pour chaque unité réalisée, exécuter le véritable `42p-verify-change` : couverture complète, workflow officiel de vérification OpenSpec et checks/tests applicables, avec `verification.md` authentique et preuves sur le commit/payload pertinent. Aucun résultat manquant n'est un succès.
+4. Après Verification satisfaisante, suivre le skill d'archivage et sa synchronisation native, contrôler les gates, puis soumettre la fusion à l'humain. Aucun candidat de production n'est dispatché tant que la chaîne n'est pas réceptionnée.
+5. Utiliser ensuite Updates pour une vraie préparation : revue de la proposition et du preview identifié, fusion humaine, qualification définitive, publication produit et promotion du site. Réaliser/recevoir le Change démo séparément avec une archive stable réellement publiée.
+
+Les propositions sont prêtes pour cette décision. L'implémentation, la réception de leurs comportements et les opérations de release restent à faire.
