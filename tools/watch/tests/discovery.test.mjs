@@ -1,62 +1,57 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { sqliteTags, vecReleases, discover, fossilTags } from '../discovery.mjs';
-
-const html = await readFile(new URL('./fixtures/sqlite-taglist.html.txt',import.meta.url),'utf8');
-const release = await readFile(new URL('./fixtures/sqlite-release.html.txt',import.meta.url));
-// The captured subset omits id; complete the test observation without editing it.
-const vec = {...JSON.parse(await readFile(new URL('./fixtures/sqlite-vec-release.json',import.meta.url))),id:324084102};
-const record = (version,id=900001) => ({...structuredClone(vec),id,url:`https://api.github.com/repos/asg017/sqlite-vec/releases/${id}`,tag_name:`v${version}`,prerelease:version.includes('-'),
-  html_url:`https://github.com/asg017/sqlite-vec/releases/tag/v${version}`,
-  assets: [{name:`sqlite-vec-${version}-amalgamation.tar.gz`,state:'uploaded',digest:'sha256:'+'1'.repeat(64),
-    browser_download_url:`https://github.com/asg017/sqlite-vec/releases/download/v${version}/sqlite-vec-${version}-amalgamation.tar.gz`}]});
-
-test('captured Fossil inventory retains all eligible exact releases, not the moving release tag',()=>{
+import { sqliteTags, vectorReleases, discover, fossilTags, vectorAPI, baselines } from '../discovery.mjs';
+const fixture = async name => JSON.parse(await readFile(new URL(`./fixtures/sqlite-vector-${name}.json`,import.meta.url)));
+const captured=await fixture('release'),tag=await fixture('tag'),commit=await fixture('commit');
+const html=await readFile(new URL('./fixtures/sqlite-taglist.html.txt',import.meta.url),'utf8');
+const release=await readFile(new URL('./fixtures/sqlite-release.html.txt',import.meta.url));
+export const record=(version,id=900001)=>({...captured,id,url:`${vectorAPI}/releases/${id}`,tag_name:version,prerelease:version.includes('-'),html_url:`https://github.com/sqliteai/sqlite-vector/releases/tag/${version}`});
+test('captured Fossil retains exact releases and rejects truncation, unknown identities and nested markup',()=>{
   assert.deepEqual(sqliteTags(html).map(x=>x.version),['3.53.4','3.54.0']);
-  assert.equal(sqliteTags(html)[1].date,'2026-10-09');
-  assert.throws(()=>sqliteTags(html.slice(0,-40)),/Incomplete/);
-  assert.throws(()=>sqliteTags(html.replace('version-3.54.0','version-3.54.0-alpha.1')),/Unresolved/);
-  assert.throws(()=>sqliteTags(html.replace('version-3.54.0','version-unknown')),/Ambiguous/);
+  for(const value of [html.slice(0,-40),html.replace('version-3.54.0','version-unknown'),html.replace('version-3.54.0','version-3.54.0-alpha.1'),
+    html.replace('<span class="tagDsp">version-3.54.0</span>','<span class="tagDsp"><script>version-3.54.0</script></span>')])assert.throws(()=>sqliteTags(value));
 });
-test('captured sqlite-vec prerelease metadata, baselines and nonrelease exclusion',()=>{
-  const draft={...vec,draft:true},snapshot={...vec,published_at:null};
-  assert.deepEqual(vecReleases([draft,snapshot,vec,record('0.1.9'),record('0.1.9-alpha.1')]).map(x=>x.version),['0.1.9','0.1.10-alpha.4']);
-  for(const r of [{...vec,prerelease:false},{...vec,assets:[]},{...vec,assets:[{...vec.assets[0],digest:null}]}])
-    assert.throws(()=>vecReleases([r]));
-  assert.throws(()=>vecReleases([vec,vec]),/Ambiguous/);
+test('captured Vector release and synthetic maturity/floor cases need no assets or checksum',()=>{
+  const versions=['1.0.0','1.1.0-alpha.1','1.1.2','1.1.3-alpha.1','1.1.3-alpha.2','1.1.3-beta.1','1.1.3-rc.1','2.0.0'];
+  const records=versions.map((v,i)=>record(v,100+i));
+  assert.deepEqual(vectorReleases([captured,...records,{...captured,draft:true},{...captured,published_at:null}]).map(x=>x.version),['1.1.0',...versions.slice(2)]);
+  assert.deepEqual(baselines,{sqlite:'3.53.4',sqliteVector:'1.1.0'});
+  for(const r of [{...captured,prerelease:true},{...captured,tag_name:'v1.1.0'},{...captured,tag_name:'latest'},{...captured,tag_name:'1.1.2-dev'},{...captured,published_at:'today'},{...captured,id:0},{...captured,url:'https://example.com'},{...captured,html_url:'https://example.com'}])assert.throws(()=>vectorReleases([r]));
+  assert.throws(()=>vectorReleases([captured,captured]),/repeated/);
+  assert.throws(()=>vectorReleases([captured,record('1.1.0')]),/Ambiguous/);
 });
-
-test('Fossil cells reject nested, incomplete and unexpected markup without stripping it',()=>{
-  const cell='<span class="tagDsp">version-3.54.0</span>';
-  for(const bad of ['<span class="tagDsp"><script>version-3.54.0</script></span>',
-    '<span class="tagDsp"><SCRIPT>version-3.54.0</SCRIPT></span>',
-    '<span class="tagDsp">version-3.54.0<script</span>',
-    '<a>version-3.54.0</a>'])
-    assert.throws(()=>sqliteTags(html.replace(cell,bad)),/Unrecognized Fossil cell markup/);
+function reader(records=[captured]) {
+  const replies=new Map([[fossilTags,{status:200,data:Buffer.from(html)}],
+    ['https://sqlite.org/releaselog/3_54_0.html',{status:200,data:release}],
+    ['https://sqlite.org/releaselog/3_53_4.html',{status:200,data:Buffer.from('<title>SQLite Release 3.53.4 On 2026-07-24</title>')}],
+    [`${vectorAPI}/releases?per_page=100`,{status:200,data:records,headers:{}}],
+    [`${vectorAPI}/git/ref/tags/1.1.0`,{status:200,data:tag}],
+    [tag.object.url,{status:200,data:commit}]]);
+  const calls=[];
+  const get=async url=>{calls.push(url);assert.ok(replies.has(url),`Unexpected read: ${url}`);return replies.get(url);};
+  return {get,replies,calls};
+}
+test('complete paginated discovery binds captured official release/tag/commit without archive reads',async()=>{
+  const f=reader();const result=await discover(f);
+  assert.equal(result.sqliteVector[0].commit,commit.sha);assert.equal(result.sqliteVector[0].tag,'1.1.0');
+  assert.ok(f.calls.every(u=>!u.includes('codeload')&&!u.includes('asg017')));
+  const page=`${vectorAPI}/releases?page=2`;
+  f.replies.set(`${vectorAPI}/releases?per_page=100`,{status:200,data:[],headers:{link:`<${page}>; rel="next"`}});
+  f.replies.set(page,{status:200,data:[captured],headers:{}});
+  assert.equal((await discover(f)).sqliteVector.length,1);
+  f.replies.set(page,{status:503});await assert.rejects(()=>discover(f));
 });
-test('complete paginated discovery verifies official release logs and fails incomplete reads',async()=>{
-  const requests=[];
-  const get=async(url)=>{requests.push(url);
-    if(url===fossilTags)return {status:200,data:Buffer.from(html)};
-    if(url.includes('/releaselog/3_54_0'))return {status:200,data:release};
-    if(url.includes('/releaselog/3_53_4'))return {status:200,data:Buffer.from('<title>SQLite Release 3.53.4 On 2026-07-24</title>')};
-    if(url.includes('page=2'))return {status:200,data:[vec],headers:{}};
-    return {status:200,data:[record('0.1.9')],headers:{link:'<https://api.github.com/repos/asg017/sqlite-vec/releases?page=2>; rel="next"'}};
-  };
-  const observed=await discover({get}); assert.equal(observed.sqlite.length,2);assert.equal(observed.sqliteVec.length,2);
-  assert.ok(requests.some(x=>x.includes('page=2')));
-  await assert.rejects(()=>discover({get:async()=>({status:503})}),/unavailable/);
-  await assert.rejects(()=>discover({get:async(url)=>url.includes('/releaselog/')?{status:200,data:Buffer.from('wrong identity')}:get(url)}),/Contradictory/);
-  await assert.rejects(()=>discover({get:async(url)=>url.includes('page=2')?{status:200,data:[record('0.1.10-alpha.4')],headers:{}}:get(url)}),/repeated sqlite-vec Release resource/);
-});
-
-test('Release resource identities reject contradictory versions, copies and ID/URL mismatches',()=>{
-  const stable=record('0.1.9',vec.id);
-  assert.throws(()=>vecReleases([stable,vec]),/repeated sqlite-vec Release resource/);
-  assert.throws(()=>vecReleases([vec,structuredClone(vec)]),/repeated sqlite-vec Release resource/);
-  for(const id of [undefined,0,-1,'900001',Number.MAX_SAFE_INTEGER+1])
-    assert.throws(()=>vecReleases([{...record('0.1.9'),id}]),/resource ID/);
-  assert.throws(()=>vecReleases([{...record('0.1.9'),url:vec.url}]),/ID\/URL mismatch/);
-  assert.throws(()=>vecReleases([record('0.1.9'),record('0.1.9',900002)]),/Ambiguous sqlite-vec release/);
+test('binding failures, annotated tags, unsafe origins and incomplete discovery fail',async()=>{
+  for(const [url,value] of [[fossilTags,{status:503}],[tag.object.url,{status:200,data:{sha:'a'.repeat(40)}}],[`${vectorAPI}/git/ref/tags/1.1.0`,{status:200,data:{...tag,ref:'refs/tags/wrong'}}],['https://sqlite.org/releaselog/3_54_0.html',{status:200,data:Buffer.from('wrong identity')}]]) {
+    const f=reader();f.replies.set(url,value);await assert.rejects(()=>discover(f));
+  }
+  const f=reader(),sha='a'.repeat(40),url=`${vectorAPI}/git/tags/${sha}`;
+  f.replies.set(`${vectorAPI}/git/ref/tags/1.1.0`,{status:200,data:{...tag,object:{sha,type:'tag',url}}});
+  f.replies.set(url,{status:200,data:{sha,object:tag.object}});
+  assert.equal((await discover(f)).sqliteVector[0].commit,commit.sha);
+  for(const object of [{...tag.object,type:'blob'},{...tag.object,url:'https://example.com'}, {sha,type:'tag',url}]) {
+    const g=reader();g.replies.set(`${vectorAPI}/git/ref/tags/1.1.0`,{status:200,data:{...tag,object}});
+    g.replies.set(url,{status:200,data:{sha,object}});await assert.rejects(()=>discover(g));
+  }
 });

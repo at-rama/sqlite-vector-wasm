@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { upstream, compareUpstream } from '../release/policy.mjs';
 import { pages } from '../release/state.mjs';
 
-export const baselines = Object.freeze({ sqlite: '3.53.4', sqliteVec: '0.1.9' });
+export const baselines = Object.freeze({ sqlite: '3.53.4', sqliteVector: '1.1.0' });
 export const fossilTags = 'https://sqlite.org/src/taglist';
 // Extract the observed Fossil cell form; do not sanitize arbitrary HTML.
 const text = cell => {
@@ -42,33 +42,52 @@ export function sqliteTags(html) {
   return found.sort((a,b) => compareUpstream(a.version,b.version,'sqlite'));
 }
 
-export function vecReleases(records) {
+export const vectorAPI = 'https://api.github.com/repos/sqliteai/sqlite-vector';
+
+export function vectorReleases(records) {
   assert.ok(Array.isArray(records));
   const found = [], seen = new Set(), resources = new Set();
   for (const r of records) {
-    assert.equal(typeof r.draft, 'boolean'); assert.equal(typeof r.prerelease, 'boolean');
+    assert.equal(typeof r?.draft, 'boolean'); assert.equal(typeof r.prerelease, 'boolean');
     if (r.draft || r.published_at === null) continue;
     assert.match(r.published_at || '', /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/);
-    const version = r.tag_name?.replace(/^v/, '');
-    upstream(version, 'sqliteVec');
-    if (compareUpstream(version,baselines.sqliteVec,'sqliteVec') < 0) continue;
-    assert.match(version, /^(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)(?:-(?:alpha|beta|rc)(?:\.(?:0|[1-9][0-9]*))?)?$/);
-    assert.equal(r.prerelease, !!upstream(version).prerelease.length, 'Contradictory sqlite-vec maturity');
-    assert.ok(Number.isSafeInteger(r.id) && r.id > 0, 'Invalid sqlite-vec Release resource ID');
-    assert.equal(r.url, `https://api.github.com/repos/asg017/sqlite-vec/releases/${r.id}`, 'sqlite-vec Release ID/URL mismatch');
-    assert.ok(!resources.has(r.id), 'Ambiguous repeated sqlite-vec Release resource'); resources.add(r.id);
-    assert.ok(!seen.has(version), 'Ambiguous sqlite-vec release'); seen.add(version);
-    assert.equal(r.html_url, `https://github.com/asg017/sqlite-vec/releases/tag/v${version}`);
-    assert.match(r.url || '', /^https:\/\/api\.github\.com\/repos\/asg017\/sqlite-vec\/releases\/[1-9][0-9]*$/);
-    assert.ok(Array.isArray(r.assets), 'Missing sqlite-vec assets');
-    const assets = r.assets.filter(a => a.name === `sqlite-vec-${version}-amalgamation.tar.gz`);
-    assert.equal(assets.length,1, 'Missing/ambiguous official amalgamation');
-    assert.equal(assets[0].state,'uploaded');
-    assert.equal(assets[0].browser_download_url,`https://github.com/asg017/sqlite-vec/releases/download/v${version}/sqlite-vec-${version}-amalgamation.tar.gz`);
-    assert.match(assets[0].digest || '', /^sha256:[0-9a-f]{64}$/, 'Missing official source-integrity metadata');
-    found.push({version,release:r.html_url,metadata:r.url,archive:assets[0].browser_download_url,digest:assets[0].digest});
+    const version = r.tag_name;
+    // Same exact published-tag vocabulary as A-inputs; aliases are not releases.
+    assert.match(version || '', /^(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)(?:-(?:alpha|beta|rc)(?:\.(?:0|[1-9][0-9]*))?)?$/);
+    upstream(version, 'sqliteVector');
+    assert.equal(r.prerelease, !!upstream(version, 'sqliteVector').prerelease.length, 'Contradictory Vector maturity');
+    if (compareUpstream(version, baselines.sqliteVector, 'sqliteVector') < 0) continue;
+    assert.ok(Number.isSafeInteger(r.id) && r.id > 0, 'Invalid Vector Release resource ID');
+    assert.equal(r.url, `${vectorAPI}/releases/${r.id}`, 'Vector Release ID/URL mismatch');
+    assert.ok(!resources.has(r.id), 'Ambiguous repeated Vector Release resource'); resources.add(r.id);
+    assert.ok(!seen.has(version), 'Ambiguous Vector release'); seen.add(version);
+    assert.equal(r.html_url, `https://github.com/sqliteai/sqlite-vector/releases/tag/${version}`);
+    found.push({version, release:r.html_url, metadata:r.url, releaseId:r.id});
   }
-  return found.sort((a,b) => compareUpstream(a.version,b.version,'sqliteVec'));
+  return found.sort((a,b) => compareUpstream(a.version,b.version,'sqliteVector'));
+}
+
+async function vectorBinding(item, get) {
+  const tagUrl = `${vectorAPI}/git/ref/tags/${item.version}`;
+  const response = await get(tagUrl);
+  assert.equal(response.status, 200, 'Vector tag unavailable');
+  assert.equal(response.data?.ref, `refs/tags/${item.version}`, 'Inconsistent Vector tag binding');
+  let object = response.data.object;
+  const seen = new Set();
+  for (let depth = 0; depth < 5; depth++) {
+    assert.match(object?.sha || '', /^[0-9a-f]{40}$/, 'Invalid Vector tag object');
+    assert.ok(['tag','commit'].includes(object.type), 'Vector tag does not identify a commit');
+    assert.ok(!seen.has(object.sha), 'Cyclic Vector tag binding'); seen.add(object.sha);
+    const url = `${vectorAPI}/git/${object.type === 'tag' ? 'tags' : 'commits'}/${object.sha}`;
+    assert.equal(object.url, url, 'Unofficial Vector tag/commit origin');
+    const record = await get(url);
+    assert.equal(record.status, 200, 'Vector tag/commit unavailable');
+    assert.equal(record.data?.sha, object.sha, 'Inconsistent Vector tag/commit metadata');
+    if (object.type === 'commit') return {...item, tag:item.version, tagUrl, commit:object.sha, commitUrl:url,
+      archive:`https://codeload.github.com/sqliteai/sqlite-vector/tar.gz/${object.sha}`};
+    object = record.data.object;
+  }
+  throw Error('Excessive Vector tag indirection');
 }
 
 export async function discover({ get }) {
@@ -83,5 +102,8 @@ export async function discover({ get }) {
     const title = `<title>SQLite Release ${item.version} On ${item.date}</title>`;
     assert.ok(log.data.toString('utf8').includes(title),`Contradictory SQLite publication: ${item.version}`);
   }
-  return {sqlite,sqliteVec:vecReleases(await pages('asg017/sqlite-vec','releases',get))};
+  const releases = vectorReleases(await pages('sqliteai/sqlite-vector','releases',get));
+  const sqliteVector = [];
+  for (const item of releases) sqliteVector.push(await vectorBinding(item,get));
+  return {sqlite,sqliteVector};
 }

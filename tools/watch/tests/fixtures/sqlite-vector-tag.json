@@ -1,0 +1,10 @@
+{
+  "ref": "refs/tags/1.1.0",
+  "node_id": "REF_kwDOOVWuCa9yZWZzL3RhZ3MvMS4xLjA",
+  "url": "https://api.github.com/repos/sqliteai/sqlite-vector/git/refs/tags/1.1.0",
+  "object": {
+    "sha": "235a7c51b18858e1fea9fb2895e115e4cbbd9f7d",
+    "type": "commit",
+    "url": "https://api.github.com/repos/sqliteai/sqlite-vector/git/commits/235a7c51b18858e1fea9fb2895e115e4cbbd9f7d"
+  }
+}

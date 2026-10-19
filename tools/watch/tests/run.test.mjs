@@ -17,8 +17,8 @@ test('complete scheduled and manual fixture plans use the same read/compute/rend
   const f=await planningFixture(),summary=[],evidence=[];
   const run=event=>runWatch({context:{...f.context,event},get:f.get,writeSummary:async s=>summary.push(s),writeEvidence:async e=>evidence.push(e)});
   const scheduled=await run('schedule'),manual=await run('workflow_dispatch');assert.deepEqual(scheduled,manual);
-  assert.deepEqual(scheduled.entries.map(e=>[e.selection.sqlite,e.selection.sqliteVec,e.identity.channel,e.identity.version]),[
-    ['3.54.0','0.1.9','latest','0.2.0'],['3.53.4','0.1.10-alpha.4','next','0.1.1-alpha.1'],['3.54.0','0.1.10-alpha.4','next','0.2.0-alpha.1']]);
+  assert.deepEqual(scheduled.entries.map(e=>[e.selection.sqlite,e.selection.sqliteVector,e.identity.channel,e.identity.version]),[
+    ['3.53.4','1.1.0','latest','0.2.0'],['3.54.0','1.1.0','latest','0.2.0']]);
   assert.equal(summary[0].split('Invocation:')[0],summary[1].split('Invocation:')[0]);assert.equal(evidence.length,2);
   assert.match(evidence[0].observationStartedAt,/^\d{4}-\d{2}-\d{2}T/);
   assert.equal(evidence[0].inventory.sqlite[1].release,'https://sqlite.org/releaselog/3_54_0.html');
@@ -31,18 +31,18 @@ test('normal empty plan succeeds with readable summary and invocation evidence',
 });
 test('all-candidate plans under either trigger preserve reference evidence and every preparation',async()=>{
   const f=await planningFixture(),api=`https://api.github.com/repos/${f.repository}/`;
-  const selections=[['3.54.0','0.1.9'],['3.53.4','0.1.10-alpha.4'],['3.54.0','0.1.10-alpha.4']];
-  f.replies.get(api+'actions/workflows/updates.yml/runs?branch=main&event=workflow_dispatch&per_page=100').data={total_count:3,
+  const selections=[['3.53.4','1.1.0'],['3.54.0','1.1.0']];
+  f.replies.get(api+'actions/workflows/updates.yml/runs?branch=main&event=workflow_dispatch&per_page=100').data={total_count:2,
     workflow_runs:selections.map(([sqlite,vec],i)=>({id:20+i,run_attempt:1,status:'queued',event:'workflow_dispatch',head_branch:'main',
       path:'.github/workflows/updates.yml',repository:{full_name:f.repository},head_sha:f.context.revision,
-      html_url:`https://github.com/${f.repository}/actions/runs/${20+i}`,display_title:`candidate sqlite=${sqlite} sqlite-vec=${vec}`}))};
+      html_url:`https://github.com/${f.repository}/actions/runs/${20+i}`,display_title:`candidate sqlite=${sqlite} SQLite-Vector=${vec}`}))};
   for(const event of ['schedule','workflow_dispatch']) {
     const summaries=[],records=[];
     const context={...f.context,event};
     const result=await runWatch({context,get:f.get,writeSummary:async s=>summaries.push(s),writeEvidence:async e=>records.push(e)});
-    assert.equal(result.outcome,'nonempty');assert.equal(result.entries.length,3);
+    assert.equal(result.outcome,'nonempty');assert.equal(result.entries.length,2);
     assert.ok(result.entries.every(e=>e.candidates.length===1));
-    assert.equal((summaries[0].match(/Existing preparation; do not launch a duplicate/g)||[]).length,3);
+    assert.equal((summaries[0].match(/Existing preparation; do not launch a duplicate/g)||[]).length,2);
     assert.doesNotMatch(summaries[0],/Normal empty plan|Preparation: none/);
     assert.match(summaries[0],new RegExp(`Invocation: ${event}; revision ${f.context.revision}`));
     assert.equal(records.length,1);assert.equal(records[0].schemaVersion,1);
@@ -55,11 +55,11 @@ test('all-candidate plans under either trigger preserve reference evidence and e
 
 test('F1 Release identity contradictions fail discovery rather than presenting a plan',async()=>{
   const f=await planningFixture();
-  const releases=f.replies.get('https://api.github.com/repos/asg017/sqlite-vec/releases?per_page=100').data;
-  releases[0].id=releases[1].id;releases[0].url=releases[1].url;
+  const releases=f.replies.get('https://api.github.com/repos/sqliteai/sqlite-vector/releases?per_page=100').data;
+  releases.push(structuredClone(releases[0]));
   const {result,summaries,evidence}=await exercise({get:f.get});
   assert.equal(result.outcome,'failed');assert.equal(result.stage,'discovery');
-  assert.match(result.diagnostic,/repeated sqlite-vec Release resource/);
+  assert.match(result.diagnostic,/repeated Vector Release resource/);
   assert.match(summaries[0],/planning failed/);assert.match(summaries[0],/discovery/);
   assert.doesNotMatch(summaries[0],/Normal empty plan|## latest|## next/);
   assert.equal(evidence[0].outcome,'failed');assert.equal(evidence[0].stage,'discovery');
@@ -71,7 +71,7 @@ test('F2 contradictory pre-PR preparation selections fail candidate state withou
   const run={id:17,run_attempt:1,status:'queued',event:'workflow_dispatch',head_branch:'main',
     path:'.github/workflows/updates.yml',repository:{full_name:repository},head_sha:f.context.revision,
     html_url:`https://github.com/${repository}/actions/runs/17`};
-  const runs=['3.54.0','3.54.1'].map(sqlite=>({...run,display_title:`candidate sqlite=${sqlite} sqlite-vec=0.1.9`}));
+  const runs=['3.54.0','3.54.1'].map(sqlite=>({...run,display_title:`candidate sqlite=${sqlite} SQLite-Vector=1.1.0`}));
   f.replies.get(`https://api.github.com/repos/${repository}/actions/workflows/updates.yml/runs?branch=main&event=workflow_dispatch&per_page=100`).data={total_count:2,workflow_runs:runs};
   const {result,summaries,evidence}=await exercise({get:f.get});
   assert.equal(result.outcome,'failed');assert.equal(result.stage,'candidate state');

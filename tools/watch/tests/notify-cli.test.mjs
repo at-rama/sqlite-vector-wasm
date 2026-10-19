@@ -80,3 +80,14 @@ test('ambiguous CLI send fails once and preserves producer records without fallb
   const {run,requests}=await cli(t,record,{GITHUB_SHA:record.context.revision},true);
   assert.equal(run.status,1);assert.equal(requests.length,1);assert.match(run.stderr,/No automatic resend/);
 });
+
+test('recurring actual Vector plans with every entry already prepared send once per complete execution',async t=>{
+  for(const event of ['schedule','workflow_dispatch'])for(let repeat=0;repeat<2;repeat++) {
+    const f=await planningFixture(),api=`https://api.github.com/repos/${f.repository}/`;
+    f.replies.get(api+'actions/workflows/updates.yml/runs?branch=main&event=workflow_dispatch&per_page=100').data={total_count:2,workflow_runs:['3.53.4','3.54.0'].map((sqlite,i)=>({id:20+i,run_attempt:1,status:'queued',event:'workflow_dispatch',head_branch:'main',path:'.github/workflows/updates.yml',repository:{full_name:f.repository},head_sha:f.context.revision,html_url:`https://github.com/${f.repository}/actions/runs/${20+i}`,display_title:`candidate sqlite=${sqlite} SQLite-Vector=1.1.0`}))};
+    const {record,result}=await produced(event,{get:f.get});
+    assert.equal(result.outcome,'nonempty');assert.ok(result.entries.every(e=>e.candidates.length===1&&e.selection.sqliteVector==='1.1.0'));
+    const output=await cli(t,record,{GITHUB_EVENT_NAME:event,GITHUB_SHA:record.context.revision});
+    assert.equal(output.run.status,0,output.run.stderr);assert.equal(output.requests.length,1);
+  }
+});
