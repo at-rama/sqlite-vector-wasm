@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, writeFile, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { root, regularBytes, hash, validatePackagedBuild, documentInputs, engineIdentity, noticeInputs, manifest, packageMetadata, inspectArchive } from '../package/package.mjs';
+import { root, regularBytes, hash, validatePackagedBuild, documentInputs, documentProvenance, engineIdentity, noticeInputs, manifest, packageMetadata, inspectArchive } from '../package/package.mjs';
 import { production, command } from '../acceptance/run.mjs';
 import { vectorLock, recordedSelection, assertSelected, assertSelectionEvidence, assertApplicable } from '../acceptance/contracts.mjs';
 import { engineKey, calculate } from './policy.mjs';
@@ -34,10 +34,11 @@ export async function acceptedPayload({ bundle, identity, commit, repository = r
   const inspection = await mkdtemp(join(bundle, 'release-inspect-'));
   const extracted = join(inspection, 'extracted');
   await inspectArchive(archivePath, packaged.files, extracted);
-  const documents = await documentInputs(build, repository);
+  const documents = await documentInputs(build, repository, identity);
   for (const [path, data] of documents) {
     assert.equal(hash(await regularBytes(join(extracted, path))), hash(data), `Published ${path} differs from selected source revision`);
   }
+  assert.deepEqual(packaged.documents, await documentProvenance(build, repository, identity, documents), 'Packaged document provenance mismatch');
   // The retained archive is the downstream input; original build directories may be gone.
   const runtime = await validatePackagedBuild({ ...build, runtimeDirectory: extracted }, repository);
   const contents = await noticeInputs(build, repository);

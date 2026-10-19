@@ -2,11 +2,11 @@
 
 ## 1. Consumer document preparation
 
-- [ ] 1.1 Prepare Vector document sources for the actual enclosed composition and native SQL adaptation, without fixed fixture-only publication claims or a duplicate public README. Add corresponding regression cases and update the existing guide in this group; verify the delivered behavior against this Change’s named modified/added scenarios before continuing.
+- [x] 1.1 Prepare Vector document sources for the actual enclosed composition and native SQL adaptation, without fixed fixture-only publication claims or a duplicate public README. Add corresponding regression cases and update the existing guide in this group; verify the delivered behavior against this Change’s named modified/added scenarios before continuing.
 
 ## 2. Identity-bound assembly
 
-- [ ] 2.1 Integrate explicit package/upstream identity rendering, source/output provenance and final-archive link validation into existing assembly, preserving both isolated engine paths and all runtime/notices/glue boundaries. Add corresponding regression cases and update the existing guide in this group; verify the delivered behavior against this Change’s named modified/added scenarios before continuing.
+- [x] 2.1 Integrate explicit package/upstream identity rendering, source/output provenance and final-archive link validation into existing assembly, preserving both isolated engine paths and all runtime/notices/glue boundaries. Add corresponding regression cases and update the existing guide in this group; verify the delivered behavior against this Change’s named modified/added scenarios before continuing.
 
 ## 3. Package verification
 

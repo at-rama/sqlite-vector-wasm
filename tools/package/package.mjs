@@ -178,13 +178,28 @@ export const documentMapping = engine => [
   ['docs/common/browser.md','docs/browser.md'],
 ];
 
-export async function documentInputs(handoff, repository = root) {
+export function renderDocument(source, handoff, suppliedIdentity) {
+  if (engineIdentity(handoff).key !== 'sqliteVector') return source;
+  const { name, version } = identity(suppliedIdentity?.name, suppliedIdentity?.version);
+  const sqlite = handoff.inputs.sqlite.version, vector = handoff.inputs.sqliteVector.version;
+  require([sqlite, vector].every(v => typeof v === 'string' && /^[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?$/.test(v)), 'Invalid document composition');
+  const text = source.toString();
+  require(!/0\.0\.0-vector|has no published npm release/.test(text), 'Stale fixture-only document');
+  const position = text.indexOf('\n');
+  require(position > 0, 'Missing document title');
+  const status = name === '@at-rama/sqlite-vector-wasm' ? 'Prepared archive' : 'Unpublished local package';
+  const header = `\n\n${status}: \`${name}@${version}\`. SQLite **${sqlite}** with SQLite-Vector **${vector}**. Assembly identifies these enclosed bytes; registry availability is established separately by the matching publication record.`;
+  return Buffer.from(text.slice(0, position) + header + text.slice(position));
+}
+
+export async function documentInputs(handoff, repository = root, suppliedIdentity) {
   const result = new Map();
   for (const [source,destination] of documentMapping(engineIdentity(handoff))) {
     require(!result.has(destination), 'Duplicate document destination');
     const path = join(repository,source);
     require(await realpath(path) === resolve(path), 'Unsafe document source');
-    result.set(destination, await regularBytes(path));
+    const sourceBytes = await regularBytes(path);
+    result.set(destination, source.startsWith('docs/sqlite-vector/') ? renderDocument(sourceBytes, handoff, suppliedIdentity) : sourceBytes);
   }
   const engine = engineIdentity(handoff);
   const title = engine.key === 'sqliteVec' ? 'sqlite-vec' : 'SQLite-Vector';
@@ -210,6 +225,15 @@ export async function documentInputs(handoff, repository = root) {
     }
   }
   return result;
+}
+
+export async function documentProvenance(handoff, repository, suppliedIdentity, documents) {
+  return Promise.all(documentMapping(engineIdentity(handoff)).map(async ([source, destination]) => ({
+    source, destination, sourceSha256: hash(await regularBytes(join(repository, source))),
+    sha256: hash(documents.get(destination)),
+    ...(engineIdentity(handoff).key === 'sqliteVector' && source.startsWith('docs/sqlite-vector/')
+      ? { identity: identity(suppliedIdentity.name, suppliedIdentity.version), upstreams: { sqlite: handoff.inputs.sqlite.version, sqliteVector: handoff.inputs.sqliteVector.version } } : {}),
+  })));
 }
 
 export function packageMetadata(name, version, files, engine = {key:'sqliteVec'}) {
@@ -261,7 +285,9 @@ export async function assemble({ handoff, name, version, repository = root, run 
     const runtime = await validateBuild(handoff, repository);
     const contents = await noticeInputs(handoff, repository);
     for (const entry of runtime) contents.set(...entry);
-    for (const entry of await documentInputs(handoff, repository)) contents.set(...entry);
+    const documents = await documentInputs(handoff, repository, { name, version });
+    for (const entry of documents) contents.set(...entry);
+    const documentRecords = await documentProvenance(handoff, repository, { name, version }, documents);
     contents.set('runtime.json', jsonBytes(manifest(handoff)));
     const names = [...contents.keys(), 'package.json'].sort();
     contents.set('package.json', jsonBytes(packageMetadata(name, version, names, engineIdentity(handoff))));
@@ -282,7 +308,7 @@ export async function assemble({ handoff, name, version, repository = root, run 
     require(hash(await regularBytes(archivePath)) === hash(archiveBytes), 'Archive changed during inspection');
     const result = { schemaVersion: 1, workspace, package: { name, version }, inputs: manifest(handoff).inputs,
       lockDigest: handoff.inputs.lockDigest, engine:engineIdentity(handoff), sourceLockPath:manifest(handoff).sourceLockPath, sourceOrigins:manifest(handoff).sourceOrigins, build: handoff.build,
-      buildHandoffSha256: hash(jsonBytes(handoff)),
+      buildHandoffSha256: hash(jsonBytes(handoff)), documents: documentRecords,
       runtimeDirectory: extracted.directory, runtimeFiles: handoff.runtimeFiles, files,
       archive: { path: archivePath, size: archiveBytes.length, sha256: hash(archiveBytes) }, logPath };
     await save(join(workspace, 'handoff.json'), result);
