@@ -35,7 +35,20 @@ test('documentation rendering rejects stale, missing or mismatched execution evi
   for(const mutate of [e=>e.context.commit='b'.repeat(40),e=>e.context.sourceHashes['README.md']='b'.repeat(64),e=>e.context.archive.sha256='b'.repeat(64),e=>e.context.version='0.3.1',e=>e.context.qualifiedCommit='b'.repeat(40),e=>e.replayOnly=true,e=>e.unchangedRuntime=false,e=>e.result.engineVersion='wrong']){
     const changed=structuredClone(evidence);mutate(changed);await save(changed);await assert.rejects(checkedDocumentation(root));
   }
-  await save(evidence);await writeFile(join(root,'README.md'),'# Changed\n');await assert.rejects(checkedDocumentation(root),/Stale/);
+  const published=structuredClone(evidence);
+  published.context.mode='published';published.context.publicationCommit='c'.repeat(40);published.selection.commit='c'.repeat(40);
+  const profile={...published.selection,mode:'published',engine:'sqliteVector'};
+  const select=p=>writeFile(join(root,'tools/site/docs-example.json'),JSON.stringify(p));
+  // Selector changes themselves are committed, so these failures test the
+  // pinned publication rather than the general stale-source guard.
+  await select(profile);execFileSync('git',['add','tools/site/docs-example.json'],{cwd:root});
+  execFileSync('git',['-c','user.name=fixture','-c','user.email=fixture@example.test','commit','-qm','published profile'],{cwd:root});
+  published.context.commit=sourceCommit(root);await save(published);assert.equal((await checkedDocumentation(root)).mode,'published');
+  for (const key of ['version','commit','archiveSha256']) {
+    await select({...profile,[key]:key==='version'?'0.3.1':'d'.repeat(key==='commit'?40:64)});
+    await assert.rejects(checkedDocumentation(root),/Wrong selected publication/);
+  }
+  await select(profile);await writeFile(join(root,'README.md'),'# Changed\n');await assert.rejects(checkedDocumentation(root),/Stale/);
   await rm(join(root,'.work/docs-example/result.json'));await assert.rejects(checkedDocumentation(root));
   assert.equal(await readFile(join(root,'tools/site/demo-runtime.json'),'utf8'),'unchanged demo selection');
 });

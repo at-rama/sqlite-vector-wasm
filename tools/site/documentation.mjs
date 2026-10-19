@@ -56,7 +56,12 @@ export async function checkedDocumentation(root, { allowDirtyDocumentation = fal
     assert.equal(selection.sourceLockPath, 'inputs/sqlite-vector.sources.lock.json');
     assert.equal(documentHash(await readFile(join(root, selection.sourceLockPath))), evidence.context.sourceLockSha256, 'Stale documentation lock');
   }
-  else assert.equal(evidence.context.publicationCommit, evidence.selection.commit, 'Wrong published example revision');
+  else {
+    assert.equal(evidence.context.publicationCommit, evidence.selection.commit, 'Wrong published example revision');
+    for (const key of ['version', 'commit', 'archiveSha256']) {
+      assert.equal(evidence.selection[key], selection[key], `Wrong selected publication ${key}`);
+    }
+  }
   assert.equal(evidence.result.sqliteVersion, evidence.context.upstreams.sqlite, 'Wrong observed SQLite version');
   assert.equal(evidence.result.engineVersion.replace(/^v/, ''), evidence.context.upstreams[evidence.context.engine], 'Wrong observed engine version');
   assert.deepEqual(evidence.workerResult, evidence.result, 'Different Worker example result');
