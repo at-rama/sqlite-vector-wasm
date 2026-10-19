@@ -9,12 +9,12 @@ const repository='at-rama/sqlite-vector-wasm',api=`https://api.github.com/repos/
 const pair={sqlite:'3.54.0',sqliteVec:'0.1.9'},commit='a'.repeat(40);
 const bytes=Buffer.from('synthetic payload; not a qualified runtime');
 const sha=createHash('sha256').update(bytes).digest('hex');
-test('Updates exposes only the exact pair for dispatches and a separate rehearsal title',async()=>{
+test('Updates exposes the exact Vector pair and a separate rehearsal title',async()=>{
   const workflow=await readFile(new URL('../../../.github/workflows/updates.yml',import.meta.url),'utf8');
   const title=workflow.split('\n').find(x=>x.startsWith('run-name:'));
   assert.match(title,/github.event_name == 'workflow_dispatch'/);
-  assert.match(title,/format\('candidate sqlite=\{0\} sqlite-vec=\{1\}', inputs.sqlite_version, inputs.sqlite_vec_version\)/);
-  assert.match(title,/'Updates PR rehearsal'/);assert.doesNotMatch(title,/sqlite_comment|sqlite_vec_comment|misc_comment|token|secret/i);
+  assert.match(title,/format\('candidate sqlite=\{0\} SQLite-Vector=\{1\}', inputs.sqlite_version, inputs.sqlite_vector_version\)/);
+  assert.match(title,/'Updates PR rehearsal'/);assert.doesNotMatch(title,/sqlite_comment|sqlite_vector_comment|misc_comment|token|secret/i);
 });
 const provenance=(version,selection=pair)=>({schemaVersion:1,name:npmPackageName,version,tag:`dist/v${version}`,
   channel:version.includes('-')?'next':'latest',commit,upstreams:selection,archive:{sha256:sha,size:bytes.length},
@@ -118,4 +118,9 @@ test('legacy, unsafe, truncated and contradictory candidate reads fail explicitl
   const moved=candidateFixture();await assert.rejects(()=>candidateState({repository,get:async(url)=>{
     const r=await moved.get(url);return url===api+'pulls/44'?{...r,data:{...r.data,head:{...r.data.head,sha:'b'.repeat(40)}}}:r;
   }}),/head changed/);
+});
+
+test('unadapted Watch rejects the Vector producer handoff explicitly',async()=>{
+  const f=candidateFixture();f.prs.length=0;f.runs[0].display_title='candidate sqlite=3.54.0 SQLite-Vector=1.1.2';
+  await assert.rejects(()=>candidateState({repository,get:f.get}));
 });

@@ -96,6 +96,8 @@ export async function prepareCandidate({ context, readSnapshot, services, reposi
     assert.equal(evidence.repository, context.repository, 'Qualification repository mismatch');
     assert.deepEqual(evidence.invocation.preparation, context.preparation);
     assert.equal(evidence.invocation.comment, context.comment);
+    const payload = await regularBytes(join(qualified.bundle, 'payload.tgz'));
+    assert.deepEqual(evidence.archive, {size:payload.length, sha256:hash(payload)}, 'Qualification archive mismatch');
     result.identity = qualified.identity; result.archive = evidence.archive; result.bundle = qualified.bundle;
     result.qualificationEvidence = qualified.evidencePath;
     result.forecastChanged = JSON.stringify(result.preflight) !== JSON.stringify(result.identity);

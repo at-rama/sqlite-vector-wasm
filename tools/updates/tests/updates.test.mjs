@@ -57,7 +57,8 @@ async function fixture(t, options={}) {
   const calls=[];let reads=0;const c={...context(),...options.context};
   const run=async (cmd,args,opts)=>{if(cmd==='sh'){await noticeInputs({inputs:lock(c.selection)},repository);assert.equal(await git(['status','--porcelain','--untracked-files=all']),'');calls.push(args[0]);if(options.failure===args[0])throw Error('mandatory check failed');return '';}if(options.failure==='commit'&&cmd==='git'&&args.includes('commit'))throw Error('commit denied');return command(cmd,args,opts);};
   const services={push:async(branch,commit)=>{calls.push('push');assert.equal(await git(['rev-parse','HEAD']),commit);if(options.failure==='push')throw Error('push denied');return {branch,head:options.failure==='pushed-head'?'b'.repeat(40):commit};},createPullRequest:async value=>{calls.push('pr');assert.match(value.body,/not reserved or published/);if(options.failure==='pr')throw Error('PR denied');return {number:1,url:'https://github.com/a/b/pull/1',head:options.failure==='head'?'b'.repeat(40):value.commit};}};
-  const qualification=async({context:ctx,readSnapshot})=>{calls.push('qualify');const snapshot=await readSnapshot();if(options.failure==='qualify')throw Error('browser failed');const evidencePath=join(repository,'.work/evidence.json');const evidence={engine:{key:'sqliteVector',upstream:'sqliteai/sqlite-vector',version:ctx.selection.sqliteVector},sourceLock:lock(ctx.selection),sourceLockSha256:hash(await readFile(join(repository,'inputs/sqlite-vector.sources.lock.json'))),repository:ctx.repository,commit:options.failure==='revision'?'b'.repeat(40):ctx.commit,upstreams:ctx.selection,invocation:{preparation:ctx.preparation,comment:ctx.comment},archive:{sha256:'c'.repeat(64),size:123}};
+  const qualification=async({context:ctx,readSnapshot})=>{calls.push('qualify');const snapshot=await readSnapshot();if(options.failure==='qualify')throw Error('browser failed');const evidencePath=join(repository,'.work/evidence.json');const payload=Buffer.from('synthetic qualified payload');const bundle=join(repository,'.work/bundle');await mkdir(bundle);await writeFile(join(bundle,'payload.tgz'),payload);const evidence={engine:{key:'sqliteVector',upstream:'sqliteai/sqlite-vector',version:ctx.selection.sqliteVector},sourceLock:lock(ctx.selection),sourceLockSha256:hash(await readFile(join(repository,'inputs/sqlite-vector.sources.lock.json'))),repository:ctx.repository,commit:options.failure==='revision'?'b'.repeat(40):ctx.commit,upstreams:ctx.selection,invocation:{preparation:ctx.preparation,comment:ctx.comment},archive:{sha256:hash(payload),size:payload.length}};
+    if(options.failure==='archive')evidence.archive.sha256='0'.repeat(64);
     if(options.failure==='engine')evidence.engine.key='sqliteVec';
     if(options.failure==='sources')evidence.sourceLock.sqliteVector.version='9.9.9';
     if(options.failure==='lock-digest')evidence.sourceLockSha256='0'.repeat(64);
@@ -175,7 +176,7 @@ test('real reconciliation rejects invalid helper output before tracked promotion
   assert.equal(JSON.parse(await readFile(join(directory,'notices.json'))).status,'failed');
 });
 
-for (const failure of ['engine','sources','lock-digest','repository','comment','preparation','pushed-head']) test(`qualification/presentation rejects ${failure} mismatch`, async t => {
+for (const failure of ['engine','sources','lock-digest','repository','comment','preparation','pushed-head','archive']) test(`qualification/presentation rejects ${failure} mismatch`, async t => {
   const f=await fixture(t,{failure});
   await assert.rejects(f.execute());
   assert.ok(!f.calls.includes('pr'));
