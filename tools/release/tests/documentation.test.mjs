@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { hash, root } from '../../package/package.mjs';
 import { candidateDocumentPaths, documentSnapshot } from '../../updates/documentation.mjs';
 import { documentationSources, renderPublicDocument } from '../../site/documentation.mjs';
-import { reviewedDocumentation } from '../documentation.mjs';
+import { reviewedDocumentation, reviewedRendererPaths } from '../documentation.mjs';
 import { qualify, publish, inspectPublicationCompletion } from '../run.mjs';
 import { releaseFixture, syntheticAttestation } from './fixture.mjs';
 
@@ -14,7 +14,7 @@ const head='b'.repeat(40),merge='a'.repeat(40),base='c'.repeat(40);
 const record = async (directory,name,value) => { await mkdir(directory,{recursive:true});await writeFile(join(directory,name),JSON.stringify(value)); };
 async function sourceFixture(t,version='0.1.0') {
   const f=await releaseFixture(t,{version});
-  for (const path of candidateDocumentPaths) {
+  for (const path of [...candidateDocumentPaths,...reviewedRendererPaths]) {
     await mkdir(join(f.repository,path,'..'),{recursive:true});await cp(join(root,path),join(f.repository,path));
   }
   const sources=await documentSnapshot(f.repository);
@@ -26,7 +26,7 @@ async function sourceFixture(t,version='0.1.0') {
 }
 async function reviewFixture(t) {
  const f=await sourceFixture(t),repository='a/b';
- const source=Object.fromEntries(await Promise.all(candidateDocumentPaths.map(async p=>[p,await readFile(join(f.repository,p),'utf8')])));
+ const source=Object.fromEntries(await Promise.all([...candidateDocumentPaths,...reviewedRendererPaths].map(async p=>[p,await readFile(join(f.repository,p),'utf8')])));
  source['inputs/release.json']=JSON.stringify({schemaVersion:2,...selected.selection,preparation:selected.preparation,releaseComment:''});
  source['inputs/sqlite-vector.sources.lock.json']=JSON.stringify(f.report.sourceLock);
  const pr={number:4,merge_commit_sha:merge,head:{sha:head,ref:'candidate/run-17-1',repo:{full_name:repository}}};
@@ -58,7 +58,7 @@ async function reviewFixture(t) {
 test('review binds preparation, qualified archive, exact Site jobs/live content and unchanged merged sources',async t=>{
  const f=await reviewFixture(t),result=await f.invoke();
  assert.equal(result.candidateCommit,head);assert.deepEqual(result.sourceHashes,f.sources);assert.equal(result.site.runId,18);
- for(const path of candidateDocumentPaths) {
+ for(const path of [...candidateDocumentPaths,...reviewedRendererPaths]) {
    f.changes.path=path;await assert.rejects(f.invoke(),/Unreviewed integrated/);
  }
  f.changes.path=undefined;
@@ -99,7 +99,8 @@ test(`review rejects ${failure} without publication authority`,async t=>{
 const state=()=>({schemaVersion:1,tags:['dist/v0.1.0'],releaseTags:['dist/v0.1.0'],npmVersions:['0.1.0'],heads:{latest:{version:'0.1.0',commit:head,upstreams:selected.selection},next:null}});
 async function finalFixture(t) {
  const f=await sourceFixture(t,'0.1.1');
- const reviewed={candidateCommit:head,forecast:'0.1.0',archive:{size:7,sha256:'f'.repeat(64)},sourceHashes:f.sources,
+ const rendererHashes=Object.fromEntries(await Promise.all(reviewedRendererPaths.map(async p=>[p,hash(await readFile(join(f.repository,p)))])));
+ const reviewed={rendererHashes,candidateCommit:head,forecast:'0.1.0',archive:{size:7,sha256:'f'.repeat(64)},sourceHashes:f.sources,
    preparation:{runId:17,attempt:1},site:{runId:18},example:structuredClone(f.example)};
  reviewed.example.context.archive=reviewed.archive;
  const context={...f.context,preparation:selected.preparation,pullRequest:4,documentation:reviewed};
@@ -121,10 +122,11 @@ test('definitive number/archive/example renew before publication and complete ha
  assert.equal(result.status,'complete');assert.equal(result.stableDocumentationEligible,true);assert.deepEqual(result.publication,evidence);
  assert.deepEqual(JSON.parse(await readFile(join(handoff.directory,'outcome.json'))).publication,evidence);
 });
-for(const failure of ['no-review','changed-source','wrong-final-head','wrong-final-archive','wrong-final-version','missing-final-links','stale-final-links'])test(`final qualification rejects ${failure}`,async t=>{
+for(const failure of ['no-review','changed-source','changed-renderer','wrong-final-head','wrong-final-archive','wrong-final-version','missing-final-links','stale-final-links'])test(`final qualification rejects ${failure}`,async t=>{
  const f=await finalFixture(t);
  if(failure==='no-review')delete f.context.documentation;
  if(failure==='changed-source')await writeFile(join(f.repository,'README.md'),'unreviewed merge');
+ if(failure==='changed-renderer')await writeFile(join(f.repository,'tools/site/documentation.mjs'),'unreviewed generated prose');
  if(failure==='wrong-final-head')f.final.context.commit=head;
  if(failure==='wrong-final-archive')f.final.context.archive={size:1,sha256:'f'.repeat(64)};
  if(failure==='wrong-final-version')f.final.context.version='0.1.0';

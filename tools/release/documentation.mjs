@@ -17,6 +17,7 @@ const successfulRun = (run, repository, path, event) => {
 const apiJSON = async (get, url) => {
   const response = await get(url); assert.equal(response.status, 200, 'Documentation evidence unavailable'); return response.data;
 };
+export const reviewedRendererPaths = ['tools/site/documentation.mjs', 'tools/site/docs.mjs', 'tools/package/package.mjs'];
 
 export async function assertObservedDocuments({ live, example, repository, pullRequest, head, readAt }) {
   assert.equal(live.publication?.repository, repository);
@@ -41,11 +42,12 @@ export async function reviewedDocumentation({ repository, pr, selected, readAt, 
   const branch = new RegExp(`^candidate/run-${selected.preparation.runId}-([1-9][0-9]*)$`).exec(pr.head.ref || '');
   assert.ok(branch, 'Candidate branch/preparation mismatch');
   const attempt = Number(branch[1]);
-  const sources = {};
-  for (const path of [...candidateDocumentPaths, 'inputs/release.json', 'inputs/sqlite-vector.sources.lock.json']) {
+  const sources = {}, renderers = {};
+  for (const path of [...candidateDocumentPaths, ...reviewedRendererPaths, 'inputs/release.json', 'inputs/sqlite-vector.sources.lock.json']) {
     const before = await readAt(head, path), after = await readAt(pr.merge_commit_sha, path);
     assert.equal(after, before, `Unreviewed integrated document/input change: ${path}`);
     if (candidateDocumentPaths.includes(path)) sources[path] = hash(Buffer.from(before));
+    if (reviewedRendererPaths.includes(path)) renderers[path] = hash(Buffer.from(before));
   }
   const preparation = await apiJSON(get, `${api}/actions/runs/${selected.preparation.runId}/attempts/${attempt}`);
   successfulRun(preparation, repository, '.github/workflows/updates.yml', 'workflow_dispatch');
@@ -89,7 +91,7 @@ export async function reviewedDocumentation({ repository, pr, selected, readAt, 
   const live = await uniqueRecord(liveArtifact, 'live-pages.json');
   assert.equal(live.publication?.preview?.branch, pr.head.ref, 'Observed preview branch mismatch');
   await assertObservedDocuments({ live, example, repository, pullRequest: pr.number, head, readAt });
-  return { candidateCommit: head, forecast: candidate.identity.version, archive: candidate.archive, sourceHashes: sources,
+  return { candidateCommit: head, forecast: candidate.identity.version, archive: candidate.archive, sourceHashes: sources, rendererHashes: renderers,
     preparation: { runId: preparation.id, attempt, artifactId: prepared.id, artifactSha256: prepared.sha256 },
     site: { runId: run.id, attempt: run.run_attempt, checksArtifactId: checks.id, checksSha256: checks.sha256,
       liveArtifactId: liveArtifact.id, liveSha256: liveArtifact.sha256 }, example };
@@ -100,6 +102,8 @@ export async function assertReviewedSources(context, repository) {
   assert.ok(reviewed?.site?.runId && reviewed.preparation?.runId, 'Missing reviewed documentation context');
   assert.match(reviewed.candidateCommit || '', /^[a-f0-9]{40}$/);
   assert.deepEqual(await documentSnapshot(repository), reviewed.sourceHashes, 'Substantive documentation changed after review');
+  assert.deepEqual(Object.keys(reviewed.rendererHashes || {}).sort(), [...reviewedRendererPaths].sort(), 'Missing reviewed renderers');
+  for (const path of reviewedRendererPaths) assert.equal(hash(await readFile(join(repository,path))), reviewed.rendererHashes[path], 'Documentation rendering changed after review');
   assert.equal(reviewed.preparation.runId, context.preparation?.runId);
   assertDocumentation(reviewed.example, { commit: reviewed.candidateCommit, selection: context.selection,
     archive: reviewed.archive, sourceHashes: reviewed.sourceHashes, identity: { version: reviewed.forecast } });

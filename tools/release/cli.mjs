@@ -3,7 +3,7 @@ import { readFile, appendFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { root, regularBytes } from '../package/package.mjs';
 import { command } from '../acceptance/run.mjs';
-import { candidateDescriptorChanged, integratedContext } from './context.mjs';
+import { candidateDescriptorChanged, integratedContext, documentationQualificationNeeded } from './context.mjs';
 import { calculate } from './policy.mjs';
 import { readState, httpReader, repositoryName } from './state.mjs';
 import { qualify, acceptedPayload, provenance, publish, checkInitialCompletion } from './run.mjs';
@@ -26,6 +26,14 @@ try {
   let result;
   if (mode === 'calculate') {
     assert.equal(args.length,1,'Usage: release.sh calculate INPUT.json'); result = calculate(await json(args[0]));
+  } else if (mode === 'exercise-needed') {
+    assert.equal(args.length,0); assert.equal(env.GITHUB_EVENT_NAME,'pull_request');
+    const event = await json(env.GITHUB_EVENT_PATH);
+    assert.equal(event.repository?.full_name,repositoryName(env.GITHUB_REPOSITORY));
+    result = { exercise: await documentationQualificationNeeded({ repository: env.GITHUB_REPOSITORY,
+      pullRequest: event.pull_request, get, profile: await json(join(root,'tools/site/docs-example.json')),
+      candidate: await json(join(root,'inputs/release.json')) }) };
+    if (env.GITHUB_OUTPUT) await appendFile(env.GITHUB_OUTPUT,`exercise=${result.exercise}\n`);
   } else if (mode === 'candidate') {
     assert.equal(args.length,0,'Usage: release.sh candidate');
     const repository = repositoryName(env.GITHUB_REPOSITORY);

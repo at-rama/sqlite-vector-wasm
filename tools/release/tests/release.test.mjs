@@ -129,3 +129,15 @@ test('integrated context requires human merge, exact revision and changed descri
   assert.equal((await invoke()).commit,commit);
   for (const changes of [{pr:{merged:false}},{pr:{merge_commit_sha:'b'.repeat(40)}},{pr:{merged_by:{type:'Bot'}}},{files:[]},{files:[{filename:'README.md',status:'modified'}]},{pr:{changed_files:3001}}]) await assert.rejects(invoke(changes));
 });
+
+test('unpublished documentation preview qualification survives archival without qualifying nominal candidates twice',async()=>{
+ const {documentationQualificationNeeded}=await import('../context.mjs');
+ const pr={number:4,changed_files:1,head:{ref:'feature/docs'}};
+ const invoke=(filenames,profile={mode:'candidate'},candidate={schemaVersion:1},pullRequest={...pr,changed_files:filenames.length})=>documentationQualificationNeeded({repository:'a/b',pullRequest,profile,candidate,get:async()=>ok(filenames.map(filename=>({filename,status:'modified'})))});
+ assert.equal(await invoke(['README.md']),true);assert.equal(await invoke(['tools/release/run.mjs']),true);
+ assert.equal(await invoke(['.42p/standards/editorial.md']),false);assert.equal(await invoke(['unrelated.txt']),false);
+ assert.equal(await invoke(['README.md'],{mode:'published'}),false);
+ assert.equal(await invoke(['inputs/release.json'],{mode:'candidate'},{schemaVersion:2},{...pr,head:{ref:'candidate/run-17-1'}}),false);
+ assert.equal(await invoke(['README.md'],{mode:'candidate'},{schemaVersion:2}),true);
+ await assert.rejects(invoke(['README.md'],undefined,undefined,{...pr,changed_files:2}),/Truncated/);
+});
