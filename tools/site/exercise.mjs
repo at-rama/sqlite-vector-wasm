@@ -142,6 +142,10 @@ This is an integration fixture, not the emoji demo.
 // Compile and load copied images, rather than accepting prepared URL strings.
 export async function exerciseRelativeImages() {
   const root = await mkdtemp(join(repository, '.work/site-images-'));
+  // This image fixture has its own Markdown and deliberately no product profile.
+  // Do not let the controller's selected publication authorize fixture content.
+  const selectedDocumentation = process.env.SITE_DOCUMENTATION_SELECTION;
+  delete process.env.SITE_DOCUMENTATION_SELECTION;
   const results = [];
   const image = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"><rect id="shape" width="20" height="20" fill="blue"/></svg>';
   try {
@@ -169,5 +173,9 @@ export async function exerciseRelativeImages() {
     await assert.rejects(readFile(join(root, '.work/site/dist/index.html')), { code: 'ENOENT' });
     results.push({ name: 'missing-relative-image', result: 'rejected; stale output removed' });
     return results;
-  } finally { await rm(root, { recursive: true, force: true }); }
+  } finally {
+    if (selectedDocumentation === undefined) delete process.env.SITE_DOCUMENTATION_SELECTION;
+    else process.env.SITE_DOCUMENTATION_SELECTION = selectedDocumentation;
+    await rm(root, { recursive: true, force: true });
+  }
 }

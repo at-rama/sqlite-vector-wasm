@@ -46,7 +46,7 @@ test('dispatch is exact, hosted, main and comments remain data', () => {
 });
 
 async function fixture(t, options={}) {
-  const repository=await mkdtemp(join(tmpdir(),'updates-test-'));t.after(()=>rm(repository,{recursive:true,force:true}));
+  const repository=await mkdtemp(join(tmpdir(),'updates-test-'));t.after(()=>rm(repository,{recursive:true,force:true,maxRetries:3,retryDelay:100}));
   await mkdir(join(repository,'inputs'));await writeFile(join(repository,'.gitignore'),'.work/\n');await writeFile(join(repository,'inputs/sqlite-vector.sources.lock.json'),JSON.stringify(lock(pair)));
   await mkdir(join(repository,'tools/package'),{recursive:true});
   for(const name of ['tools/package/notices.json','tools/package/notices','tools/package/NOTICE-vector.txt','LICENSE']) await cp(join(root,name),join(repository,name),{recursive:true});
