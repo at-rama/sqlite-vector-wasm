@@ -121,3 +121,15 @@ test('fallback source must remain an ancestor and its published state must still
  await assert.rejects(stableSource({...args,get:async url=>response(url.includes('/compare/')?{status:'diverged',merge_base_commit:{sha:head}}:{repository,stablePresent:true,mainCommit:prior})}),/unrelated/);
  await assert.rejects(stableSource({...args,get:async url=>response(url.includes('/compare/')?{status:'ahead',merge_base_commit:{sha:prior}}:{repository,stablePresent:true,mainCommit:prior}),resolveSource:async()=>{throw Error('registry unavailable');}}),/registry unavailable/);
 });
+
+test('a failed completion attempt cannot borrow an older successful handoff from the same run',async t=>{
+ const f=await candidate(t),directory=await mkdtemp(join(tmpdir(),'site-attempt-'));t.after(()=>rm(directory,{recursive:true,force:true}));
+ const run={id:9,head_sha:head,run_attempt:2,repository:{full_name:repository},path:'.github/workflows/release.yml',event:'pull_request',status:'completed',conclusion:'failure'};
+ const pr={merged:true,state:'closed',merged_by:{type:'User'},base:{ref:'main',repo:{full_name:repository}},head:{sha:head,repo:{full_name:repository}},merge_commit_sha:prior};
+ const invoke=()=>publicationCompletion({repository,publication:f.pub,release:f.release,trigger:run,directory,
+ get:async url=>response(url.includes('/pulls/')?pr:url.includes('/artifacts?')?{total_count:2,artifacts:[1,2].map(n=>({name:'release-outcome-9-'+n,expired:false}))}:url.includes('/attempts/1')?{...run,run_attempt:1,conclusion:'success'}:run),
+ artifact:async({name})=>{await writeFile(join(directory,'publication.json'),JSON.stringify(f.pub));await writeFile(join(directory,'outcome.json'),JSON.stringify({status:name.endsWith('-1')?'complete':'failed',identity:{version:f.pub.version,tag:f.pub.tag}}));return {directory,id:10,sha256:'e'.repeat(64)};},
+ services:{verifyGitHub:async()=>{},verifyNpm:async()=>({status:'verified'})},
+ inspect:async()=>({status:'complete',stableDocumentationEligible:true})});
+ await assert.rejects(invoke(),/No complete matching/);
+});

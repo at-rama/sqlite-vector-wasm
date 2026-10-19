@@ -41,7 +41,7 @@ async function publicationCompletion({repository,publication,release,get,trigger
  if(trigger)assert.equal(eligible.length,1,"Unrelated release completion");
  const matches=[];
  for(const run of eligible){const list=await json(get,`${api(repository)}/actions/runs/${run.id}/artifacts?per_page=100`);assert.equal(list.total_count,list.artifacts?.length);
-  for(const entry of list.artifacts.filter(a=>new RegExp(`^release-outcome-${run.id}-[1-9][0-9]*$`).test(a.name)&&!a.expired)){
+  for(const entry of list.artifacts.filter(a=>new RegExp(`^release-outcome-${run.id}-[1-9][0-9]*$`).test(a.name)&&!a.expired&&(!trigger||a.name===`release-outcome-${trigger.id}-${trigger.run_attempt}`))){
    const attempt=Number(entry.name.split("-").at(-1)),source=await json(get,`${api(repository)}/actions/runs/${run.id}/attempts/${attempt}`);
    assert.equal(source.id,run.id);assert.equal(source.head_sha,run.head_sha);assert.equal(source.run_attempt,attempt);assert.equal(source.repository?.full_name,repository);
    assert.equal(source.path?.split("@")[0],".github/workflows/release.yml");assert.equal(source.event,"pull_request");assert.equal(source.status,"completed");
