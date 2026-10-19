@@ -192,14 +192,19 @@ export function renderDocument(source, handoff, suppliedIdentity) {
   return Buffer.from(text.slice(0, position) + header + text.slice(position));
 }
 
-export async function documentInputs(handoff, repository = root, suppliedIdentity) {
-  const result = new Map();
+export async function preparedDocuments(handoff, repository = root, suppliedIdentity) {
+  const result = new Map(), records = [];
   for (const [source,destination] of documentMapping(engineIdentity(handoff))) {
     require(!result.has(destination), 'Duplicate document destination');
     const path = join(repository,source);
     require(await realpath(path) === resolve(path), 'Unsafe document source');
     const sourceBytes = await regularBytes(path);
-    result.set(destination, source.startsWith('docs/sqlite-vector/') ? renderDocument(sourceBytes, handoff, suppliedIdentity) : sourceBytes);
+    const rendered = source.startsWith('docs/sqlite-vector/') ? renderDocument(sourceBytes, handoff, suppliedIdentity) : sourceBytes;
+    result.set(destination, rendered);
+    records.push({ source, destination, sourceSha256: hash(sourceBytes), sha256: hash(rendered),
+      ...(source.startsWith('docs/sqlite-vector/') ? { identity: identity(suppliedIdentity.name, suppliedIdentity.version),
+        upstreams: { sqlite: handoff.inputs.sqlite.version, sqliteVector: handoff.inputs.sqliteVector.version } } : {}),
+    });
   }
   const engine = engineIdentity(handoff);
   const title = engine.key === 'sqliteVec' ? 'sqlite-vec' : 'SQLite-Vector';
@@ -224,16 +229,11 @@ export async function documentInputs(handoff, repository = root, suppliedIdentit
       }
     }
   }
-  return result;
+  return { documents: result, records };
 }
 
-export async function documentProvenance(handoff, repository, suppliedIdentity, documents) {
-  return Promise.all(documentMapping(engineIdentity(handoff)).map(async ([source, destination]) => ({
-    source, destination, sourceSha256: hash(await regularBytes(join(repository, source))),
-    sha256: hash(documents.get(destination)),
-    ...(engineIdentity(handoff).key === 'sqliteVector' && source.startsWith('docs/sqlite-vector/')
-      ? { identity: identity(suppliedIdentity.name, suppliedIdentity.version), upstreams: { sqlite: handoff.inputs.sqlite.version, sqliteVector: handoff.inputs.sqliteVector.version } } : {}),
-  })));
+export async function documentInputs(handoff, repository = root, suppliedIdentity) {
+  return (await preparedDocuments(handoff, repository, suppliedIdentity)).documents;
 }
 
 export function packageMetadata(name, version, files, engine = {key:'sqliteVec'}) {
@@ -285,9 +285,8 @@ export async function assemble({ handoff, name, version, repository = root, run 
     const runtime = await validateBuild(handoff, repository);
     const contents = await noticeInputs(handoff, repository);
     for (const entry of runtime) contents.set(...entry);
-    const documents = await documentInputs(handoff, repository, { name, version });
+    const { documents, records: documentRecords } = await preparedDocuments(handoff, repository, { name, version });
     for (const entry of documents) contents.set(...entry);
-    const documentRecords = await documentProvenance(handoff, repository, { name, version }, documents);
     contents.set('runtime.json', jsonBytes(manifest(handoff)));
     const names = [...contents.keys(), 'package.json'].sort();
     contents.set('package.json', jsonBytes(packageMetadata(name, version, names, engineIdentity(handoff))));

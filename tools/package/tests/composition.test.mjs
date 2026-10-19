@@ -132,6 +132,10 @@ test('both consumed archives remain independently verifiable after generated inp
   assert.equal((await validatePackagedBuild(retained,f.repository)).size,runtimeNames.length);
   const verify=()=>acceptedPayload({bundle,identity:packaged.package,commit,repository:f.repository});
   assert.equal((await verify()).archive.sha256,packaged.archive.sha256);
+  const badDocuments=structuredClone(packaged);badDocuments.documents[0].sourceSha256='0'.repeat(64);
+  await writeFile(join(bundle,'package.json'),JSON.stringify(badDocuments));
+  await assert.rejects(verify(),/Packaged document provenance mismatch/);
+  await writeFile(join(bundle,'package.json'),JSON.stringify(packaged));
   const wrongEngine=structuredClone(packaged);wrongEngine.engine.key='contradictory';
   await writeFile(join(bundle,'package.json'),JSON.stringify(wrongEngine));
   await assert.rejects(verify(),/Packaged engine identity/);
