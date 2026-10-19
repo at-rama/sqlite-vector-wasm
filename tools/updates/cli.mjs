@@ -13,8 +13,8 @@ try {
   const env = process.env, rehearsal = mode === 'rehearsal';
   const event = JSON.parse(await readFile(env.GITHUB_EVENT_PATH, 'utf8'));
   if (rehearsal) {
-    const lock = JSON.parse(await readFile(join(root, 'inputs/sources.lock.json'), 'utf8'));
-    event.inputs = { sqlite_version: lock.sqlite.version, sqlite_vec_version: lock.sqliteVec.version, misc_comment: 'Nonpublishing preparation rehearsal' };
+    const lock = JSON.parse(await readFile(join(root, 'inputs/sqlite-vector.sources.lock.json'), 'utf8'));
+    event.inputs = { sqlite_version: lock.sqlite.version, sqlite_vector_version: lock.sqliteVector.version, misc_comment: 'Nonpublishing preparation rehearsal' };
   }
   const context = invocation({ event, environment: env, rehearsal });
   const get = httpReader(env.GH_TOKEN);

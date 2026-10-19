@@ -65,7 +65,18 @@ async function vectorFixture(t,{version,name}) {
     await mkdir(join(repository,file,'..'),{recursive:true});await cp(join(root,file),join(repository,file),{recursive:true});
   }
   const sourceLockPath=key==='sqliteVec'?'inputs/sources.lock.json':'inputs/sqlite-vector.sources.lock.json';
-  const lockBytes=await readFile(join(repository,sourceLockPath)), lock=JSON.parse(lockBytes);
+  const lockBytes=await readFile(new URL('./vector-lock.json',import.meta.url)), lock=JSON.parse(lockBytes);
+  await writeFile(join(repository,sourceLockPath),lockBytes);
+  const noticesPath=join(repository,'tools/package/notices.json');
+  const notices=JSON.parse(await readFile(noticesPath));
+  for(const notice of notices.notices) {
+    if(notice.project==='sqlite') notice.version=lock.sqlite.version;
+    if(notice.project==='sqliteVector') {
+      notice.version=lock.sqliteVector.version; notice.source.commit=lock.sqliteVector.commit;
+      notice.origin=`https://github.com/sqliteai/sqlite-vector/blob/${lock.sqliteVector.commit}/LICENSE.md`;
+    }
+  }
+  await writeFile(noticesPath,JSON.stringify(notices,null,2)+'\n');
   const inputs={lockDigest:{algorithm:'sha256',value:hash(lockBytes)}};
   for(const k of ['sqlite',key])inputs[k]={...lock[k],sourcePath:join(repository,'sources',k),archivePath:join(repository,k+'.zip')};
   const engine={key,version:lock[key].version,upstream:key==='sqliteVec'?'asg017/sqlite-vec':'sqliteai/sqlite-vector'};

@@ -1,5 +1,5 @@
 name: Updates
-run-name: ${{ github.event_name == 'workflow_dispatch' && format('candidate sqlite={0} sqlite-vec={1}', inputs.sqlite_version, inputs.sqlite_vec_version) || 'Updates PR rehearsal' }}
+run-name: ${{ github.event_name == 'workflow_dispatch' && format('candidate sqlite={0} SQLite-Vector={1}', inputs.sqlite_version, inputs.sqlite_vector_version) || 'Updates PR rehearsal' }}
 
 on:
   workflow_dispatch:
@@ -8,16 +8,16 @@ on:
         description: Exact SQLite version
         required: true
         type: string
-      sqlite_vec_version:
-        description: Exact sqlite-vec version
+      sqlite_vector_version:
+        description: Exact SQLite-Vector version
         required: true
         type: string
       sqlite_comment:
         description: SQLite release comment
         default: ''
         type: string
-      sqlite_vec_comment:
-        description: sqlite-vec release comment
+      sqlite_vector_comment:
+        description: SQLite-Vector release comment
         default: ''
         type: string
       misc_comment:
@@ -44,7 +44,7 @@ jobs:
       - name: Select implementation rehearsal
         id: select
         run: |
-          if test -f .42p/openspec/changes/prepare-distribution-candidate/tasks.md; then
+          if test -f .42p/openspec/changes/prepare-sqlite-vector-candidate/tasks.md; then
             echo 'active=true' >> "$GITHUB_OUTPUT"
           fi
       - name: Install production browser prerequisites

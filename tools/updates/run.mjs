@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, readFile, writeFile, rename, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
-import { root, noticeInputs, regularBytes } from '../package/package.mjs';
+import { root, noticeInputs, regularBytes, hash } from '../package/package.mjs';
 import { reconcileNotices, noticePaths } from './notices.mjs';
 import { command } from '../acceptance/run.mjs';
 import { calculate, commitPattern } from '../release/policy.mjs';
@@ -12,12 +12,12 @@ const json = async path => JSON.parse(await readFile(path, 'utf8'));
 const saveJson = (path, value) => writeFile(path, JSON.stringify(value, null, 2) + '\n');
 
 export async function resolveSources({ repository, directory, context, run = command }) {
-  const lockPath = join(directory, 'sources.lock.json');
+  const lockPath = join(directory, 'sqlite-vector.sources.lock.json');
   let output;
   try {
-    output = JSON.parse(await run('bash', ['tools/inputs.sh', 'resolve',
-      '--sqlite-version', context.selection.sqlite, '--sqlite-vec-version', context.selection.sqliteVec,
-      '--baseline-lock', 'inputs/sources.lock.json', '--output', lockPath], { cwd: repository }));
+    output = JSON.parse(await run('bash', ['tools/inputs.sh', 'resolve-vector',
+      '--sqlite-version', context.selection.sqlite, '--vector-version', context.selection.sqliteVector,
+      '--baseline-lock', 'inputs/sqlite-vector.sources.lock.json', '--output', lockPath], { cwd: repository }));
     assert.equal(output.lockPath, lockPath);
   } finally {
     // Keep failed resolution traces too, outside production's fresh inputs workspace.
@@ -54,7 +54,7 @@ export async function prepareCandidate({ context, readSnapshot, services, reposi
       }
       return base;
     });
-    const lock = await step('resolve', () => resolve({ repository, directory, context, run }));
+    const lock = await step('resolve-vector', () => resolve({ repository, directory, context, run }));
     const selected = candidateDescriptor(context, lock);
     result.preflightState = await step('state', readSnapshot);
     result.preflight = calculate({ selection: context.selection, snapshot: result.preflightState, comment: context.comment });
@@ -62,7 +62,7 @@ export async function prepareCandidate({ context, readSnapshot, services, reposi
     const notices = await step('notices', () => reconcile({ repository, directory, lock, run }));
     result.commit = await step('commit', async () => {
       await run('git', ['switch', '-c', context.branch], { cwd: repository });
-      const lockPath = join(repository, 'inputs/sources.lock.json');
+      const lockPath = join(repository, 'inputs/sqlite-vector.sources.lock.json');
       if (JSON.stringify(await json(lockPath)) !== JSON.stringify(lock)) await saveJson(lockPath, lock);
       await saveJson(join(repository, 'inputs/release.json'), selected);
       for (const path of noticePaths) {
@@ -70,7 +70,7 @@ export async function prepareCandidate({ context, readSnapshot, services, reposi
         if (!(await regularBytes(join(repository, path))).equals(data)) await writeFile(join(repository, path), data);
       }
       await noticeInputs({ inputs: lock }, repository);
-      await run('git', ['add', '--', 'inputs/sources.lock.json', 'inputs/release.json', ...noticePaths], { cwd: repository });
+      await run('git', ['add', '--', 'inputs/sqlite-vector.sources.lock.json', 'inputs/release.json', ...noticePaths], { cwd: repository });
       await run('git', ['-c', 'user.name=sqlite-vector-wasm preparation', '-c', 'user.email=41898282+github-actions[bot]@users.noreply.github.com',
         'commit', '-m', 'chore: prepare distribution candidate'], { cwd: repository });
       const commit = await run('git', ['rev-parse', 'HEAD'], { cwd: repository }); assert.match(commit, commitPattern);
@@ -90,6 +90,10 @@ export async function prepareCandidate({ context, readSnapshot, services, reposi
     const evidence = await json(qualified.evidencePath);
     assert.equal(evidence.commit, result.commit, 'Qualification revision mismatch');
     assert.deepEqual(evidence.upstreams, context.selection);
+    assert.deepEqual(evidence.engine, {key:'sqliteVector', upstream:'sqliteai/sqlite-vector', version:context.selection.sqliteVector}, 'Qualification engine mismatch');
+    assert.deepEqual(evidence.sourceLock, lock, 'Qualification sources mismatch');
+    assert.equal(evidence.sourceLockSha256, hash(await regularBytes(join(repository, 'inputs/sqlite-vector.sources.lock.json'))), 'Qualification lock digest mismatch');
+    assert.equal(evidence.repository, context.repository, 'Qualification repository mismatch');
     assert.deepEqual(evidence.invocation.preparation, context.preparation);
     assert.equal(evidence.invocation.comment, context.comment);
     result.identity = qualified.identity; result.archive = evidence.archive; result.bundle = qualified.bundle;
@@ -103,7 +107,11 @@ export async function prepareCandidate({ context, readSnapshot, services, reposi
       result.status = 'qualified-without-pr'; result.publicationCalls = 0;
     } else {
       assert.ok(services, 'Candidate write authorization unavailable');
-      result.branchResult = await step('push', () => services.push(context.branch, result.commit));
+      result.branchResult = await step('push', async () => {
+        const pushed = await services.push(context.branch, result.commit);
+        assert.equal(pushed.branch, context.branch); assert.equal(pushed.head, result.commit, 'Pushed candidate head mismatch');
+        return pushed;
+      });
       await save();
       result.pullRequest = await step('pull-request', () => services.createPullRequest({ branch: context.branch,
         commit: result.commit, title: `chore: prepare ${result.identity.version} distribution`, body: candidateBody(result) }));

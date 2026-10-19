@@ -19,9 +19,9 @@ export function invocation({ event, environment, rehearsal = false }) {
   }
   const input = event.inputs;
   assert.ok(input && typeof input === 'object' && !Array.isArray(input), 'Exact dispatch inputs required');
-  const commentKeys = ['sqlite_comment', 'sqlite_vec_comment', 'misc_comment'];
-  assert.deepEqual(Object.keys(input).filter(key => !commentKeys.includes(key)).sort(), ['sqlite_vec_version', 'sqlite_version']);
-  const selection = { sqlite: input.sqlite_version, sqliteVec: input.sqlite_vec_version };
+  const commentKeys = ['sqlite_comment', 'sqlite_vector_comment', 'misc_comment'];
+  assert.deepEqual(Object.keys(input).filter(key => !commentKeys.includes(key)).sort(), ['sqlite_vector_version', 'sqlite_version']);
+  const selection = { sqlite: input.sqlite_version, sqliteVector: input.sqlite_vector_version };
   channelFor(selection);
   for (const key of commentKeys) assert.ok(input[key] === undefined || typeof input[key] === 'string');
   const comment = commentKeys.map(key => (input[key] ?? '').trim()).filter(Boolean).join('\n\n');
@@ -34,7 +34,7 @@ export function invocation({ event, environment, rehearsal = false }) {
 }
 
 export function candidateDescriptor(context, lock) {
-  const value = { schemaVersion: 1, sqlite: context.selection.sqlite, sqliteVec: context.selection.sqliteVec,
+  const value = { schemaVersion: 2, sqlite: context.selection.sqlite, sqliteVector: context.selection.sqliteVector,
     releaseComment: context.comment, preparation: context.preparation };
   descriptor(value, lock);
   assert.ok(value.preparation.url.startsWith(`https://github.com/${context.repository}/actions/runs/`), 'Preparation repository mismatch');
@@ -43,5 +43,5 @@ export function candidateDescriptor(context, lock) {
 
 export function candidateBody(result) {
   assert.match(result.commit, commitPattern);
-  return `Prepared distribution candidate\n\nSQLite: ${result.selection.sqlite}\nsqlite-vec: ${result.selection.sqliteVec}\nCandidate commit: ${result.commit}\nForecast: ${result.identity.version} (${result.identity.channel}); not reserved or published.\nArchive SHA-256: ${result.archive.sha256}\nPreparation: ${result.preparation.url} (attempt ${result.attempt})\nEvidence artifact: updates-${result.preparation.runId}-${result.attempt}\n\nAll preparation controls passed. Approve any pending PR workflow runs, review their results, then decide whether to merge. Publication recalculates and qualifies the definitive main revision and payload.\n${result.comment ? `\nRelease comment:\n${result.comment}\n` : ''}`;
+  return `Prepared distribution candidate\n\nSQLite: ${result.selection.sqlite}\nSQLite-Vector: ${result.selection.sqliteVector}\nCandidate commit: ${result.commit}\nForecast: ${result.identity.version} (${result.identity.channel}); not reserved or published.\nArchive SHA-256: ${result.archive.sha256}\nPreparation: ${result.preparation.url} (attempt ${result.attempt})\nEvidence artifact: updates-${result.preparation.runId}-${result.attempt}\n\nAll preparation controls passed. Approve any pending PR workflow runs, review their results, then decide whether to merge. Publication recalculates and qualifies the definitive main revision and payload.\n${result.comment ? `\nRelease comment:\n${result.comment}\n` : ''}`;
 }

@@ -1,16 +1,13 @@
-import base64
 import copy
 import hashlib
 import importlib.util
 import io
 import json
-import os
 from pathlib import Path
 import shutil
 import tarfile
 import tempfile
 import unittest
-import warnings
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -23,47 +20,32 @@ class NoticesTest(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
-        self.root = Path(self.tmp.name)
-        self.repo = self.root / 'repository'
-        for name in ['inputs/sources.lock.json', 'tools/package/notices.json', 'LICENSE', 'tools/package/NOTICE.txt']:
+        self.repo = Path(self.tmp.name) / 'repository'
+        for name in ['inputs/sqlite-vector.sources.lock.json', 'tools/package/notices.json', 'LICENSE', 'tools/package/NOTICE-vector.txt']:
             out = self.repo / name
             out.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(ROOT / name, out)
         shutil.copytree(ROOT / 'tools/package/notices', self.repo / 'tools/package/notices')
-        self.baseline = json.loads((self.repo / 'inputs/sources.lock.json').read_text())
-        self.baseline['sqlite'].update(version='3.53.4', archiveUrl='https://sqlite.org/2026/sqlite-src-3530400.zip', releaseUrl='https://sqlite.org/releaselog/3_53_4.html')
-        self.baseline['sqliteVec'].update(version='0.1.9', archiveUrl='https://github.com/asg017/sqlite-vec/releases/download/v0.1.9/sqlite-vec-0.1.9-amalgamation.tar.gz', releaseUrl='https://github.com/asg017/sqlite-vec/releases/tag/v0.1.9')
-        (self.repo / 'inputs/sources.lock.json').write_text(json.dumps(self.baseline) + '\n')
-        records = json.loads((self.repo / 'tools/package/notices.json').read_text())
-        for record in records['notices']:
-            if record['project'] in self.baseline:
-                record['version'] = self.baseline[record['project']]['version']
-                record['origin'] = 'controlled offline fixture'
-                record.pop('source', None)
-        (self.repo / 'tools/package/notices.json').write_text(json.dumps(records) + '\n')
+        self.baseline = json.loads((self.repo / 'inputs/sqlite-vector.sources.lock.json').read_text())
         self.selected = copy.deepcopy(self.baseline)
-        self.selected['sqlite'].update(version='3.54.0', archiveUrl='https://sqlite.org/2026/sqlite-src-3540000.zip', releaseUrl='https://sqlite.org/releaselog/3_54_0.html')
-        self.selected['sqliteVec'].update(version='0.1.10-alpha.1', archiveUrl='https://github.com/asg017/sqlite-vec/releases/download/v0.1.10-alpha.1/sqlite-vec-0.1.10-alpha.1-amalgamation.tar.gz', releaseUrl='https://github.com/asg017/sqlite-vec/releases/tag/v0.1.10-alpha.1')
+        self.selected['sqlite'].update(version='3.55.0', archiveUrl='https://sqlite.org/2026/sqlite-src-3550000.zip', releaseUrl='https://sqlite.org/releaselog/3_55_0.html')
+        self.selected['sqliteVector'].update(version='1.1.3-alpha.1', tag='1.1.3-alpha.1', releaseUrl='https://github.com/sqliteai/sqlite-vector/releases/tag/1.1.3-alpha.1')
         self.directory = self.repo / '.work/updates/run-test'
         self.directory.mkdir(parents=True)
         self.requests = []
-        self.files = {'LICENSE-MIT': b'MIT wording  \n\n', 'LICENSE-APACHE': b'Apache wording\t\n'}
-        self.commit, self.tree, self.tag = 'a' * 40, 'b' * 40, 'c' * 40
-        self.bad_blob = False
-        self.annotated = False
-        self.bad_kind = False
-        self.git_entries = []
-        self.blobs = {}
-        for name, raw in self.files.items():
-            oid = hashlib.sha1(b'blob ' + str(len(raw)).encode() + b'\0' + raw).hexdigest()
-            self.git_entries.append({'path': name, 'type': 'blob', 'mode': '100644', 'sha': oid})
-            self.blobs[oid] = raw
+        # Independent synthetic dependency bytes and expectations; not an upstream build.
+        self.headers = {name: ('synthetic header ' + name + '\n').encode() for name in ['fp16.h', 'bitcasts.h', 'macros.h']}
+        records = json.loads((self.repo / 'tools/package/notices.json').read_text())
+        dependency = next(r for r in records['notices'] if r['project'] == 'fp16')
+        dependency['incorporatedHeaders'] = {name: hashlib.sha1(b'blob ' + str(len(raw)).encode() + b'\0' + raw).hexdigest() for name, raw in self.headers.items()}
+        (self.repo / 'tools/package/notices.json').write_text(json.dumps(records) + '\n')
+        self.license = (self.repo / 'tools/package/notices/sqlite-vector-APACHE.txt').read_bytes()
 
-    def archives(self, *, vec_notices=False, missing_sqlite=False, unsafe=False, duplicate=False, link=False, ambiguous=False):
+    def archives(self, *, missing_sqlite=False, missing_vector=False, corrupt_header=False, unsafe=False, normalization=False, bad_version=False):
+        self.selected['sqliteVector']['tagUrl'] = n.inputs.VECTOR_API + '/git/ref/tags/' + self.selected['sqliteVector']['version']
         sql = io.BytesIO()
         with zipfile.ZipFile(sql, 'w') as z:
-            for name, data in [('configure', '#!/bin/sh\n'), ('Makefile.in', 'make\n'), ('src/sqlite.h.in', 'header\n'), ('ext/wasm/GNUmakefile', 'wasm\n'),
-                               ('LICENSE.md', 'SQLite wording  \n\n'), ('ext/wasm/api/sqlite3-license-version-header.js', '/* @preserve\n** WASM license  \n*/\nconst version = "not a notice";\n')]:
+            for name, data in [('configure', '#!/bin/sh\n'), ('Makefile.in', 'make\n'), ('src/sqlite.h.in', 'header\n'), ('ext/wasm/GNUmakefile', 'wasm\n'), ('LICENSE.md', 'SQLite wording  \n\n'), ('ext/wasm/api/sqlite3-license-version-header.js', '/* @preserve\n** WASM license  \n*/\nconst version = 1;\n')]:
                 if missing_sqlite and name == 'LICENSE.md':
                     continue
                 info = zipfile.ZipInfo('sqlite-src-' + n.inputs.sqlite_code(self.selected['sqlite']['version']) + '/' + name)
@@ -71,153 +53,105 @@ class NoticesTest(unittest.TestCase):
                 z.writestr(info, data)
             if unsafe:
                 z.writestr('../escape', 'bad')
-            if duplicate:
-                z.writestr('duplicate.txt', 'one')
-                with warnings.catch_warnings():
-                    warnings.simplefilter('ignore', UserWarning)
-                    z.writestr('duplicate.txt', 'two')
-            if link:
-                info = zipfile.ZipInfo('symlink'); info.create_system = 3; info.external_attr = 0o120777 << 16
-                z.writestr(info, 'target')
         vec = io.BytesIO()
         with tarfile.open(fileobj=vec, mode='w:gz') as t:
-            files = {'sqlite-vec.c': b'C\n', 'sqlite-vec.h': b'header\n'}
-            if vec_notices:
-                files.update(self.files)
-            if ambiguous:
-                files.update({'one/LICENSE-MIT': b'one', 'two/LICENSE-MIT': b'two'})
+            version = '9.9.9' if bad_version else self.selected['sqliteVector']['version']
+            files = {'src/sqlite-vector.c': b'C\n', 'src/sqlite-vector.h': f'#define SQLITE_VECTOR_VERSION "{version}"\n'.encode()}
+            for cpu in ['cpu', 'avx2', 'avx512', 'neon', 'rvv', 'sse2']:
+                for ext in ['c', 'h']:
+                    files[f'src/distance-{cpu}.{ext}'] = b'fixture\n'
+            files.update({'libs/fp16/' + name: raw for name, raw in self.headers.items()})
+            if corrupt_header:
+                files['libs/fp16/fp16.h'] = b'drift\n'
+            if not missing_vector:
+                files['LICENSE.md'] = self.license + (b'\n' if normalization else b'')
             for name, raw in files.items():
-                info = tarfile.TarInfo(name); info.size = len(raw)
+                info = tarfile.TarInfo('sqlite-vector-' + self.selected['sqliteVector']['commit'] + '/' + name)
+                info.size = len(raw)
                 t.addfile(info, io.BytesIO(raw))
-        self.archives_by_url = {self.selected['sqlite']['archiveUrl']: sql.getvalue(), self.selected['sqliteVec']['archiveUrl']: vec.getvalue()}
-        for project in ('sqlite', 'sqliteVec'):
-            data = self.archives_by_url[self.selected[project]['archiveUrl']]
-            algorithm = self.selected[project]['digest']['algorithm'].replace('-', '_')
-            self.selected[project]['digest']['value'] = hashlib.new(algorithm, data).hexdigest()
+        self.archives_by_url = {self.selected['sqlite']['archiveUrl']: sql.getvalue(), self.selected['sqliteVector']['archiveUrl']: vec.getvalue()}
+        for project in ['sqlite', 'sqliteVector']:
+            pin = self.selected[project]
+            pin['digest']['value'] = hashlib.new(pin['digest']['algorithm'].replace('-', '_'), self.archives_by_url[pin['archiveUrl']]).hexdigest()
 
     def fetch(self, url, destination):
         self.requests.append(url)
-        if url in self.archives_by_url:
-            destination.write_bytes(self.archives_by_url[url]); return
-        if getattr(self, 'transport_failure', False):
-            raise OSError('private transport body must not enter the diagnostic')
-        path = url.removeprefix(n.API)
-        if path.startswith('/git/ref/tags/v'):
-            value = {'ref': 'refs/tags/v' + self.selected['sqliteVec']['version'], 'object': {'type': 'tag' if self.annotated else 'commit', 'sha': self.tag if self.annotated else self.commit}}
-        elif path == '/git/tags/' + self.tag:
-            value = {'sha': self.tag, 'object': {'type': 'commit', 'sha': self.commit}}
-        elif path == '/git/commits/' + self.commit:
-            value = {'sha': self.commit, 'tree': {'sha': self.tree}}
-        elif path == '/git/trees/' + self.tree:
-            entries = copy.deepcopy(self.git_entries)
-            if self.bad_kind:
-                entries[0]['mode'] = '120000'
-            value = {'sha': self.tree, 'truncated': False, 'tree': entries}
-        elif path.startswith('/git/blobs/'):
-            oid = path.rsplit('/', 1)[1]; raw = self.blobs[oid]
-            value = {'sha': oid, 'encoding': 'base64', 'content': base64.b64encode(raw + b'x' if self.bad_blob else raw).decode(), 'size': len(raw)}
-        else:
-            raise AssertionError('Unexpected request ' + url)
-        destination.write_text(json.dumps(value))
+        destination.write_bytes(self.archives_by_url[url])
 
-    def run_reconcile(self):
+    def reconcile(self):
         return n.reconcile(self.repo, self.selected, self.directory, fetch=self.fetch)
 
-    def test_archive_first_normalization_header_and_metadata(self):
-        self.archives(vec_notices=True)
+    def test_changed_sources_preserve_license_text_but_establish_selected_association(self):
+        self.archives()
         before = (self.repo / 'tools/package/notices.json').read_bytes()
-        result = self.run_reconcile()
-        prepared = Path(result['prepared'])
-        records = json.loads((prepared / 'tools/package/notices.json').read_text())['notices']
-        expected = {'SQLite-LICENSE.txt': b'SQLite wording\n', 'SQLite-WASM-NOTICE.txt': b'/* @preserve\n** WASM license\n*/\n', 'sqlite-vec-MIT.txt': b'MIT wording\n', 'sqlite-vec-APACHE.txt': b'Apache wording\n'}
-        for record in records:
-            data = (prepared / 'tools/package/notices' / record['name']).read_bytes()
-            if record['name'] in expected:
-                self.assertEqual(data, expected[record['name']])
-                self.assertEqual(record['sha256'], hashlib.sha256(expected[record['name']]).hexdigest())
-                self.assertEqual(record['version'], self.selected[record['project']]['version'])
-                self.assertEqual(record['source']['kind'], 'archive')
-                self.assertEqual(record['source']['archiveDigest'], self.selected[record['project']]['digest'])
-            else:
-                old = json.loads(before)['notices'][records.index(record)]
+        result = self.reconcile()
+        staged = Path(result['prepared'])
+        records = json.loads((staged / 'tools/package/notices.json').read_text())['notices']
+        vector = next(r for r in records if r['project'] == 'sqliteVector')
+        self.assertEqual(vector['version'], '1.1.3-alpha.1')
+        self.assertEqual(vector['sha256'], hashlib.sha256(self.license).hexdigest())
+        self.assertEqual(vector['source']['archiveDigest'], self.selected['sqliteVector']['digest'])
+        self.assertEqual(vector['source']['commit'], self.selected['sqliteVector']['commit'])
+        self.assertEqual((staged / 'tools/package/notices/sqlite-vector-APACHE.txt').read_bytes(), self.license)
+        self.assertEqual((staged / 'tools/package/notices/SQLite-LICENSE.txt').read_bytes(), b'SQLite wording\n')
+        self.assertNotIn(b'const version', (staged / 'tools/package/notices/SQLite-WASM-NOTICE.txt').read_bytes())
+        for record, old in zip(records, json.loads(before)['notices']):
+            if record['project'] not in ['sqlite', 'sqliteVector']:
                 self.assertEqual(record, old)
+        self.assertTrue((staged / 'tools/package/NOTICE-vector.txt').is_file())
         self.assertEqual((self.repo / 'tools/package/notices.json').read_bytes(), before)
-        self.assertFalse((self.repo / '.work/inputs').exists())
-        self.assertFalse(any('/git/' in url for url in self.requests))
+        self.assertEqual(len(self.requests), 2)
 
-    def test_missing_vec_licenses_use_one_immutable_annotated_tag(self):
-        self.archives(); self.annotated = True
-        result = self.run_reconcile()
-        records = json.loads((Path(result['prepared']) / 'tools/package/notices.json').read_text())['notices'][2:4]
-        for record in records:
-            source = record['source']
-            self.assertEqual(source['commit'], self.commit)
-            self.assertEqual(source['tag'], 'v0.1.10-alpha.1')
-            self.assertEqual(source['sha256'], hashlib.sha256(self.files[source['path']]).hexdigest())
-            self.assertIn('/blob/' + self.commit + '/', record['origin'])
-        self.assertEqual(sum('/git/ref/' in url for url in self.requests), 1)
-        self.assertFalse(list(self.directory.glob('git-*.json')))
-
-    def test_unchanged_pair_is_byte_preserving_without_fetch(self):
+    def test_same_pair_preserves_bytes_and_reports_retained_proof(self):
         self.selected = copy.deepcopy(self.baseline)
-        result = n.reconcile(self.repo, self.selected, self.directory, acquire=lambda *_: self.fail('acquisition'), fetch=lambda *_: self.fail('network'))
+        result = self.reconcile()
         self.assertEqual((Path(result['prepared']) / 'tools/package/notices.json').read_bytes(), (self.repo / 'tools/package/notices.json').read_bytes())
         report = json.loads(Path(result['reportPath']).read_text())
-        self.assertTrue(all(item['disposition'] == 'retained' and item['rawSource'] == 'not-established' for item in report['notices']))
+        self.assertTrue(all(r['disposition'] == 'retained' for r in report['notices']))
+        self.assertEqual(self.requests, [])
         self.assertNotIn('acquisition', report)
 
-    def test_failures_retain_diagnostics_and_do_not_change_inputs(self):
-        for mode in ['digest', 'unsafe', 'duplicate', 'link', 'missing', 'ambiguous', 'blob', 'kind', 'transport']:
+    def test_sqlite_only_vector_only_and_rollback(self):
+        original = copy.deepcopy(self.selected)
+        for project in ['sqlite', 'sqliteVector']:
+            for rollback in [False, True]:
+                with self.subTest(project=project, rollback=rollback):
+                    self.selected = copy.deepcopy(self.baseline)
+                    self.selected[project] = copy.deepcopy(original[project])
+                    if rollback and project == 'sqliteVector':
+                        self.selected[project].update(version='1.1.1', tag='1.1.1', releaseUrl='https://github.com/sqliteai/sqlite-vector/releases/tag/1.1.1')
+                    if rollback and project == 'sqlite':
+                        self.selected[project].update(version='3.53.4', archiveUrl='https://sqlite.org/2026/sqlite-src-3530400.zip', releaseUrl='https://sqlite.org/releaselog/3_53_4.html')
+                    self.directory = self.repo / '.work/updates' / (project + str(rollback))
+                    self.archives()
+                    result = self.reconcile()
+                    report = json.loads(Path(result['reportPath']).read_text())
+                    for record in report['notices']:
+                        self.assertEqual(record['disposition'], 'refreshed' if record['project'] == project else 'retained')
+
+    def test_required_source_dependency_encoding_and_integrity_fail_closed(self):
+        for mode in ['missing_sqlite', 'missing_vector', 'corrupt_header', 'unsafe', 'normalization', 'bad_version', 'digest', 'transport']:
             with self.subTest(mode=mode):
-                self.directory = self.repo / '.work/updates' / mode; self.directory.mkdir()
-                self.archives(missing_sqlite=mode == 'missing', unsafe=mode == 'unsafe', duplicate=mode == 'duplicate', link=mode == 'link', ambiguous=mode == 'ambiguous')
-                self.bad_blob = mode == 'blob'; self.bad_kind = mode == 'kind'
-                if mode == 'digest': self.selected['sqlite']['digest']['value'] = '0' * 64
+                self.directory = self.repo / '.work/updates' / mode
+                self.archives(**({mode: True} if mode not in ['digest', 'transport'] else {}))
+                if mode == 'digest':
+                    self.selected['sqliteVector']['digest']['value'] = '0' * 64
                 before = (self.repo / 'tools/package/notices.json').read_bytes()
-                self.transport_failure = mode == 'transport'
-                with self.assertRaises(Exception): self.run_reconcile()
-                report = json.loads((self.directory / 'notices.json').read_text())
-                self.assertEqual(report['status'], 'failed')
-                self.assertIn(report['failure']['project'], ('sqlite', 'sqliteVec'))
-                self.assertTrue(report['failure']['notices'])
+                fetch = (lambda *_: (_ for _ in ()).throw(OSError('offline'))) if mode == 'transport' else self.fetch
+                with self.assertRaises(Exception):
+                    n.reconcile(self.repo, self.selected, self.directory, fetch=fetch)
+                self.assertEqual(json.loads((self.directory / 'notices.json').read_text())['status'], 'failed')
                 self.assertEqual((self.repo / 'tools/package/notices.json').read_bytes(), before)
                 self.assertFalse((self.repo / '.work/inputs').exists())
 
-
-    def test_single_upstream_groups_and_same_wording_new_version(self):
-        for changed in ('sqlite', 'sqliteVec'):
-            with self.subTest(changed=changed):
-                other = 'sqliteVec' if changed == 'sqlite' else 'sqlite'
-                self.selected[other] = copy.deepcopy(self.baseline[other])
-                self.directory = self.repo / '.work/updates' / changed
-                self.directory.mkdir()
-                self.archives(vec_notices=True)
-                before = json.loads((self.repo / 'tools/package/notices.json').read_text())
-                if changed == 'sqlite':
-                    # Independently specified identical normalized wording still needs new provenance.
-                    (self.repo / 'tools/package/notices/SQLite-LICENSE.txt').write_bytes(b'SQLite wording\n')
-                    before['notices'][0]['sha256'] = hashlib.sha256(b'SQLite wording\n').hexdigest()
-                    (self.repo / 'tools/package/notices.json').write_text(json.dumps(before) + '\n')
-                result = self.run_reconcile()
-                manifest = json.loads((Path(result['prepared']) / 'tools/package/notices.json').read_text())
-                for old, record in zip(before['notices'], manifest['notices']):
-                    if record['project'] != changed:
-                        self.assertEqual(record, old)
-                    else:
-                        self.assertIn('source', record)
-                        self.assertEqual(record['version'], self.selected[changed]['version'])
-                if changed == 'sqlite':
-                    self.assertEqual(manifest['notices'][0]['sha256'], before['notices'][0]['sha256'])
-                # Restore the other selected identity for the next independent subcase.
-                self.selected = copy.deepcopy(self.baseline)
-                self.selected['sqliteVec'].update(version='0.1.10-alpha.1', archiveUrl='https://github.com/asg017/sqlite-vec/releases/download/v0.1.10-alpha.1/sqlite-vec-0.1.10-alpha.1-amalgamation.tar.gz', releaseUrl='https://github.com/asg017/sqlite-vec/releases/tag/v0.1.10-alpha.1')
-
-    def test_invalid_notice_text_and_header_are_rejected(self):
+    def test_invalid_text_and_license_block(self):
         self.assertEqual(n.derive(b'text  \r\n\r\n'), b'text\r\n')
         for raw in [b'', b' \n\t\n', b'bad\0text', b'\xff']:
-            with self.assertRaises(Exception): n.derive(raw)
+            with self.assertRaises(Exception):
+                n.derive(raw)
         for raw in [b'const x = 1;', b'/* @preserve missing end', b'/* other */\n/* @preserve yes */']:
-            with self.assertRaises(Exception): n.derive(raw, True)
+            with self.assertRaises(Exception):
+                n.derive(raw, True)
 
 
 if __name__ == '__main__':

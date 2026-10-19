@@ -6,14 +6,14 @@ import { noticeInputs } from '../package/package.mjs';
 import { command } from '../acceptance/run.mjs';
 
 export const noticePaths = ['tools/package/notices.json', ...[
-  'SQLite-LICENSE.txt', 'SQLite-WASM-NOTICE.txt', 'sqlite-vec-MIT.txt', 'sqlite-vec-APACHE.txt',
+  'SQLite-LICENSE.txt', 'SQLite-WASM-NOTICE.txt', 'sqlite-vector-APACHE.txt',
 ].map(name => `tools/package/notices/${name}`)];
 
 export async function reconcileNotices({ repository, directory, lock, run = command }) {
   const reportPath = join(directory, 'notices.json');
   // Persist the boundary failure too: the Python helper must not repair corrupt baseline inputs.
   try {
-    const baseline = JSON.parse(await readFile(join(repository, 'inputs/sources.lock.json'), 'utf8'));
+    const baseline = JSON.parse(await readFile(join(repository, 'inputs/sqlite-vector.sources.lock.json'), 'utf8'));
     await noticeInputs({ inputs: baseline }, repository);
     const lockPath = join(directory, 'notice-sources.lock.json');
     await writeFile(lockPath, JSON.stringify(lock, null, 2) + '\n');
@@ -28,7 +28,7 @@ export async function reconcileNotices({ repository, directory, lock, run = comm
     let report;
     try { report = JSON.parse(await readFile(reportPath, 'utf8')); }
     catch (readError) { if (readError.code !== 'ENOENT') throw readError;
-      report = { schemaVersion: 1, selection: { sqlite: lock.sqlite.version, sqliteVec: lock.sqliteVec.version }, notices: [] }; }
+      report = { schemaVersion: 1, selection: { sqlite: lock.sqlite.version, sqliteVector: lock.sqliteVector.version }, notices: [] }; }
     report.status = 'failed'; report.diagnostic = error.message;
     await writeFile(reportPath, JSON.stringify(report, null, 2) + '\n');
     throw error;
