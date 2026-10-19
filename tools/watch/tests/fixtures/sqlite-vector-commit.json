@@ -1,0 +1,35 @@
+{
+  "sha": "235a7c51b18858e1fea9fb2895e115e4cbbd9f7d",
+  "node_id": "C_kwDOOVWuCdoAKDIzNWE3YzUxYjE4ODU4ZTFmZWE5ZmIyODk1ZTExNWU0Y2JiZDlmN2Q",
+  "url": "https://api.github.com/repos/sqliteai/sqlite-vector/git/commits/235a7c51b18858e1fea9fb2895e115e4cbbd9f7d",
+  "html_url": "https://github.com/sqliteai/sqlite-vector/commit/235a7c51b18858e1fea9fb2895e115e4cbbd9f7d",
+  "author": {
+    "name": "marcobambini",
+    "email": "marcobambini@users.noreply.github.com",
+    "date": "2026-08-24T21:16:06Z"
+  },
+  "committer": {
+    "name": "marcobambini",
+    "email": "marcobambini@users.noreply.github.com",
+    "date": "2026-08-24T21:16:06Z"
+  },
+  "tree": {
+    "sha": "a179a139163c6ddd72eadb953b8d43465902e798",
+    "url": "https://api.github.com/repos/sqliteai/sqlite-vector/git/trees/a179a139163c6ddd72eadb953b8d43465902e798"
+  },
+  "message": "Update Package.swift checksum for 1.1.0 [auto-update]",
+  "parents": [
+    {
+      "sha": "7cd6b6e229f8986aa3ca7ab2e34dc11b2767210b",
+      "url": "https://api.github.com/repos/sqliteai/sqlite-vector/git/commits/7cd6b6e229f8986aa3ca7ab2e34dc11b2767210b",
+      "html_url": "https://github.com/sqliteai/sqlite-vector/commit/7cd6b6e229f8986aa3ca7ab2e34dc11b2767210b"
+    }
+  ],
+  "verification": {
+    "verified": false,
+    "reason": "unsigned",
+    "signature": null,
+    "payload": null,
+    "verified_at": null
+  }
+}

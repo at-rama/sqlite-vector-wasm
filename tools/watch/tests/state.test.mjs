@@ -3,10 +3,11 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { cachedReader, publicationState, candidateState } from '../state.mjs';
+import { pairKey } from '../state.mjs';
 import { npmPackageName } from '../../release/policy.mjs';
 
 const repository='at-rama/sqlite-vector-wasm',api=`https://api.github.com/repos/${repository}/`;
-const pair={sqlite:'3.54.0',sqliteVec:'0.1.9'},commit='a'.repeat(40);
+const pair={sqlite:'3.54.0',sqliteVec:'0.1.9'},vectorPair={sqlite:'3.54.0',sqliteVector:'1.1.2'},commit='a'.repeat(40);
 const bytes=Buffer.from('synthetic payload; not a qualified runtime');
 const sha=createHash('sha256').update(bytes).digest('hex');
 test('Updates exposes the exact Vector pair and a separate rehearsal title',async()=>{
@@ -64,7 +65,7 @@ test('unready registry placeholder is not empty publication history',async()=>{
   await assert.rejects(()=>publicationState({repository,get:cachedReader(f.get)}),/unready/);
 });
 
-const run=(id=17,attempt=1)=>({id,run_attempt:attempt,status:'queued',event:'workflow_dispatch',head_branch:'main',path:'.github/workflows/updates.yml',repository:{full_name:repository},head_sha:commit,html_url:`https://github.com/${repository}/actions/runs/${id}`,display_title:'candidate sqlite=3.54.0 sqlite-vec=0.1.9'});
+const run=(id=17,attempt=1)=>({id,run_attempt:attempt,status:'queued',event:'workflow_dispatch',head_branch:'main',path:'.github/workflows/updates.yml',repository:{full_name:repository},head_sha:commit,html_url:`https://github.com/${repository}/actions/runs/${id}`,display_title:'candidate sqlite=3.54.0 SQLite-Vector=1.1.2'});
 const pr=(number=44,id=17,attempt=1)=>({number,state:'open',html_url:`https://github.com/${repository}/pull/${number}`,changed_files:1,base:{ref:'main',repo:{full_name:repository}},head:{ref:`candidate/run-${id}-${attempt}`,sha:commit,repo:{full_name:repository}}});
 function candidateFixture(){
   const runs=[run()],prs=[pr()],changed=new Map(),values=new Map();
@@ -75,8 +76,8 @@ function candidateFixture(){
     const identity=url.match(/\/pulls\/(\d+)(\/files)?/);
     if(identity){const p=prs.find(p=>p.number===+identity[1]);return {status:200,data:identity[2]?[{filename:'inputs/release.json',status:changed.get(p.number)||'modified'}]:p,headers:{}};}
     if(url.includes('/contents/')){
-      const path=url.includes('sources.lock')?'inputs/sources.lock.json':'inputs/release.json';
-      const value=values.get(path)|| (path.includes('sources.lock')?{sqlite:{version:pair.sqlite},sqliteVec:{version:pair.sqliteVec}}:{schemaVersion:1,...pair,releaseComment:'',preparation:{runId:17,url:`https://github.com/${repository}/actions/runs/17`}});
+      const path=url.includes('sources.lock')?'inputs/sqlite-vector.sources.lock.json':'inputs/release.json';
+      const value=values.get(path)|| (path.includes('sources.lock')?{schemaVersion:2,sqlite:{version:vectorPair.sqlite},sqliteVector:{version:vectorPair.sqliteVector}}:{schemaVersion:2,...vectorPair,releaseComment:'',preparation:{runId:17,url:`https://github.com/${repository}/actions/runs/17`}});
       const raw=Buffer.from(JSON.stringify(value));return {status:200,data:{type:'file',path,encoding:'base64',size:raw.length,content:raw.toString('base64')}};
     }
     throw Error('Unexpected '+url);
@@ -99,7 +100,7 @@ test('inherited descriptor, completed failures and unrelated branches do not bec
 });
 
 test('same run and attempt cannot supply repeated or contradictory pre-PR selections',async()=>{
-  for(const title of ['candidate sqlite=3.54.0 sqlite-vec=0.1.9','candidate sqlite=3.54.1 sqlite-vec=0.1.9']) {
+  for(const title of ['candidate sqlite=3.54.0 SQLite-Vector=1.1.2','candidate sqlite=3.54.1 SQLite-Vector=1.1.2']) {
     const f=candidateFixture();f.prs.length=0;f.runs.push({...run(),display_title:title});
     await assert.rejects(()=>candidateState({repository,get:f.get}),/Repeated active preparation observation/);
   }
@@ -110,8 +111,8 @@ test('same run and attempt cannot supply repeated or contradictory pre-PR select
 });
 test('legacy, unsafe, truncated and contradictory candidate reads fail explicitly',async()=>{
   for(const modify of [f=>f.runs[0].display_title='Updates',f=>f.runs[0].repository.full_name='other/repository',f=>f.runs[0].head_branch='other',f=>f.runs[0].path='.github/workflows/other.yml',f=>f.prs[0].changed_files=2,
-    f=>f.values.set('inputs/sources.lock.json',{sqlite:{version:'3.53.4'},sqliteVec:{version:'0.1.9'}}),
-    f=>f.values.set('inputs/release.json',{schemaVersion:1,...pair,releaseComment:'',preparation:{runId:17,url:'https://github.com/other/repository/actions/runs/17'}})]) {
+    f=>f.values.set('inputs/sqlite-vector.sources.lock.json',{schemaVersion:2,sqlite:{version:'3.53.4'},sqliteVector:{version:'1.1.2'}}),
+    f=>f.values.set('inputs/release.json',{schemaVersion:2,...vectorPair,releaseComment:'',preparation:{runId:17,url:'https://github.com/other/repository/actions/runs/17'}})]) {
     const f=candidateFixture();modify(f);await assert.rejects(()=>candidateState({repository,get:f.get}));
   }
   const f=candidateFixture();await assert.rejects(()=>candidateState({repository,get:async(url)=>url.includes('actions/workflows/')?{status:200,data:{total_count:2,workflow_runs:f.runs},headers:{}}:f.get(url)}),/Truncated/);
@@ -120,7 +121,50 @@ test('legacy, unsafe, truncated and contradictory candidate reads fail explicitl
   }}),/head changed/);
 });
 
-test('unadapted Watch rejects the Vector producer handoff explicitly',async()=>{
-  const f=candidateFixture();f.prs.length=0;f.runs[0].display_title='candidate sqlite=3.54.0 SQLite-Vector=1.1.2';
-  await assert.rejects(()=>candidateState({repository,get:f.get}));
+test('Vector producer handoff is consumed; clearly identified legacy observations stay historical',async()=>{
+  const f=candidateFixture();assert.equal((await candidateState({repository,get:f.get})).length,1);
+  assert.ok(f.requests.some(u=>u.includes('inputs/sqlite-vector.sources.lock.json')));
+  assert.ok(!f.requests.some(u=>u.includes('contents/inputs/sources.lock.json')));
+  f.runs[0].display_title='candidate sqlite=3.54.0 sqlite-vec=0.1.9';
+  f.values.set('inputs/release.json',{schemaVersion:1,...pair,releaseComment:'',preparation:{runId:17,url:`https://github.com/${repository}/actions/runs/17`}});
+  assert.deepEqual(await candidateState({repository,get:f.get}),[]);
+  f.values.get('inputs/release.json').sqliteVector='1.1.2';
+  await assert.rejects(()=>candidateState({repository,get:f.get}),/Mixed legacy/);
+});
+test('unknown, mixed, missing lock and wrong run/attempt observations fail',async()=>{
+  for(const modify of [f=>f.runs[0].run_attempt=0, f=>f.runs[0].display_title+=' sqlite-vec=0.1.9',
+    f=>f.values.set('inputs/release.json',{schemaVersion:3}),
+    f=>f.values.set('inputs/sqlite-vector.sources.lock.json',{schemaVersion:2,...vectorPair,sqliteVec:'0.1.9'}),
+    f=>f.values.set('inputs/release.json',{schemaVersion:2,...vectorPair,releaseComment:'',preparation:{runId:99,url:`https://github.com/${repository}/actions/runs/99`}})]) {
+    const f=candidateFixture();modify(f);await assert.rejects(()=>candidateState({repository,get:f.get}));
+  }
+  const f=candidateFixture();await assert.rejects(()=>candidateState({repository,get:async url=>url.includes('sqlite-vector.sources.lock')?{status:404}:f.get(url)}));
+});
+test('composition keys distinguish engines even for identical numeric versions',()=>{
+  assert.notEqual(pairKey({sqlite:'3.54.0',sqliteVec:'1.1.2'}),pairKey(vectorPair));
+});
+
+test('publication reader preserves actual Vector and mixed-channel provenance identities',async()=>{
+  const f=publicationFixture();
+  for(const i of [1,2]) {
+    const e=f.evidence[i],version=i===1?'1.1.2':'1.1.3-alpha.1';
+    e.upstreams={sqlite:e.upstreams.sqlite,sqliteVector:version};
+    e.engine={key:'sqliteVector',upstream:'sqliteai/sqlite-vector',version};
+    e.sourceLock={schemaVersion:2,sqlite:e.sourceLock.sqlite,sqliteVector:{version,commit,archiveUrl:`https://codeload.github.com/sqliteai/sqlite-vector/tar.gz/${commit}`,digest:{algorithm:'sha256',value:'b'.repeat(64)}}};
+  }
+  f.npm['dist-tags'].next='0.3.0-alpha.1';
+  const result=await publicationState({repository,get:cachedReader(f.get)});
+  assert.deepEqual(result.snapshot.heads.latest.upstreams,pair);
+  assert.equal(result.snapshot.heads.next.upstreams.sqliteVector,'1.1.3-alpha.1');
+  assert.deepEqual(result.history.map(h=>Object.keys(h.selection).sort()),[['sqlite','sqliteVec'],['sqlite','sqliteVector'],['sqlite','sqliteVector']]);
+  f.npm['dist-tags'].latest='0.2.0';
+  assert.equal((await publicationState({repository,get:cachedReader(f.get)})).snapshot.heads.latest.upstreams.sqliteVector,'1.1.2');
+  f.evidence[1].sourceLock.sqliteVec={version:'0.1.9'};
+  await assert.rejects(()=>publicationState({repository,get:cachedReader(f.get)}),/Ambiguous/);
+});
+test('legacy and current records cannot contradict the engine for one preparation attempt',async()=>{
+  const f=candidateFixture();f.runs[0].display_title='candidate sqlite=3.54.0 sqlite-vec=0.1.9';
+  await assert.rejects(()=>candidateState({repository,get:f.get}),/Mixed run\/candidate engines/);
+  const g=candidateFixture();g.values.set('inputs/release.json',{schemaVersion:1,...pair,releaseComment:'',preparation:{runId:17,url:`https://github.com/${repository}/actions/runs/17`}});
+  await assert.rejects(()=>candidateState({repository,get:g.get}),/Mixed run\/candidate engines/);
 });

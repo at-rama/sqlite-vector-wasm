@@ -1,25 +1,28 @@
 import { readFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { npmPackageName } from '../../release/policy.mjs';
-import { fossilTags } from '../discovery.mjs';
+import { fossilTags, vectorAPI } from '../discovery.mjs';
 
 export async function planningFixture({empty=false}={}) {
   const repository='at-rama/sqlite-vector-wasm',api=`https://api.github.com/repos/${repository}/`;
   const html=await readFile(new URL('./fixtures/sqlite-taglist.html.txt',import.meta.url));
   const release=await readFile(new URL('./fixtures/sqlite-release.html.txt',import.meta.url));
-  // Complete the captured subset with its URL identity for this synthetic observation.
-  const vec={...JSON.parse(await readFile(new URL('./fixtures/sqlite-vec-release.json',import.meta.url))),id:324084102};
+  const vec=JSON.parse(await readFile(new URL('./fixtures/sqlite-vector-release.json',import.meta.url)));
+  const tag=JSON.parse(await readFile(new URL('./fixtures/sqlite-vector-tag.json',import.meta.url)));
+  const binding=JSON.parse(await readFile(new URL('./fixtures/sqlite-vector-commit.json',import.meta.url)));
   const bytes=Buffer.from('synthetic publication payload'),commit='a'.repeat(40);
-  const selection={sqlite:empty?'3.54.0':'3.53.4',sqliteVec:'0.1.9'};
+  const selection={sqlite:empty?'3.54.0':'3.53.4',[empty?'sqliteVector':'sqliteVec']:empty?'1.1.0':'0.1.9'};
   const evidence={schemaVersion:1,name:npmPackageName,version:'0.1.0',tag:'dist/v0.1.0',channel:'latest',commit,upstreams:selection,
     archive:{sha256:createHash('sha256').update(bytes).digest('hex'),size:bytes.length},
-    sourceLock:{schemaVersion:1,...Object.fromEntries(Object.entries(selection).map(([k,version])=>[k,{version,archiveUrl:k==='sqlite'?'https://sqlite.org/2026/source.zip':'https://github.com/asg017/sqlite-vec/releases/download/v0.1.9/source.tgz',digest:{algorithm:'sha256',value:'b'.repeat(64)}}]))},build:{tools:{}},acceptance:{verdict:'passed'}};
-  const stable={...vec,id:900001,tag_name:'v0.1.9',prerelease:false,url:'https://api.github.com/repos/asg017/sqlite-vec/releases/900001',html_url:'https://github.com/asg017/sqlite-vec/releases/tag/v0.1.9',assets:[{name:'sqlite-vec-0.1.9-amalgamation.tar.gz',state:'uploaded',digest:'sha256:'+'c'.repeat(64),browser_download_url:'https://github.com/asg017/sqlite-vec/releases/download/v0.1.9/sqlite-vec-0.1.9-amalgamation.tar.gz'}]};
+    ...(empty?{engine:{key:'sqliteVector',upstream:'sqliteai/sqlite-vector',version:'1.1.0'}}:{}),
+    sourceLock:{schemaVersion:empty?2:1,...Object.fromEntries(Object.entries(selection).map(([k,version])=>[k,{version,...(k==='sqliteVector'?{commit:binding.sha}:{}),archiveUrl:k==='sqlite'?'https://sqlite.org/2026/source.zip':k==='sqliteVector'?`https://codeload.github.com/sqliteai/sqlite-vector/tar.gz/${binding.sha}`:'https://github.com/asg017/sqlite-vec/releases/download/v0.1.9/source.tgz',digest:{algorithm:'sha256',value:'b'.repeat(64)}}]))},build:{tools:{}},acceptance:{verdict:'passed'}};
   const replies=new Map([
     [fossilTags,{status:200,data:html}],
     ['https://sqlite.org/releaselog/3_54_0.html',{status:200,data:release}],
     ['https://sqlite.org/releaselog/3_53_4.html',{status:200,data:Buffer.from('<title>SQLite Release 3.53.4 On 2026-07-24</title>')}],
-    ['https://api.github.com/repos/asg017/sqlite-vec/releases?per_page=100',{status:200,data:empty?[stable]:[stable,vec],headers:{}}],
+    [`${vectorAPI}/releases?per_page=100`,{status:200,data:[vec],headers:{}}],
+    [`${vectorAPI}/git/ref/tags/1.1.0`,{status:200,data:tag}],
+    [tag.object.url,{status:200,data:binding}],
     [api+'tags?per_page=100',{status:200,data:[{name:'dist/v0.1.0',commit:{sha:commit}}],headers:{}}],
     [api+'releases?per_page=100',{status:200,data:[{tag_name:'dist/v0.1.0',draft:false,prerelease:false,assets:[{name:'publication.json',url:api+'releases/assets/1'},{name:'payload.tgz',url:api+'releases/assets/2'}]}],headers:{}}],
     [api+'releases/assets/1',{status:200,data:Buffer.from(JSON.stringify(evidence))}],

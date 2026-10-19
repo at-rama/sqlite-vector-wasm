@@ -4,32 +4,32 @@ import { makePlan, renderPlan, renderFailure } from '../plan.mjs';
 import { calculate } from '../../release/policy.mjs';
 
 const repository='at-rama/sqlite-vector-wasm';
-const published=(version,sqlite,sqliteVec)=>({version,commit:'a'.repeat(40),upstreams:{sqlite,sqliteVec}});
-const inventory=(sqlite,sqliteVec)=>({sqlite:sqlite.map(version=>({version})),sqliteVec:sqliteVec.map(version=>({version}))});
+const published=(version,sqlite,sqliteVector)=>({version,commit:'a'.repeat(40),upstreams:{sqlite,sqliteVector}});
+const inventory=(sqlite,sqliteVector)=>({sqlite:sqlite.map(version=>({version})),sqliteVector:sqliteVector.map(version=>({version}))});
 function context(){
-  const latest=published('0.1.0','3.54.0','0.1.9'),next=published('0.2.0-alpha.1','3.53.5','0.1.10-alpha.1');
-  return {repository,inventory:inventory(['3.53.4','3.53.6','3.54.0','3.54.1'],['0.1.9','0.1.10-alpha.1','0.1.10-alpha.2']),
+  const latest=published('0.1.0','3.54.0','1.1.0'),next=published('0.2.0-alpha.1','3.53.5','1.1.1-alpha.1');
+  return {repository,inventory:inventory(['3.53.4','3.53.6','3.54.0','3.54.1'],['1.1.0','1.1.1-alpha.1','1.1.1-alpha.2']),
     publication:{snapshot:{schemaVersion:1,tags:['dist/v0.1.0','dist/v0.2.0-alpha.1'],releaseTags:['dist/v0.1.0','dist/v0.2.0-alpha.1'],npmVersions:['0.1.0','0.2.0-alpha.1'],heads:{latest,next}},history:[],partial:[]},candidates:[]};
 }
-const pairs=plan=>plan.entries.map(e=>`${e.identity.channel}:${e.selection.sqlite}/${e.selection.sqliteVec}`);
+const pairs=plan=>plan.entries.map(e=>`${e.identity.channel}:${e.selection.sqlite}/${e.selection.sqliteVector}`);
 test('Cartesian eligibility keeps stable maintenance, all alpha pairs and existing-version combinations',()=>{
   const c=context();
-  assert.deepEqual(pairs(makePlan(c)),['latest:3.54.1/0.1.9','next:3.54.0/0.1.10-alpha.1','next:3.54.0/0.1.10-alpha.2','next:3.54.1/0.1.10-alpha.1','next:3.54.1/0.1.10-alpha.2']);
+  assert.deepEqual(pairs(makePlan(c)),['latest:3.54.1/1.1.0','next:3.54.0/1.1.1-alpha.1','next:3.54.0/1.1.1-alpha.2','next:3.54.1/1.1.1-alpha.1','next:3.54.1/1.1.1-alpha.2']);
   assert.deepEqual(pairs(makePlan(c)),pairs(makePlan(c)),'unselected jobs recur without refusal memory');
   c.publication.snapshot.heads.latest.upstreams.sqlite='3.54.1';
   assert.ok(!pairs(makePlan(c)).some(p=>p.startsWith('latest:')),'reference progression removes superseded pairs');
 });
 test('without next, latest is the experimental reference; suffix ordering and both floors remain',()=>{
   const c=context();c.publication.snapshot.heads.next=null;
-  c.inventory.sqliteVec.push({version:'0.1.9-alpha.1'});
-  const plan=makePlan(c);assert.ok(plan.entries.some(e=>e.selection.sqliteVec==='0.1.10-alpha.1'));
-  assert.ok(!plan.entries.some(e=>e.selection.sqlite==='3.53.6'||e.selection.sqliteVec==='0.1.9-alpha.1'));
+  c.inventory.sqliteVector.push({version:'1.1.0-alpha.1'});
+  const plan=makePlan(c);assert.ok(plan.entries.some(e=>e.selection.sqliteVector==='1.1.1-alpha.1'));
+  assert.ok(!plan.entries.some(e=>e.selection.sqlite==='3.53.6'||e.selection.sqliteVector==='1.1.0-alpha.1'));
 });
 test('history excludes corresponding-status compositions after rollback and packaging corrections',()=>{
-  const c=context();c.publication.history=[{channel:'latest',selection:{sqlite:'3.54.1',sqliteVec:'0.1.9'},version:'0.2.0'},
-    {channel:'latest',selection:{sqlite:'3.54.1',sqliteVec:'0.1.9'},version:'0.2.1'},
-    {channel:'next',selection:{sqlite:'3.54.0',sqliteVec:'0.1.10-alpha.1'},version:'0.2.0-alpha.3'}];
-  assert.deepEqual(pairs(makePlan(c)),['next:3.54.0/0.1.10-alpha.2','next:3.54.1/0.1.10-alpha.1','next:3.54.1/0.1.10-alpha.2']);
+  const c=context();c.publication.history=[{channel:'latest',selection:{sqlite:'3.54.1',sqliteVector:'1.1.0'},version:'0.2.0'},
+    {channel:'latest',selection:{sqlite:'3.54.1',sqliteVector:'1.1.0'},version:'0.2.1'},
+    {channel:'next',selection:{sqlite:'3.54.0',sqliteVector:'1.1.1-alpha.1'},version:'0.2.0-alpha.3'}];
+  assert.deepEqual(pairs(makePlan(c)),['next:3.54.0/1.1.1-alpha.2','next:3.54.1/1.1.1-alpha.1','next:3.54.1/1.1.1-alpha.2']);
 });
 test('forecasts use the unchanged common snapshot and fail collisions without renumbering',()=>{
   const c=context(),before=JSON.stringify(c),plan=makePlan(c);
@@ -45,19 +45,19 @@ test('shared alpha-series policy responds to changed publication state',()=>{
   plan=makePlan(c);assert.equal(plan.entries[1].identity.version,'0.2.0-alpha.4');
 });
 test('complete summary is deterministic, actionable and preserves candidate links without duplicate advice',()=>{
-  const c=context();c.candidates=[{kind:'run',selection:{sqlite:'3.54.1',sqliteVec:'0.1.9'},runId:17,attempt:1,status:'queued',url:`https://github.com/${repository}/actions/runs/17`}];
+  const c=context();c.candidates=[{kind:'run',selection:{sqlite:'3.54.1',sqliteVector:'1.1.0'},runId:17,attempt:1,status:'queued',url:`https://github.com/${repository}/actions/runs/17`}];
   const rendered=renderPlan(makePlan(c));
-  assert.match(rendered,/3.54.1 × sqlite-vec 0.1.9/);assert.match(rendered,/- latest: 0.1.1 · PATCH/);
+  assert.match(rendered,/3.54.1 × SQLite-Vector 1.1.0/);assert.match(rendered,/- latest: 0.1.1 · PATCH/);
   assert.match(rendered,/Existing preparation; do not launch a duplicate/);assert.match(rendered,/actions\/runs\/17/);
-  assert.match(rendered,/`sqlite_vec_version`: `0.1.10-alpha.2`/);
-  for(const key of ['sqlite_comment','sqlite_vec_comment','misc_comment'])assert.ok(rendered.includes(`\`${key}\``));
+  assert.match(rendered,/`sqlite_vector_version`: `1.1.1-alpha.2`/);
+  for(const key of ['sqlite_comment','sqlite_vector_comment','misc_comment'])assert.ok(rendered.includes(`\`${key}\``));
   assert.match(rendered,/actions\/workflows\/updates.yml/);assert.doesNotMatch(rendered,/Preparation: none/);
   assert.match(rendered,/invoke `\/release-comments` with the selected pair/);
   assert.ok(rendered.includes(`https://github.com/${repository}/blob/main/.42p/.agents/skills/release-comments/SKILL.md`));
-  for(const k of ['sqlite','sqliteVec'])c.inventory[k].reverse();assert.equal(renderPlan(makePlan(c)),rendered);
+  for(const k of ['sqlite','sqliteVector'])c.inventory[k].reverse();assert.equal(renderPlan(makePlan(c)),rendered);
 });
 test('compact entries preserve every plan fact while sharing instructions and retaining all candidates',()=>{
-  const c=context(),selection={sqlite:'3.54.1',sqliteVec:'0.1.9'};
+  const c=context(),selection={sqlite:'3.54.1',sqliteVector:'1.1.0'};
   c.publication.partial=['0.8.0-alpha.7'];
   c.candidates=[
     {kind:'run',selection,runId:17,attempt:2,status:'queued',url:`https://github.com/${repository}/actions/runs/17`},
@@ -68,17 +68,17 @@ test('compact entries preserve every plan fact while sharing instructions and re
   const plan=makePlan(c),before=JSON.stringify(plan),rendered=renderPlan(plan);
   assert.match(rendered,/Complete plan: 5 eligible pairs/);
   assert.equal((rendered.match(/actions\/workflows\/updates.yml/g)||[]).length,1);
-  for(const key of ['sqlite_comment','sqlite_vec_comment','misc_comment'])assert.equal(rendered.split(`\`${key}\``).length-1,1);
+  for(const key of ['sqlite_comment','sqlite_vector_comment','misc_comment'])assert.equal(rendered.split(`\`${key}\``).length-1,1);
   assert.match(rendered,/no channel or version override/);
   assert.equal((rendered.match(/^### SQLite /gm)||[]).length,plan.entries.length);
   for(const e of plan.entries) {
-    const heading=`### SQLite ${e.selection.sqlite} × sqlite-vec ${e.selection.sqliteVec}\n`;
+    const heading=`### SQLite ${e.selection.sqlite} × SQLite-Vector ${e.selection.sqliteVector}\n`;
     const block=rendered.split(heading)[1].split(/\n##(?:#)? /)[0];
     assert.ok(block.includes(`\`sqlite_version\`: \`${e.parameters.sqlite_version}\``));
-    assert.ok(block.includes(`\`sqlite_vec_version\`: \`${e.parameters.sqlite_vec_version}\``));
+    assert.ok(block.includes(`\`sqlite_vector_version\`: \`${e.parameters.sqlite_vector_version}\``));
     assert.doesNotMatch(block,/Forecast:/);
     assert.ok(rendered.split("## Forecast\n")[1].split("\n## latest")[0].includes(`${e.identity.version} · ${e.identity.signal}`));
-    assert.equal(e.parameters.sqlite_comment,'');assert.equal(e.parameters.sqlite_vec_comment,'');assert.equal(e.parameters.misc_comment,'');
+    assert.equal(e.parameters.sqlite_comment,'');assert.equal(e.parameters.sqlite_vector_comment,'');assert.equal(e.parameters.misc_comment,'');
     for(const candidate of e.candidates)assert.ok(block.includes(candidate.url));
   }
   assert.match(rendered,/Preparation 17, attempt 2.*\(queued\)/);
@@ -88,7 +88,7 @@ test('compact entries preserve every plan fact while sharing instructions and re
   assert.match(rendered,/Active attempt 3: in_progress/);
   assert.ok(rendered.indexOf('## Reference state')>rendered.lastIndexOf('### SQLite'));
   for(const [channel,h] of Object.entries(plan.references)) {
-    assert.ok(rendered.includes(`${channel}: ${h.version}; SQLite ${h.upstreams.sqlite}, sqlite-vec ${h.upstreams.sqliteVec}; revision ${h.commit}`));
+    assert.ok(rendered.includes(`${channel}: ${h.version}; SQLite ${h.upstreams.sqlite}, SQLite-Vector ${h.upstreams.sqliteVector}; revision ${h.commit}`));
   }
   assert.match(rendered,/Partial occupied identities \(not completed publications\): 0.8.0-alpha.7/);
   assert.equal(JSON.stringify(plan),before,'presentation cannot mutate the result handed to a consumer');
@@ -103,15 +103,15 @@ test('all-candidate plans remain complete nonempty results without per-entry lau
 });
 test('long suffixes and absent next remain visible; unsafe links are rejected',()=>{
   const c=context();c.publication.snapshot.heads.next=null;
-  c.inventory.sqliteVec.push({version:'0.1.10-alpha.123456'});
+  c.inventory.sqliteVector.push({version:'1.1.1-alpha.123456'});
   const rendered=renderPlan(makePlan(c));
-  assert.match(rendered,/`sqlite_vec_version`: `0.1.10-alpha.123456`/);
+  assert.match(rendered,/`sqlite_vector_version`: `1.1.1-alpha.123456`/);
   assert.match(rendered,/next: no published HEAD/);
-  c.candidates=[{kind:'run',selection:{sqlite:'3.54.1',sqliteVec:'0.1.9'},runId:17,attempt:1,status:'queued',url:'javascript:alert(1)'}];
+  c.candidates=[{kind:'run',selection:{sqlite:'3.54.1',sqliteVector:'1.1.0'},runId:17,attempt:1,status:'queued',url:'javascript:alert(1)'}];
   assert.throws(()=>renderPlan(makePlan(c)));
 });
 test('normal empty and failed outcomes stay distinct; diagnostics cannot inject summary HTML',()=>{
-  const c=context();c.inventory=inventory(['3.54.0'],['0.1.9']);assert.match(renderPlan(makePlan(c)),/Normal empty plan/);
+  const c=context();c.inventory=inventory(['3.54.0'],['1.1.0']);assert.match(renderPlan(makePlan(c)),/Normal empty plan/);
   for(const tag of ['script','SCRIPT']) {
     const failed=renderFailure('discovery',`<${tag}>unavailable</${tag}>`);assert.match(failed,/planning failed/);
     assert.match(failed,/not an empty-plan/);
@@ -125,34 +125,81 @@ test('central forecasts summarize homogeneous channels once before unchanged pai
   const section=rendered.split('## Forecast\n')[1].split('\n## latest')[0];
   assert.equal(section.trim(),'- latest: 0.1.1 · PATCH\n- next: 0.2.0-alpha.2 · PATCH');
   assert.ok(rendered.indexOf('## Forecast')<rendered.indexOf('## latest'));
-  assert.deepEqual([...rendered.matchAll(/^### SQLite (.+) × sqlite-vec (.+)$/gm)].map(m=>[m[1],m[2]]),plan.entries.map(e=>[e.selection.sqlite,e.selection.sqliteVec]));
+  assert.deepEqual([...rendered.matchAll(/^### SQLite (.+) × SQLite-Vector (.+)$/gm)].map(m=>[m[1],m[2]]),plan.entries.map(e=>[e.selection.sqlite,e.selection.sqliteVector]));
   assert.doesNotMatch(rendered,/Forecast:/);
   assert.match(rendered,/observed published state and recalculated at publication/);
   assert.equal(JSON.stringify(plan),before);
 });
 test('different forecasts within next are mapped by sufficient SQLite selectors',()=>{
-  const c=context();c.publication.snapshot.heads.latest=published('0.1.1','3.53.4','0.1.9');
+  const c=context();c.publication.snapshot.heads.latest=published('0.1.1','3.53.4','1.1.0');
   c.publication.snapshot.heads.next=null;c.publication.snapshot.tags=['dist/v0.1.1'];
   c.publication.snapshot.releaseTags=['dist/v0.1.1'];c.publication.snapshot.npmVersions=['0.1.1'];
-  c.inventory=inventory(['3.53.4','3.54.0'],['0.1.9','0.1.10-alpha.1','0.1.10-alpha.2']);
+  c.inventory=inventory(['3.53.4','3.54.0'],['1.1.0','1.1.1-alpha.1','1.1.1-alpha.2']);
   const plan=makePlan(c),rendered=renderPlan(plan),section=rendered.split('## Forecast\n')[1].split('\n## latest')[0];
   assert.equal(section.trim(),'- latest: 0.2.0 · MINOR\n- next:\n  - SQLite 3.53.4: 0.1.2-alpha.1 · PATCH\n  - SQLite 3.54.0: 0.2.0-alpha.1 · MINOR');
-  assert.deepEqual([...rendered.matchAll(/^### SQLite (.+) × sqlite-vec (.+)$/gm)].map(m=>[m[1],m[2]]),plan.entries.map(e=>[e.selection.sqlite,e.selection.sqliteVec]));
+  assert.deepEqual([...rendered.matchAll(/^### SQLite (.+) × SQLite-Vector (.+)$/gm)].map(m=>[m[1],m[2]]),plan.entries.map(e=>[e.selection.sqlite,e.selection.sqliteVector]));
 });
-test('SQLite selector falls back to exact pairs when sqlite-vec changes the forecast',()=>{
+test('SQLite selector falls back to exact pairs when SQLite-Vector changes the forecast',()=>{
   const c=context();c.publication.snapshot.heads.next=null;
   for(const key of ['tags','releaseTags'])c.publication.snapshot[key]=['dist/v0.1.0'];
   c.publication.snapshot.npmVersions=['0.1.0'];
-  c.inventory=inventory(['3.54.0'],['0.1.10-alpha.1','0.2.0-alpha.1']);
+  c.inventory=inventory(['3.54.0'],['1.1.1-alpha.1','1.2.0-alpha.1']);
   const plan=makePlan(c),rendered=renderPlan(plan),section=rendered.split('## Forecast\n')[1].split('\n## next')[0];
-  assert.equal(section.trim(),'- next:\n  - SQLite 3.54.0 × sqlite-vec 0.1.10-alpha.1: 0.1.1-alpha.1 · PATCH\n  - SQLite 3.54.0 × sqlite-vec 0.2.0-alpha.1: 0.2.0-alpha.1 · MINOR');
+  assert.equal(section.trim(),'- next:\n  - SQLite 3.54.0 × SQLite-Vector 1.1.1-alpha.1: 0.1.1-alpha.1 · PATCH\n  - SQLite 3.54.0 × SQLite-Vector 1.2.0-alpha.1: 0.2.0-alpha.1 · MINOR');
   assert.doesNotMatch(section,/- latest:/);
   assert.doesNotMatch(section,/SQLite 3.54.0:/);
 });
 test('empty plan has no invented forecast or channel pair section',()=>{
-  const c=context();c.inventory=inventory(['3.54.0'],['0.1.9']);
+  const c=context();c.inventory=inventory(['3.54.0'],['1.1.0']);
   const rendered=renderPlan(makePlan(c));
   assert.match(rendered,/Normal empty plan/);
   assert.doesNotMatch(rendered,/## Forecast|## latest|## next/);
   assert.match(rendered,/## Reference state/);
+});
+
+test('first engine transition has no invented Vector baseline and retains both fixed-floor versions',()=>{
+  const c=context();c.publication.snapshot.heads.next=null;
+  c.publication.snapshot.heads.latest.upstreams={sqlite:'3.54.0',sqliteVec:'0.1.9'};
+  c.inventory=inventory(['3.53.4','3.54.0'],['1.1.0-alpha.1','1.1.0','1.1.2']);
+  const plan=makePlan(c);
+  assert.deepEqual(pairs(plan),['latest:3.54.0/1.1.0','latest:3.54.0/1.1.2']);
+  assert.ok(plan.entries.every(e=>e.identity.transition && e.identity.componentReferences.sqliteVector===null));
+  assert.match(renderPlan(plan),/sqlite-vec 0.1.9/);assert.doesNotMatch(renderPlan(plan),/undefined/);
+  // Published history with numerically identical foreign versions cannot exclude Vector.
+  c.publication.history=[{channel:'latest',selection:{sqlite:'3.54.0',sqliteVec:'1.1.0'}}];
+  assert.equal(makePlan(c).entries.length,2);
+  c.inventory.sqliteVector.push({version:'1.9.0'});assert.equal(makePlan(c).entries[0].selection.sqliteVector,'1.1.0');
+});
+test('mixed channel references compare only the same engine and preserve latest lower bounds',()=>{
+  const c=context();c.publication.snapshot.heads.latest.upstreams={sqlite:'3.54.0',sqliteVec:'0.1.9'};
+  c.publication.snapshot.heads.next.upstreams={sqlite:'3.54.0',sqliteVector:'1.1.3-alpha.1'};
+  c.inventory=inventory(['3.53.6','3.54.0'],['1.1.0','1.1.2','1.1.3-alpha.1','1.1.3-alpha.2']);
+  assert.deepEqual(pairs(makePlan(c)),['latest:3.54.0/1.1.0','latest:3.54.0/1.1.2','next:3.54.0/1.1.3-alpha.2']);
+  c.publication.snapshot.heads.latest.upstreams={sqlite:'3.54.0',sqliteVector:'1.1.2'};
+  c.publication.snapshot.heads.next.upstreams={sqlite:'3.54.0',sqliteVec:'0.1.10-alpha.1'};
+  c.inventory=inventory(['3.54.0'],['1.1.1-alpha.1','1.1.3-alpha.1','1.1.3-alpha.2']);
+  assert.deepEqual(pairs(makePlan(c)),['next:3.54.0/1.1.3-alpha.1','next:3.54.0/1.1.3-alpha.2']);
+  assert.ok(makePlan(c).entries.every(e=>e.identity.componentReferences.sqliteVector===c.publication.snapshot.heads.latest));
+});
+test('same-engine comparisons reject Vector regression and consume stable closure numbering',()=>{
+  const c=context();c.publication.snapshot.heads.latest.upstreams.sqliteVector='1.1.2';
+  c.publication.snapshot.heads.next.upstreams={sqlite:'3.54.0',sqliteVector:'1.2.0-alpha.1'};
+  c.inventory=inventory(['3.54.0','3.54.1'],['1.1.0','1.1.2','1.2.0','1.2.0-alpha.2']);
+  const plan=makePlan(c);assert.ok(plan.entries.every(e=>e.selection.sqliteVector!=='1.1.0'));
+  for(const e of plan.entries)assert.deepEqual(e.identity,calculate({selection:e.selection,snapshot:c.publication.snapshot}));
+});
+
+test('optional drafting guidance uses exact Vector fields and qualified historical comparisons',async()=>{
+  const {readFile}=await import('node:fs/promises');
+  const skill=await readFile(new URL('../../../.42p/.agents/skills/release-comments/SKILL.md',import.meta.url),'utf8');
+  const guide=await readFile(new URL('../../../docs/watch.md',import.meta.url),'utf8');
+  for(const text of [skill,guide]) {
+    assert.match(text,/sqlite_vector_version/);assert.match(text,/sqlite_vector_comment/);
+    assert.doesNotMatch(text,/sqlite_vec_version|sqlite_vec_comment/);
+    assert.match(text,/same-engine/);assert.match(text,/explicit distribution/);
+  }
+  assert.match(skill,/sqliteai\/sqlite-vector\/releases/);assert.match(skill,/first engine transition/);
+  assert.match(skill,/unchanged component/);assert.match(skill,/prereleases and rollbacks/);
+  assert.match(skill,/do not edit files, dispatch Updates or publish/);
+  assert.match(skill,/missing or ambiguous evidence/);assert.match(guide,/fixed and inclusive/);
 });

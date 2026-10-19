@@ -1,4 +1,4 @@
 interface:
   display_name: "Release comments"
   short_description: "Draft upstream release comments for a selected pair"
-  default_prompt: "Use $release-comments to draft the three optional release comments for a selected SQLite and sqlite-vec pair."
+  default_prompt: "Use $release-comments to draft the three optional release comments for a selected SQLite and SQLite-Vector pair."

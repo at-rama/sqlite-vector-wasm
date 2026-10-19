@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict';
-import { commitPattern, channelFor, upstream, distribution } from '../release/policy.mjs';
+import { commitPattern, channelFor, upstream, distribution, engineKey } from '../release/policy.mjs';
 import { pages, repositoryName, readState, npmState, publicationIdentity, download } from '../release/state.mjs';
+import { vectorLock } from '../acceptance/contracts.mjs';
 import { descriptor, candidateDescriptorChanged } from '../release/context.mjs';
 
-export const pairKey = selection => JSON.stringify([selection.sqlite,selection.sqliteVec]);
+export const pairKey = selection => JSON.stringify([selection.sqlite,engineKey(selection),selection[engineKey(selection)]]);
 
 // Cache read responses only within this invocation; never retain selection state.
 export function cachedReader(get) {
@@ -61,7 +62,7 @@ export async function candidateState({repository,get}) {
     return {...r,data:r.data.workflow_runs};
   });
   assert.equal(runs.length,total,'Truncated preparation inventory');
-  const active=new Set(['queued','in_progress','waiting','pending','requested']), seenRuns=new Set();
+  const active=new Set(['queued','in_progress','waiting','pending','requested']), seenRuns=new Set(), legacyRuns=new Set();
   for(const run of runs) {
     if(run.status==='completed')continue;
     assert.ok(active.has(run.status),'Unknown preparation state');
@@ -74,10 +75,12 @@ export async function candidateState({repository,get}) {
     const identity=JSON.stringify([run.id,run.run_attempt]);
     assert.ok(!seenRuns.has(identity),`Repeated active preparation observation: ${run.html_url} attempt ${run.run_attempt}`);
     seenRuns.add(identity);
-    const selected=/^candidate sqlite=(\S+) sqlite-vec=(\S+)$/.exec(run.display_title || '');
+    const legacy=/^candidate sqlite=(\S+) sqlite-vec=(\S+)$/.exec(run.display_title || '');
+    if(legacy) { channelFor({sqlite:legacy[1],sqliteVec:legacy[2]}); legacyRuns.add(identity); continue; }
+    const selected=/^candidate sqlite=(\S+) SQLite-Vector=(\S+)$/.exec(run.display_title || '');
     assert.ok(selected,`Unresolved active preparation: ${run.html_url}`);
-    const selection={sqlite:selected[1],sqliteVec:selected[2]};
-    upstream(selection.sqlite,'sqlite');upstream(selection.sqliteVec,'sqliteVec');channelFor(selection);
+    const selection={sqlite:selected[1],sqliteVector:selected[2]};
+    upstream(selection.sqlite,'sqlite');upstream(selection.sqliteVector,'sqliteVector');channelFor(selection);
     items.push({kind:'run',selection,runId:run.id,attempt:run.run_attempt,status:run.status,url:run.html_url});
   }
   const seenPR=new Set();
@@ -92,12 +95,27 @@ export async function candidateState({repository,get}) {
     assert.equal(pr.head?.ref,listed.head.ref,'Candidate branch changed during observation');
     assert.equal(pr.html_url,`https://github.com/${repository}/pull/${pr.number}`);
     if(!await candidateDescriptorChanged({repository,pullRequest:pr,get}))continue;
-    const [value,lock]=await Promise.all([jsonAt(repository,pr.head.sha,'inputs/release.json',get),jsonAt(repository,pr.head.sha,'inputs/sources.lock.json',get)]);
+    const value=await jsonAt(repository,pr.head.sha,'inputs/release.json',get);
+    // Only clearly identified legacy descriptors may be ignored as historical.
+    if(value?.schemaVersion === 1) {
+      channelFor({sqlite:value.sqlite,sqliteVec:value.sqliteVec});
+      assert.deepEqual(Object.keys(value).sort(),['schemaVersion','sqlite','sqliteVec','releaseComment','preparation'].sort(),'Mixed legacy candidate descriptor');
+      assert.equal(typeof value.releaseComment,'string');
+      assert.ok(Number.isSafeInteger(value.preparation?.runId) && value.preparation.runId>0,'Invalid legacy preparation');
+      assert.equal(value.preparation.url,`https://github.com/${repository}/actions/runs/${value.preparation.runId}`);
+      assert.ok(pr.head.ref.startsWith(`candidate/run-${value.preparation.runId}-`),'Legacy branch/preparation mismatch');
+      const attempt=Number(pr.head.ref.match(/-([1-9][0-9]*)$/)[1]);
+      assert.ok(!items.some(x=>x.runId===value.preparation.runId && x.attempt===attempt),'Mixed run/candidate engines');
+      continue;
+    }
+    assert.equal(value?.schemaVersion,2,'Unknown candidate descriptor');
+    const lock=await jsonAt(repository,pr.head.sha,vectorLock,get);
     const selected=descriptor(value,lock);
     assert.equal(selected.preparation.url,`https://github.com/${repository}/actions/runs/${selected.preparation.runId}`);
     assert.ok(pr.head.ref.startsWith(`candidate/run-${selected.preparation.runId}-`),'Candidate branch/preparation mismatch');
     const attempt=Number(pr.head.ref.match(/-([1-9][0-9]*)$/)[1]);
     assert.ok(Number.isSafeInteger(attempt),'Invalid candidate attempt');
+    assert.ok(!legacyRuns.has(JSON.stringify([selected.preparation.runId,attempt])),'Mixed run/candidate engines');
     for(const run of items.filter(x=>x.runId===selected.preparation.runId && x.attempt===attempt))assert.equal(pairKey(run.selection),pairKey(selected.selection),'Run/candidate selection mismatch');
     items.push({kind:'pr',selection:selected.selection,runId:selected.preparation.runId,attempt,number:pr.number,status:'open',url:pr.html_url,head:pr.head.sha,preparation:selected.preparation.url});
   }
