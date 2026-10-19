@@ -24,7 +24,6 @@ on:
   workflow_run:
     workflows: [Distribution release]
     types: [completed]
-    branches: [main]
 
 permissions:
   contents: read

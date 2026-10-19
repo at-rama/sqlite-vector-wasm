@@ -107,3 +107,17 @@ test('handoff must match integrated human PR, workflow, attempt, outcome and can
  pr.merge_commit_sha=head;await assert.rejects(invoke());pr.merge_commit_sha=prior;
  const changed=structuredClone(f.pub);changed.archive.sha256='0'.repeat(64);await writeFile(join(directory,'publication.json'),JSON.stringify(changed));await assert.rejects(invoke(),/differs/);
 });
+
+test('matching completion passes only its verified run to stable selection; stale attempt stops',async()=>{
+ const run={id:9,head_sha:head,run_attempt:2,repository:{full_name:repository},path:'.github/workflows/release.yml',event:'pull_request',status:'completed',conclusion:'success'};
+ const value={...common,eventName:'workflow_run',ref:'refs/heads/main',event:{repository:{full_name:repository},workflow_run:structuredClone(run)},
+ get:async url=>response(url.endsWith('/commits/main')?{sha:main}:url.includes('/artifacts?')?{total_count:1,artifacts:[{name:'release-outcome-9-2',expired:false}]}:run),
+ selectStable:async({trigger})=>{assert.deepEqual(trigger,run);return {...stable,sourceCommit:main};}};
+ assert.equal((await siteSelection(value)).stable.sourceCommit,main);
+ run.run_attempt=3;await assert.rejects(siteSelection(value));
+});
+test('fallback source must remain an ancestor and its published state must still verify',async()=>{
+ const args={repository,mainCommit:main,readAt,resolveSource:async({commit})=>{if(commit===main)throw Error('pending');return stable;}};
+ await assert.rejects(stableSource({...args,get:async url=>response(url.includes('/compare/')?{status:'diverged',merge_base_commit:{sha:head}}:{repository,stablePresent:true,mainCommit:prior})}),/unrelated/);
+ await assert.rejects(stableSource({...args,get:async url=>response(url.includes('/compare/')?{status:'ahead',merge_base_commit:{sha:prior}}:{repository,stablePresent:true,mainCommit:prior}),resolveSource:async()=>{throw Error('registry unavailable');}}),/registry unavailable/);
+});
