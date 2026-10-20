@@ -11,9 +11,7 @@ bash tools/harness.sh install
 bash tools/harness.sh check
 bash tools/harness.sh deps
 bash tools/harness.sh smoke
-bash tools/build.sh > /tmp/sqlite-vector-wasm-build.json
-# Optional raw construction from the other recorded composition:
-bash tools/build.sh --lock inputs/sqlite-vector.sources.lock.json > /tmp/sqlite-vector-build.json
+bash tools/build.sh --lock inputs/sqlite-vector.sources.lock.json > /tmp/sqlite-vector-wasm-build.json
 ```
 
 Use an empty external tool directory for initial reconstruction on managed workspaces; retain it for subsequent integrity-checked executions. SDK Node is development tooling. No Node product runtime is built.
@@ -52,7 +50,7 @@ For SQLite-Vector the [separate bridge](../tools/build/vector-extra-init.c.in) r
 
 The native output retains conventional, ESM and bundler-friendly loaders, their Worker1 and promiser companions, the shared `sqlite3.wasm`, and `sqlite3-opfs-async-proxy.js`. [The inventory](../tools/build/config.mjs) defines the eleven files for this pinned release. A missing, empty, nonregular or unexpected runtime file fails construction. Build intermediates are not additional distributable engines.
 
-The version-1 handoff retains `inputs` (the complete acquisition handoff), `build` (actual tools, platform and executed options plus repository configuration hashes), `runtimeDirectory`, `runtimeFiles` (relative names, sizes and SHA-256), and `logPath`. Additive fields identify `sourceLockPath`, `engine` and `build.commonWasmOptions`; Vector additionally records all `extensionCommands` and generated bridge/Make-include SHA-256 identities. `templateSha256` identifies the template actually consumed. The default handoff keeps its required fields and calling convention. A Vector raw handoff does not establish support in the unchanged downstream packager: final-package/notices and acceptance need their own allocated work. Neither lock nor the release descriptor is switched here. The completed file is written atomically; its parsed JSON equals stdout. Consumers must validate every declared file's size/hash before using it. These identities contain no acceptance or publication verdict and do not require byte-identical rebuilds.
+The version-1 handoff retains `inputs` (the complete acquisition handoff), `build` (actual tools, platform and executed options plus repository configuration hashes), `runtimeDirectory`, `runtimeFiles` (relative names, sizes and SHA-256), and `logPath`. Additive fields identify `sourceLockPath`, `engine` and `build.commonWasmOptions`; Vector additionally records all `extensionCommands` and generated bridge/Make-include SHA-256 identities. `templateSha256` identifies the template actually consumed. The default handoff keeps its required fields and calling convention. A raw handoff does not itself establish final-package acceptance or publication readiness. The completed file is written atomically; its parsed JSON equals stdout. Consumers must validate every declared file's size/hash before using it. These identities contain no acceptance or publication verdict and do not require byte-identical rebuilds.
 
 Keep both the handoff's build directory and `inputs.workspace` until downstream consumption finishes. Afterwards the caller can delete those exact invocation directories. Failed builds retain their available build log/state; acquisition owns its own failure cleanup. All generated material stays ignored and outside source control.
 
@@ -65,7 +63,7 @@ sh tools/check-repository.sh
 
 The offline suite needs system Node 18 or newer and `cc`, in addition to the existing Python/Bash/archive prerequisites. The packaging suite additionally uses npm for local archive packing/installation and Python for archive inspection. These suites neither install the SDK nor download sources. Stage new repository files before the repository check.
 
-Browser construction checks are implemented separately from these lightweight checks. A-build evidence uses raw constructed assets. A-acceptance will test final packaged bytes, the complete known vector/Hamming fixtures and persistence through runtime shutdown/reopen.
+Browser construction checks are implemented separately from these lightweight checks. A-build evidence uses raw constructed assets. Final-package acceptance tests packaged bytes, vector/Hamming fixtures and persistence through runtime shutdown/reopen.
 
 ```sh
 bash tools/harness.sh exec node tools/build/check.mjs /tmp/sqlite-vector-wasm-build.json

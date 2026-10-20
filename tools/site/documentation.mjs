@@ -28,6 +28,7 @@ export function renderPublicDocument(text, context) {
   assert.ok(line > 0, 'Missing documentation title');
   let rendered = text.slice(0, line + 1) + '\n' + status + text.slice(line + 1);
   if (context.mode === 'published') rendered = rendered.replaceAll('npm install ./payload.tgz', `npm install @at-rama/sqlite-vector-wasm@${context.version}`);
+  else rendered = rendered.replaceAll(`npm install @at-rama/sqlite-vector-wasm@${context.version}`, 'npm install ./payload.tgz');
   return rendered;
 }
 export async function documentationSelection(root) {
