@@ -134,6 +134,7 @@ jobs:
         env:
           HARNESS_STATE: ${{ runner.temp }}/site-harness
           STABLE_PRESENT: ${{ steps.selection.outputs.stable_present }}
+          STABLE_PLACEHOLDER: ${{ steps.selection.outputs.stable_placeholder }}
           STABLE_PROFILE: ${{ steps.selection.outputs.stable_profile }}
         run: |
           if [ "$STABLE_PRESENT" = true ]; then
@@ -145,7 +146,11 @@ jobs:
               if [ -f tools/site/example.mjs ]; then
                 bash ../candidate/tools/harness.sh exec sh tools/site.sh example
               fi
-              sh tools/site.sh build
+              if [ "$STABLE_PLACEHOLDER" = true ]; then
+                node ../candidate/tools/site/placeholder.mjs "$PWD" ../candidate/.work/site/selection.json
+              else
+                sh tools/site.sh build
+              fi
             )
             if [ "$GITHUB_EVENT_NAME" != pull_request ]; then
               cp ../stable/.work/site/build.json .work/site/build.json

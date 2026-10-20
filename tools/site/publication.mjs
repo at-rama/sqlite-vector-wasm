@@ -1,3 +1,4 @@
+import assert from 'node:assert/strict';
 import { cp, mkdir, readFile, rm, writeFile, access } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
 import { join, resolve, sep } from 'node:path';
@@ -61,6 +62,10 @@ export async function assemble({ stableRoot, candidateRoot, output, context }) {
     if (stablePresent) {
       const stable = await validatedOutput(stableRoot);
       if (stable.record.preview) throw Error('Stable build contains preview metadata.');
+      if (context.stablePlaceholder) {
+        assert.deepEqual(stable.record.placeholder, {sourceCommit:context.mainCommit,sha256:context.stablePlaceholder.sha256}, 'Stable placeholder build identity mismatch');
+        assert.equal(stable.record.runtime, null);
+      }
       await cp(stable.output, output, { recursive: true });
     }
     if (context.mode === 'preview') {
@@ -110,7 +115,7 @@ async function main() {
     const mainCommit = selection.mainCommit;
     if (revision(stableRoot) !== (selection.stable?.sourceCommit ?? mainCommit)) throw Error('Stable checkout identity mismatch.');
     if (context.preview && revision(candidateRoot) !== context.preview.commit) throw Error('PR checkout identity mismatch.');
-    console.log(JSON.stringify(await assemble({ stableRoot, candidateRoot, output, context: { ...context, mainCommit, stableDocumentation: selection.stable } })));
+    console.log(JSON.stringify(await assemble({ stableRoot, candidateRoot, output, context: { ...context, mainCommit, stableDocumentation: selection.stable, ...(selection.stablePlaceholder?{stablePlaceholder:selection.stablePlaceholder}:{}) } })));
   } else if (command === 'guard' && args.length === 1) {
     const record = JSON.parse(await readFile(args[0], 'utf8'));
     await assertCurrent(record, async path => {

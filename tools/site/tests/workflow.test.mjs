@@ -75,3 +75,12 @@ test('placeholder stays in existing publication checks without old runtime exerc
   assert.match(workflow, /sh tools\/site.sh exercise/);
   assert.match(workflow, /tools\/site\/observe.mjs/);
 });
+
+
+test('stable placeholder is bound to main while historical docs keep their own profile',async()=>{
+ const workflow=await source();
+ assert.match(workflow,/STABLE_PLACEHOLDER: \$\{\{ steps.selection.outputs.stable_placeholder \}\}/);
+ assert.match(workflow,/node \.\.\/candidate\/tools\/site\/placeholder.mjs/);
+ assert.match(workflow,/unset SITE_CANDIDATE_BUNDLE SITE_DOCUMENTATION_SELECTION SITE_DOCUMENTATION_PREVIEW_INPUT/);
+ assert.match(workflow,/export SITE_DOCUMENTATION_SELECTION="\$STABLE_PROFILE"/);
+});

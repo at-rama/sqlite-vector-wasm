@@ -141,3 +141,16 @@ test('a cleanup PR without release.json still selects an unpublished preview and
  assert.equal(result.input,'exercise');assert.deepEqual(result.previewSelection,candidateProfile);
  assert.equal(result.stable.sourceCommit,prior);
 });
+
+
+test('only adopted main placeholder replaces the historical stable demo, independently of unpublished docs', async () => {
+ const markdown = await readFile(new URL('../../../site/demo/index.md',import.meta.url),'utf8');
+ const source = async (commit,path,...args) => path==='site/demo/index.md' ? (commit===main?markdown:'# Demo\n<script>old runtime</script>') : readAt(commit,path,...args);
+ const result=await siteSelection({...common,readAt:source,eventName:'pull_request',selectStable:selected,resolveSource:async()=>{throw Error('pending');}});
+ assert.equal(result.stable.sourceCommit,prior);assert.deepEqual(result.stable.selection,stable.selection);
+ assert.deepEqual(result.stablePlaceholder,{sourceCommit:main,sha256:hash(markdown),markdown});
+ await assertStableCurrent({repository,mainCommit:main,stableDocumentation:stable,stablePlaceholder:result.stablePlaceholder},{get:common.get,readAt:source,selectStable:selected});
+ await assert.rejects(assertStableCurrent({repository,mainCommit:main,stableDocumentation:stable,stablePlaceholder:{...result.stablePlaceholder,sha256:'0'.repeat(64)}},{get:common.get,readAt:source,selectStable:selected}),/placeholder source changed/);
+ const previewOnly=await siteSelection({...common,readAt:async(commit,path,...args)=>path==='site/demo/index.md'?(commit===head?markdown:'# Old demo'):readAt(commit,path,...args),eventName:'pull_request',selectStable:selected,resolveSource:async()=>{throw Error('pending');}});
+ assert.equal(previewOnly.stablePlaceholder,undefined);
+});

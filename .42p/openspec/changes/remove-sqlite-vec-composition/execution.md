@@ -1,8 +1,8 @@
 # Cleanup execution account
 
-## Reviewed implementation
+## First implementation checkpoint
 
-Exact clean implementation commit: `5204f0e75e4a955f8cb87b043eaf4ea238fe936e`. These are execution observations, not publication approval. Subsequent task/report-only commits do not alter the reviewed implementation or requirements. Generated primary local outputs remain temporary under `.work/`; this committed document is their account, not the raw output.
+Exact clean implementation commit: `5204f0e75e4a955f8cb87b043eaf4ea238fe936e`. These are execution observations, not publication approval. The following task/account checkpoint changed no implementation or requirements. The later stable-source correction below is recorded separately and requires renewed applicable evidence. Generated primary local outputs remain temporary under `.work/`; this committed document is their account, not the raw output.
 
 ## Repository and isolated production
 
@@ -45,3 +45,12 @@ An earlier exact-source Site run reached assembly and its local preview checks p
 [Site run for the implementation head](https://github.com/at-rama/sqlite-vector-wasm/actions/runs/39397021840) was canceled in the shared Pages queue before jobs existed. GitHub's rerun-failed-jobs endpoint returned 403, “This workflow run cannot be retried”. No identified live Pages placeholder observation is available at this checkpoint. Task 6.2 stays incomplete until such evidence is obtained. Current runtime/vector demo checks remain deferred to the independent future return under #77; they are not placeholder successes.
 
 Earlier missing-descriptor and canonical-pagination CI failures were corrected before the reviewed implementation commit, with specific negative/security regressions. Verification and Archive merge gates were expected to fail before their reports/lifecycle outputs; those failures are not converted into product qualification passes. No merge, archive or product publication occurred.
+
+
+## Stable-source correction after the first checkpoint
+
+Semantic review found that retaining the independent historical stable documentation source could also reconstruct its old runnable demo after this cleanup reached main. The static placeholder is now selected only from the exact observed main source, with its own SHA-256 and source commit, independently of the eligible published README/Usage root. A PR-only placeholder cannot replace stable content. The existing prepared-source handoff and current no-demo builder replace only the historical demo page; the published document selection, original lockfile, example checks and publication/freshness authority remain. No configurable product mode or legacy runtime adapter is added.
+
+`tools/site/placeholder.mjs` rejects altered/nonstatic handoffs and removes stale output on failure. Eligibility/guard bind the static source to main; assembly checks the separate build identity; the observer expects zero runtime/data requests and Workers for that stable placeholder. Before integration, main still contains its original demo, so the PR retains its independent historical stable root and changes only preview. After integration, the placeholder does not wait for a new Vector product publication.
+
+Offline selection/guard/assembly/workflow regressions and a real VitePress/browser fixture pass: separately selected published-documentation fixture text is preserved, the main-bound placeholder has no runtime inventory or requests/Workers at 1280/390 pixels, and a modified handoff fails with stale output removed. This fixture is explicitly synthetic, not an observed historical stable deployment or a release qualification. The new helper, workflow and current Site checks require renewed final evidence below before Verification.

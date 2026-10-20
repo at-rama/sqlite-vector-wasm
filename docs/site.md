@@ -22,6 +22,8 @@ Authored shell sources live in `site/`. `tools/site/docs.mjs` renders README and
 
 The shell still accepts ordinary prepared documentation outside `.work/site/` through `sh tools/site.sh build --prepared DIRECTORY`. Symlinks/nonregular inputs are rejected. The ordinary placeholder build supplies no runtime or corpus overlay and performs no old-runtime acquisition. The generic shell checksum transport remains available to independent synthetic integration checks and a future explicitly qualified demo; it does not select or acquire a runtime. The future complete demo and its published-stable runtime qualification are separate work.
 
+During this phase, the stable documentation can remain bound to its previous eligible published source while Démo uses the static placeholder adopted on `main`. Its source commit and document hash are recorded separately. A PR-only placeholder cannot replace the stable surface. The current builder supplies no demo assets for this static page; the independently selected Presentation/Usage sources and their published-example checks remain unchanged. No new Vector publication is needed for the placeholder.
+
 ## Browser and preservation checks
 
 The offline tests run with `sh tools/test-repository.sh`. A real compiler/browser exercise is separate and requires the [qualified browser harness](../.42p/engineering/2026-10-04_sqlite-vec-wasm_technical_architecture_edit-0.1.md), its Linux system prerequisites and network access for initial installation:
