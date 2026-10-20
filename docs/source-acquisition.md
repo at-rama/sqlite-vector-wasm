@@ -4,11 +4,9 @@ Run these commands from the repository root on Linux with Bash, Python 3.9 or ne
 Git, tar and unzip. Source acquisition uses existing system tools; it does not
 install or require the WASM SDK, Node.js, npm or browser tooling.
 
-The two acquisition paths remain available for release compositions. Each lock
-selects SQLite and exactly one engine. `resolve` retains sqlite-vec;
-`resolve-vector` selects SQLite-Vector. Neither command switches engine on failure.
+The SQLite-Vector product uses `resolve-vector` and the Vector source lock. The retained `resolve` command is an internal legacy acquisition path; neither resolver switches engines on failure.
 
-Resolve a sqlite-vec candidate with each project's latest official stable release:
+For an internal legacy-source reproduction, resolve a sqlite-vec candidate:
 
 ```sh
 mkdir -p .work/inputs
@@ -42,7 +40,7 @@ It writes the complete candidate atomically and does not acquire sources or
 commit/adopt the candidate. Inspect the candidate and its provenance before
 recording reviewed pins in `inputs/sources.lock.json`.
 
-Prepare a SQLite-Vector candidate separately:
+Prepare a SQLite-Vector candidate:
 
 ```sh
 bash tools/inputs.sh resolve-vector --sqlite-version 3.54.0 --vector-version 1.1.2 --output .work/inputs/vector-candidate.lock.json
@@ -70,9 +68,7 @@ A newly prepared candidate is not extracted or adopted by resolution.
 
 Inspect the identities and provenance, then record the reviewed candidate as
 `inputs/sqlite-vector.sources.lock.json`. Both lock schemas are validated offline;
-there is no conversion between them. The existing default source lock and release
-descriptor continue to select sqlite-vec. Adopting a Vector source lock alone does
-not activate a Vector build; downstream build/package/acceptance work is separate.
+there is no conversion between them. The legacy default source lock does not select a Vector build. Specify the Vector lock explicitly for construction and qualification.
 
 Validate a lock without network access:
 
