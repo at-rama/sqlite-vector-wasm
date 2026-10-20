@@ -12,7 +12,11 @@ export function httpReader(token = '') {
   return async (url, { binary = false } = {}) => {
     const target = new URL(url);
     assert.equal(target.protocol, 'https:', 'Publication state requires HTTPS');
-    const headers = { 'User-Agent': 'sqlite-vector-wasm-release', Accept: binary ? 'application/octet-stream' : 'application/vnd.github+json' };
+    // Actions archive negotiation returns a ZIP redirect using the JSON API media
+    // type. Release assets instead require octet-stream to select their bytes.
+    const actionsArchive = target.hostname === 'api.github.com'
+      && /^\/repos\/[^/]+\/[^/]+\/actions\/artifacts\/[1-9][0-9]*\/zip$/.test(target.pathname);
+    const headers = { 'User-Agent': 'sqlite-vector-wasm-release', Accept: binary && !actionsArchive ? 'application/octet-stream' : 'application/vnd.github+json' };
     if (target.hostname === 'api.github.com' && token) headers.Authorization = `Bearer ${token}`;
     const response = await fetch(target, { headers, signal: AbortSignal.timeout(120000) });
     const bytes = Buffer.from(await response.arrayBuffer());
