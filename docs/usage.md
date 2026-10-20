@@ -2,12 +2,12 @@
 
 A short guide to SQLite's browser JavaScript/WASM APIs, with SQLite-Vector available in each new connection.
 
-Use an identified SQLite-Vector archive. Install a release candidate from its supplied archive; a published distribution can also be installed using its exact npm version. A prepared archive does not itself establish npm availability.
+Install `@at-rama/sqlite-vector-wasm@0.3.0` and serve its complete runtime asset set.
 
 ## Host and initialize
 
 ```sh
-npm install ./payload.tgz
+npm install @at-rama/sqlite-vector-wasm@0.3.0
 ```
 
 From your project's root, copy **all eleven runtime files** into one public asset directory. For example, with a POSIX shell:
@@ -33,7 +33,7 @@ const db = new sqlite3.oo1.DB(':memory:');
 
 ## Float32 nearest neighbors
 
-SQLite-Vector uses ordinary tables and BLOB columns. This two-dimensional Float32 example uses exact L2 full-scan search; quantization is optional. Existing sqlite-vec `vec0` tables and `vec_*` SQL require adaptation, without automatic migration of existing vector structures.
+SQLite-Vector uses ordinary tables and BLOB columns. This two-dimensional Float32 example uses exact L2 full-scan search; quantization is optional.
 
 ```js
 db.exec('CREATE TABLE items(embedding BLOB)');
@@ -115,4 +115,4 @@ See [SQLite's persistence prerequisites](https://sqlite.org/wasm/doc/trunk/persi
 
 ## Package provenance and licensing
 
-`runtime.json` records source versions, digests, assets and build settings. The distribution's `LICENSE` covers project-authored Apache-2.0 material; `NOTICE` and `licenses/` preserve the upstream licensing terms. See the [project README](https://at-rama.github.io/sqlite-vector-wasm/) for release channels and source-build documentation.
+`runtime.json` records source versions, digests, assets and build settings. The distribution's `LICENSE` covers project-authored Apache-2.0 material; `NOTICE` and `licenses/` preserve the upstream licensing terms. See the [project README](https://at-rama.github.io/sqlite-vector-wasm/) for distribution and source-build documentation.

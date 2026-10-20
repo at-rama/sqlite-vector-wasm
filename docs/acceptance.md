@@ -16,11 +16,10 @@ version `0.0.0-test`. A caller preparing an exact release artifact can provide
 its already selected name and version without changing the acceptance procedure:
 
 ```sh
-bash tools/acceptance.sh --name @at-rama/sqlite-vector-wasm --version 0.1.0
+bash tools/acceptance.sh --lock inputs/sqlite-vector.sources.lock.json --name @at-rama/sqlite-vector-wasm --version 0.3.0
 ```
 
-Select the other recorded composition explicitly, retaining the same supplied
-package-identity convention:
+For a nonpublished test fixture using SQLite-Vector, retain a distinct fixture identity:
 
 ```sh
 bash tools/acceptance.sh --lock inputs/sqlite-vector.sources.lock.json --name sqlite-vector-wasm-acceptance-fixture --version 0.0.0-test

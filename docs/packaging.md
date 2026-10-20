@@ -30,8 +30,8 @@ Packaging does not select a release name/version policy, tag or publish it.
 The explicit name/version supplied by the caller are carried into metadata;
 the fixture identity above is never published by these commands. For the product,
 use `--name @at-rama/sqlite-vector-wasm` and an independently selected SemVer according to
-the [release-version policy](publication.md). `0.1.0` is an initial example,
-not a repository release pin. `package.json` holds that product identity;
+the [release-version policy](publication.md). The documentation targets `0.3.0`; packaging does not itself publish a release.
+`package.json` holds the selected identity;
 `runtime.json` preserves exact `inputs.sqlite` and selected engine versions
 and digests (`inputs.sqliteVec` or `inputs.sqliteVector`). These identify upstream
 components, not the project version. Packaging performs no registry publication.
@@ -68,8 +68,7 @@ and scoped results. It does not establish the full Hamming, restart-persistence
 or hosted production CI acceptance gates.
 
 The package checker uses browser test infrastructure, not a consumer server.
-See the selected [sqlite-vec guide](sqlite-vec/usage.md) or
-[SQLite-Vector guide](sqlite-vector/usage.md) for browser examples
+See the [SQLite-Vector guide](sqlite-vector/usage.md) for product-facing browser examples
 and the [build storage conditions](build.md#browser-storage-conditions) for
 VFS-specific prerequisites. All generated material stays ignored. After assembly,
 the caller can remove the exact original build/input invocation directories;
@@ -132,9 +131,7 @@ against the candidate source tree, without requiring an unpublished branch to be
 available on main. External upstream links are authored references, not a promise
 of network availability during offline assembly.
 
-Root `README.md` and `docs/usage.md` remain the existing Site inputs with the
-published 0.2.0 reference. Selecting these new sources for Site is subsequent
-A-site_docs work. The Vector guide explicitly has no published npm reference;
+Root `README.md` and `docs/usage.md` are the Site presentation and usage sources for the SQLite-Vector `0.3.0` target.
 its local fixture evidence must not be described as a registry release.
 
 ## Selected notices and FP16 provenance
@@ -152,7 +149,7 @@ Their Git blob identities are recorded alongside the unmodified MIT
 Vector's separate Apache-2.0 text is pinned to its recorded source commit.
 Missing dependency provenance or changed texts fail assembly. The existing
 `noticeInputs({inputs: lock}, repository)` default convention remains usable;
-automated Vector notice refresh remains A-updates work.
+Vector notice refresh is performed during candidate preparation.
 
 ## Final archive checks and reuse
 
@@ -166,7 +163,7 @@ Worker OPFS, opfs-wl and SAH pool checks retain their browser prerequisites.
 Missing/corrupt WASM, missing Worker and missing proxy must make the targeted
 capability unavailable. Checks preserve the archive and all extracted file hashes.
 These are packaging checks, not complete Hamming, restart or production acceptance.
-Vector acceptance orchestration remains A-acceptance work.
+The acceptance workflow selects the explicit Vector source lock for Vector release candidates.
 
 A changed supplied package name/version means a fresh assembly, archive and renewed
 downstream checks. Never relabel qualified bytes or transfer an acceptance result

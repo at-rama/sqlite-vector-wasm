@@ -179,7 +179,7 @@ test('Vector archive documents follow supplied identity and changed upstreams wi
  assert.match(await get(first,'README.md'),/Prepared archive: `@at-rama\/sqlite-vector-wasm@0\.3\.0`/);
  assert.match(await get(second,'README.md'),/@0\.3\.1`/);
  assert.notEqual(first.archive.sha256,second.archive.sha256);assert.deepEqual(first.runtimeFiles,second.runtimeFiles);
- assert.match(await get(first,'docs/usage.md'),/vec0.*vec_\*/);
+ assert.match(await get(first,'docs/usage.md'),/vector_init.*vector_full_scan/s);
  assert.doesNotMatch(await get(first,'README.md'),/has no published npm release|0\.0\.0-vector/);
  const local=await assemble(f);assert.match(await get(local,'README.md'),/Unpublished local package/);
  const source=await readFile(join(f.repository,'docs/sqlite-vector/usage.md'));
