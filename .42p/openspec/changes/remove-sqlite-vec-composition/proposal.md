@@ -12,7 +12,7 @@ SQLite-Vector is the sole product engine, but the repository still acquires, bui
 - Delete `docs/sqlite-vec/` and obsolete current callers. Remove old-engine-only defaults, manifest branches, notice inputs and fixtures. Retain SQLite-Vector/FP16 and SQLite/toolchain notices and all generic SQLite functionality.
 - Reject legacy candidate/build/package/acceptance inputs. Keep only narrowly necessary read-only interpretation of historical published records for channel history, transition numbering, integrity and collisions. No legacy build or calculation offer is retained for callers.
 - Preserve SQLite/SQLite-Vector official stable/prerelease tracking, discovery floor, shared numbering policy, exact bytes, fail-closed integrity and full browser/persistence qualification.
-- Adapt the existing emoji demo to native SQLite-Vector SQL and observed identity, then qualify an explicit actually published stable Vector archive. This is distinct from source-code removal and from candidate example checking. Completion depends on that published archive; no relabeling, unpublished substitute, permanent old-engine exception or artificial disablement.
+- Consume the separately realized and qualified emoji demo adaptation already proposed in PR #77 under A-site_demo, then remove any residual legacy-only assumptions. This cleanup does not duplicate that adaptation or its real published-byte qualification. Completion depends on that published archive; no relabeling, unpublished substitute, permanent old-engine exception or artificial disablement.
 - Explain the break in 0.3.0 Release notes only; native Vector usage remains documented, without an additional migration guide or old-vector compatibility promise.
 
 ## Capabilities
@@ -29,7 +29,7 @@ None. No runtime facade, adapter framework or additional product is introduced.
 - `browser-acceptance`: one production composition with the complete existing Vector matrix and independent oracles.
 - `distribution-release`: separate Vector-only current calculations/qualification from required historical publication interpretation.
 - `site-docs`: native current usage without a separate legacy adaptation guide.
-- `site-demo`: native Vector queries and observed identity on an explicitly qualified published stable archive.
+- `site-demo`: require the separately qualified published Vector demo outcome before declaring removal complete; native adaptation remains in PR #77.
 
 ## Impact
 
