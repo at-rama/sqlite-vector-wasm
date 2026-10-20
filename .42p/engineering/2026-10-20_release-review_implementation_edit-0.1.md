@@ -1,5 +1,7 @@
 # PR #76 — Rapport d’implémentation pour institution
 
+> Mise à jour après vérification : les cinq changes ont été archivés sur demande explicite du mainteneur, dans l’ordre d’implémentation. La section 8 décrit cette opération ; les sections 1 à 7 conservent le compte rendu du candidat vérifié avant archivage.
+
 ## 1. Périmètre et décision proposée
 
 **Les cinq changes sont implémentés et vérifiés ; l’ensemble est prêt pour décision d’institution.** La PR reste ouverte en brouillon, sans archivage, fusion ni publication de distribution. Le gate Archive restera donc bloquant jusqu’à l’opération ultérieure explicitement autorisée. Cette conclusion ne signifie pas « fusionnable immédiatement ».
@@ -14,11 +16,11 @@ Chaque unité a été traitée après vérification satisfaisante de la précéd
 
 | Ordre et allocation | Change et rapport | Résultat réalisé |
 | --- | --- | --- |
-| 1 — A-package | [prepare-release-package-docs](../openspec/changes/prepare-release-package-docs/verification.md) | Documents du package dérivés de la composition et du numéro fournis ; sources/rendus tracés et revérifiés lors de la consommation de l’archive. |
-| 2 — A-site_docs | [preview-vector-release-docs](../openspec/changes/preview-vector-release-docs/verification.md) | README/Usage Vector, adaptation SQL native et exemple main/Worker sur l’archive exacte ; preview explicitement non publié, sources uniques et liens vérifiés. |
-| 3 — A-updates | [prepare-reviewed-release-candidates](../openspec/changes/prepare-reviewed-release-candidates/verification.md) | Une préparation compose sélection, documents et qualification dans le même candidat ; les candidats existants sont référencés et le preview manquant laisse l’intégration inéligible. |
-| 4 — A-release | [bind-release-documentation](../openspec/changes/bind-release-documentation/verification.md) | Liaison à la préparation, au preview et aux sources/rendeurs revus ; qualification documentaire renouvelée sur l’archive définitive ; handoff complet seulement après les destinations vérifiées. |
-| 5 — A-site_shell | [publish-site-after-distribution](../openspec/changes/publish-site-after-distribution/verification.md) | Même garde sur push, manuel et stable voisin d’un preview ; ancien public conservé pendant l’attente ; promotion après publication complète et contrôle final des identités/fraîcheur. |
+| 1 — A-package | [prepare-release-package-docs](../openspec/changes/archive/2026-10-20-prepare-release-package-docs/verification.md) | Documents du package dérivés de la composition et du numéro fournis ; sources/rendus tracés et revérifiés lors de la consommation de l’archive. |
+| 2 — A-site_docs | [preview-vector-release-docs](../openspec/changes/archive/2026-10-20-preview-vector-release-docs/verification.md) | README/Usage Vector, adaptation SQL native et exemple main/Worker sur l’archive exacte ; preview explicitement non publié, sources uniques et liens vérifiés. |
+| 3 — A-updates | [prepare-reviewed-release-candidates](../openspec/changes/archive/2026-10-20-prepare-reviewed-release-candidates/verification.md) | Une préparation compose sélection, documents et qualification dans le même candidat ; les candidats existants sont référencés et le preview manquant laisse l’intégration inéligible. |
+| 4 — A-release | [bind-release-documentation](../openspec/changes/archive/2026-10-20-bind-release-documentation/verification.md) | Liaison à la préparation, au preview et aux sources/rendeurs revus ; qualification documentaire renouvelée sur l’archive définitive ; handoff complet seulement après les destinations vérifiées. |
+| 5 — A-site_shell | [publish-site-after-distribution](../openspec/changes/archive/2026-10-20-publish-site-after-distribution/verification.md) | Même garde sur push, manuel et stable voisin d’un preview ; ancien public conservé pendant l’attente ; promotion après publication complète et contrôle final des identités/fraîcheur. |
 
 Les capacités techniques isolées sqlite-vec et SQLite-Vector restent consommables et testées. Watch/Updates/Release prospectifs restent explicitement Vector. Aucun moteur simultané, canal supplémentaire, registre de releases ou écriture directe sur main n’a été ajouté. La démo conserve son runtime publié 0.2.0 ; son adaptation Vector reste dans [PR #77](https://github.com/at-rama/sqlite-vector-wasm/pull/77).
 
@@ -39,7 +41,7 @@ Corrections effectuées et revérifiées : isolation du profil documentaire dans
 - [Updates en répétition](https://github.com/at-rama/sqlite-vector-wasm/actions/runs/39328793448) : état publié réellement observé latest 0.2.1, candidat temporaire local `78f67706b86c7e1f69ca357b6032c6ca3abaea5c`, qualification et exemple exact-archive réussis. Son archive est distincte : 1 164 982 octets, SHA-256 `ce55ce38d89501afb56bfff67b8ca9244f34052f50d57111dfab8b5a014a2535`. Aucun adaptateur de création distante de candidat n’est utilisé.
 - [Site](https://github.com/at-rama/sqlite-vector-wasm/actions/runs/39328793220) : build, deploy et observe réussissent. Le preview identifie exactement `67d5feb9245666e3f046718fc828d47dfae3efd7` et consomme l’artefact Release `12224170572`, dont l’archive est vérifiée. Le stable provient séparément de main `741b26d`, avec la sélection publiée 0.2.0 vérifiée sur GitHub/npm. Les destinations sont observées à 1280/390 pixels ; les identités avant/après, sources rendues, navigations et runtime préservé sont enregistrés.
 
-Les quatre ZIPs décisifs ont été téléchargés, leurs SHA-256 comparés aux métadonnées GitHub et leurs JSON inspectés. Le [rapport A-site_shell](../openspec/changes/publish-site-after-distribution/verification.md) donne les identifiants, digests, fichiers et liens primaires. Les preuves publiques sont limitées par leur rétention ; l’URL partagée du preview peut être remplacée et n’est pas à elle seule une identité de preuve.
+Les quatre ZIPs décisifs ont été téléchargés, leurs SHA-256 comparés aux métadonnées GitHub et leurs JSON inspectés. Le [rapport A-site_shell](../openspec/changes/archive/2026-10-20-publish-site-after-distribution/verification.md) donne les identifiants, digests, fichiers et liens primaires. Les preuves publiques sont limitées par leur rétention ; l’URL partagée du preview peut être remplacée et n’est pas à elle seule une identité de preuve.
 
 ## 5. Cohérence, écarts et limites
 
@@ -60,3 +62,19 @@ Les principaux commits d’implémentation sont `6b80ab0` (package), `a102cc2` (
 Après décision explicite d’institution : archiver ensemble les cinq changes selon les skills du dépôt, avec la synchronisation prévue par l’archivage ; renouveler strict, contrôles canoniques et gates ; fusionner humainement PR #76. L’archivage n’a pas été anticipé pour rendre le gate vert.
 
 Ensuite, lancer Updates avec la paire exacte choisie, examiner sa PR et son preview identifié, puis décider de son intégration. Release recalcule et qualifie le numéro et l’archive définitifs ; Site promeut les documents seulement après publication complète vérifiée. L’intégration de la PR technique #76 seule ne publie pas de nouvelle distribution et ne doit pas exposer les documents Vector comme déjà disponibles. Une mise à jour explicite de la démo #77 vient après une véritable publication stable Vector.
+
+## 8. Archivage du 20 octobre 2026
+
+Le mainteneur a demandé l’actualisation de la PR puis l’archivage dans l’ordre d’implémentation. Chaque opération a relu le statut, les tâches et les instructions OpenSpec, constaté la vérification passante, synchronisé le delta avec conservation du titre/Purpose, des exigences non modifiées et des scénarios retenus, puis validé les specs avant l’archivage natif. La mise à jour automatique des specs a été désactivée uniquement au moment du déplacement natif, après cette synchronisation explicite déjà achevée et comparée ; aucune validation n’a été contournée.
+
+| Ordre | Change | Commit d’archivage |
+| --- | --- | --- |
+| 1 | prepare-release-package-docs | `ba8ed9cee01bb66ec970707c3b36237afef542ac` |
+| 2 | preview-vector-release-docs | `5f1863f326e90a925bb14f3632bd594d6d66efce` |
+| 3 | prepare-reviewed-release-candidates | `f1bda5eeeca856a787ec877c3de24ed9727fd758` |
+| 4 | bind-release-documentation | `783c187e13f5aa1b7e33c5f3ea9ec49e8e4f7c13` |
+| 5 | publish-site-after-distribution | `5efa6b47b2603e5c243c506f66f40e7aa4f87c46` |
+
+Les dossiers sont sous `.42p/openspec/changes/archive/2026-10-20-<change>/` et la liste active OpenSpec est vide. L’horloge de l’exécuteur natif produisait un préfixe au 19 ; les noms ont été alignés sur le 20 octobre, date courante de la session. Les cinq rapports `verification.md` et leurs métadonnées sont identiques octet par octet à ceux du candidat vérifié. Les liens relatifs des propositions/designs et des comptes rendus ont été ajustés pour leur déplacement, sans modification sémantique des contrats ou des preuves. Les anciennes archives n’ont pas été modifiées.
+
+Après archivage, le contrôle canonique, la suite complète enregistrée et OpenSpec strict (12/12 specs, aucun change actif) passent. Les gates Verification et Archive passent pour les cinq changes sur le commit d’archivage final `5efa6b47b2603e5c243c506f66f40e7aa4f87c46` ; ils sont relancés après les ajustements de liens. Leur état final et celui de la CI sont reportés dans la description de PR #76. Aucun code produit, workflow exécutable, pin, Capture ou Allocation n’a changé pendant cette opération ; aucune fusion ni publication de distribution n’a été déclenchée.
