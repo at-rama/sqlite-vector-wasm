@@ -36,6 +36,8 @@ jobs:
     timeout-minutes: 45
     permissions:
       contents: read
+      actions: read
+      pull-requests: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -44,7 +46,8 @@ jobs:
       - name: Select implementation rehearsal
         id: select
         run: |
-          if test -f .42p/openspec/changes/prepare-sqlite-vector-candidate/tasks.md; then
+          if test -f .42p/openspec/changes/prepare-sqlite-vector-candidate/tasks.md ||
+             test -f .42p/openspec/changes/prepare-reviewed-release-candidates/tasks.md; then
             echo 'active=true' >> "$GITHUB_OUTPUT"
           fi
       - name: Install production browser prerequisites
@@ -79,6 +82,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+      actions: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

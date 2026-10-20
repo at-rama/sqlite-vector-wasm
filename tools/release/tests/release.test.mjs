@@ -125,7 +125,19 @@ test('release candidate routing checks the exact changed descriptor and fails cl
 test('integrated context requires human merge, exact revision and changed descriptor', async () => {
   const pr = {number:1,merged:true,state:'closed',merged_by:{type:'User'},base:{ref:'main',repo:{full_name:'a/b'}},merge_commit_sha:commit,changed_files:1};
   const event = {action:'closed',repository:{full_name:'a/b'},pull_request:pr};
-  const invoke = (changes={}) => integratedContext({repository:'a/b',event,get:async url=>ok(url.includes('/actions/runs/') ? {id:17,html_url:'https://github.com/a/b/actions/runs/17',repository:{full_name:'a/b'}} : url.includes('/files?') ? changes.files || [{filename:'inputs/release.json',status:'added'}] : {...pr,...changes.pr}),readAt:async (revision,path)=> {assert.equal(revision,commit);return JSON.stringify(path.endsWith('sources.lock.json') ? {schemaVersion:2,sqlite:{version:'3.53.4'},sqliteVector:{version:'1.1.2'}} : {...candidate(),schemaVersion:2,sqliteVec:undefined,sqliteVector:'1.1.2'});}});
+  const invoke = (changes={}) => integratedContext({repository:'a/b',event,review:async()=>({testedSeparately:true}),get:async url=>ok(url.includes('/actions/runs/') ? {id:17,html_url:'https://github.com/a/b/actions/runs/17',repository:{full_name:'a/b'}} : url.includes('/files?') ? changes.files || [{filename:'inputs/release.json',status:'added'}] : {...pr,...changes.pr}),readAt:async (revision,path)=> {assert.equal(revision,commit);return JSON.stringify(path.endsWith('sources.lock.json') ? {schemaVersion:2,sqlite:{version:'3.53.4'},sqliteVector:{version:'1.1.2'}} : {...candidate(),schemaVersion:2,sqliteVec:undefined,sqliteVector:'1.1.2'});}});
   assert.equal((await invoke()).commit,commit);
   for (const changes of [{pr:{merged:false}},{pr:{merge_commit_sha:'b'.repeat(40)}},{pr:{merged_by:{type:'Bot'}}},{files:[]},{files:[{filename:'README.md',status:'modified'}]},{pr:{changed_files:3001}}]) await assert.rejects(invoke(changes));
+});
+
+test('unpublished documentation preview qualification survives archival without qualifying nominal candidates twice',async()=>{
+ const {documentationQualificationNeeded}=await import('../context.mjs');
+ const pr={number:4,changed_files:1,head:{ref:'feature/docs'}};
+ const invoke=(filenames,profile={mode:'candidate'},candidate={schemaVersion:1},pullRequest={...pr,changed_files:filenames.length})=>documentationQualificationNeeded({repository:'a/b',pullRequest,profile,candidate,get:async()=>ok(filenames.map(filename=>({filename,status:'modified'})))});
+ assert.equal(await invoke(['README.md']),true);assert.equal(await invoke(['tools/release/run.mjs']),true);
+ assert.equal(await invoke(['.42p/standards/editorial.md']),false);assert.equal(await invoke(['unrelated.txt']),false);
+ assert.equal(await invoke(['README.md'],{mode:'published'}),false);
+ assert.equal(await invoke(['inputs/release.json'],{mode:'candidate'},{schemaVersion:2},{...pr,head:{ref:'candidate/run-17-1'}}),false);
+ assert.equal(await invoke(['README.md'],{mode:'candidate'},{schemaVersion:2}),true);
+ await assert.rejects(invoke(['README.md'],undefined,undefined,{...pr,changed_files:2}),/Truncated/);
 });

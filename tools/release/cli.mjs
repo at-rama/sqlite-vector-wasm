@@ -3,7 +3,7 @@ import { readFile, appendFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { root, regularBytes } from '../package/package.mjs';
 import { command } from '../acceptance/run.mjs';
-import { candidateDescriptorChanged, integratedContext } from './context.mjs';
+import { candidateDescriptorChanged, integratedContext, documentationQualificationNeeded } from './context.mjs';
 import { calculate } from './policy.mjs';
 import { readState, httpReader, repositoryName } from './state.mjs';
 import { qualify, acceptedPayload, provenance, publish, checkInitialCompletion } from './run.mjs';
@@ -12,14 +12,28 @@ import { githubServices } from './services.mjs';
 const json = async path => JSON.parse(await regularBytes(path));
 const env = process.env;
 const get = httpReader(env.GH_TOKEN || env.GITHUB_TOKEN);
-const readAt = (commit,path) => command('git',['show',`${commit}:${path}`],{cwd:root});
-const context = async () => integratedContext({repository:repositoryName(env.GITHUB_REPOSITORY),event:await json(env.GITHUB_EVENT_PATH),get,readAt});
+const readAt = async (commit,path) => {
+  const response = await get(`https://api.github.com/repos/${repositoryName(env.GITHUB_REPOSITORY)}/contents/${path}?ref=${commit}`);
+  assert.equal(response.status, 200, 'Reviewed source unavailable');
+  const file = response.data; assert.equal(file.type, 'file'); assert.equal(file.path, path); assert.equal(file.encoding, 'base64');
+  const bytes = Buffer.from(file.content, 'base64'); assert.equal(bytes.length, file.size, 'Incomplete reviewed source');
+  return bytes.toString('utf8');
+};
+const context = async siteRunId => integratedContext({repository:repositoryName(env.GITHUB_REPOSITORY),event:await json(env.GITHUB_EVENT_PATH),get,readAt,siteRunId});
 
 try {
   const [mode,...args] = process.argv.slice(2);
   let result;
   if (mode === 'calculate') {
     assert.equal(args.length,1,'Usage: release.sh calculate INPUT.json'); result = calculate(await json(args[0]));
+  } else if (mode === 'exercise-needed') {
+    assert.equal(args.length,0); assert.equal(env.GITHUB_EVENT_NAME,'pull_request');
+    const event = await json(env.GITHUB_EVENT_PATH);
+    assert.equal(event.repository?.full_name,repositoryName(env.GITHUB_REPOSITORY));
+    result = { exercise: await documentationQualificationNeeded({ repository: env.GITHUB_REPOSITORY,
+      pullRequest: event.pull_request, get, profile: await json(join(root,'tools/site/docs-example.json')),
+      candidate: await json(join(root,'inputs/release.json')) }) };
+    if (env.GITHUB_OUTPUT) await appendFile(env.GITHUB_OUTPUT,`exercise=${result.exercise}\n`);
   } else if (mode === 'candidate') {
     assert.equal(args.length,0,'Usage: release.sh candidate');
     const repository = repositoryName(env.GITHUB_REPOSITORY);
@@ -43,8 +57,9 @@ try {
     if (env.GITHUB_ENV) await appendFile(env.GITHUB_ENV,`HARNESS_STATE=${report.toolsDirectory}\n`);
   } else if (mode === 'publish') {
     assert.equal(args.length,2,'Usage: release.sh publish HANDOFF.json ATTESTATION.json');
-    const integrated = await context();
-    const handoff = await json(args[0]); assert.deepEqual(handoff.context,integrated,'Publication context no longer agrees');
+    const handoff = await json(args[0]);
+    const integrated = await context(handoff.context.documentation?.site?.runId);
+    assert.deepEqual(handoff.context,integrated,'Publication context no longer agrees');
     assert.equal(await command('git',['rev-parse','HEAD'],{cwd:root}),integrated.commit);
     assert.equal(await command('git',['status','--porcelain','--untracked-files=all'],{cwd:root}),'','Dirty publication checkout');
     assert.ok(['trusted','initial-manual-npm'].includes(env.RELEASE_SETUP),'A-bootstrap must establish RELEASE_SETUP');
@@ -61,6 +76,10 @@ try {
     const accepted = await acceptedPayload({bundle:result.bundle,identity:result.identity,commit:exercise.commit});
     assert.deepEqual(await json(result.evidencePath),provenance(exercise,result.identity,accepted).evidence);
     result = {...result,status:'qualified-without-publication',publicationCalls:0,publicationState:'explicit historical 0.2.4 sqlite-vec fixture, not live registry evidence',snapshot};
+    // Exercise the final-archive example without inventing an integrated PR or
+    // waiting for Site (which consumes this qualification artifact).
+    const { renewDocumentation } = await import('./documentation.mjs');
+    result.documentationChecks = await renewDocumentation({ repository: root, qualified: result, directory: result.directory, run: command });
   } else if (mode === 'check-initial') {
     assert.equal(args.length,1,'Usage: release.sh check-initial PUBLICATION.json (read-only)');
     const evidence = await json(args[0]);

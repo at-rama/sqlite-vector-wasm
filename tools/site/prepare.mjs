@@ -42,7 +42,7 @@ export async function runtimeInventory(source) {
   return result;
 }
 
-export async function prepare(root, prepared, { preview, docs = true } = {}) {
+export async function prepare(root, prepared, { preview, docs = true, allowDirtyDocumentation = false } = {}) {
   const work = join(root, '.work/site');
   const source = join(work, 'src');
   const output = join(work, 'dist');
@@ -64,7 +64,7 @@ export async function prepare(root, prepared, { preview, docs = true } = {}) {
     await mkdir(join(source, 'public'), { recursive: true });
     await writeFile(join(source, 'public/site-revision.json'), JSON.stringify(configuration.preview) + '\n');
   }
-  if (docs) await prepareDocs(root, source, configuration.base);
+  if (docs) await prepareDocs(root, source, configuration.base, { allowDirtyDocumentation });
   const runtime = await runtimeInventory(source);
   if (runtime) {
     await mkdir(join(source, 'public'), { recursive: true });

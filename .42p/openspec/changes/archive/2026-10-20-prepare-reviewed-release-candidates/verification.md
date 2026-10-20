@@ -1,0 +1,73 @@
+---
+schema_version: 1
+change: prepare-reviewed-release-candidates
+allocation_unit: A-updates
+checked_commit: 5ef7cf27be07f930fcb642e1bc0dd93d516ee83b
+verdict: passed
+coverage:
+  allocation_to_change: 100
+  change_to_allocation: 100
+openspec_verify: passed
+repository_checks: passed
+applicable_tests: passed
+---
+# A-updates Verification
+
+## Institutional view
+
+**Passed for A-updates.** All four tasks and the three Verification controls pass for the nine effective obligations below. The checked commit completes task markers only; implementation evidence is explicitly reused from `b1c28ced5743b7b3d4c3958e2520caef48747251`, with identical code, guides, inputs and tooling. Its real hosted rehearsal completed the candidate commit, full product qualification and exact-archive documentation example without a remote write adapter. It evaluated the observed published state, not a fixture history. The local candidate created inside that run is not the PR #76 head. Remote PR creation/failure paths are tested with injected services; no live native-token PR-creation authorization was exercised. Actual Pages observation is separately bound to implementation head c087478, not relabeled as a preview of that temporary candidate. These distinctions do not claim a published product or overall PR readiness.
+
+**Command provenance.** The [reconciled Allocation](https://github.com/at-rama/sqlite-vector-wasm/blob/41c7d36e2f67118d507deb0005eda887bfa12334/.42p/engineering/2026-10-04_sqlite-vec-wasm_allocation_edit-0.1.md), A-updates, derives its command from Distribution C-inputs/C-autonomy/C-failure/C-nonmodification/C-release-review and Release/Watch C-dispatch/C-candidate/C-version-identity/C-determinism/C-semver/C-channels/C-provenance and their stated rationale. Those passages, the complete unit and [coverage mapping](coverage.md) were read against all nine effective baseline/delta requirements. Both semantic directions remain 100%. Original historical SPEC fidelity is provenance rather than a renewed audit; document hashes do not establish realization.
+
+**Exact human selection — verified.** [Dispatch controls](https://github.com/at-rama/sqlite-vector-wasm/blob/b1c28ced5743b7b3d4c3958e2520caef48747251/tools/updates/context.mjs), `invocation`, preserve exact Vector inputs, hosted human/main dispatch, aggregated comments as data and rejection of legacy/mixed selection and channel/version overrides. [Successful repository test execution](https://github.com/at-rama/sqlite-vector-wasm/actions/runs/39319168619/job/118288403841) includes these positive/negative tests. The real rehearsal uses its explicitly bounded PR invocation rather than pretending that this mission issued a production dispatch.
+
+**Official inputs and coherent notices — verified.** [Actual rehearsal](https://github.com/at-rama/sqlite-vector-wasm/actions/runs/39319168726/job/118288405422) passed candidate inventory, exact recorded-pair resolution, notice validation and the joint commit before repository/production checks. The retained `updates/run-*/notices.json` in the [primary artifact](https://github.com/at-rama/sqlite-vector-wasm/actions/runs/39319168726/artifacts/12219527204) distinguishes retained validation from renewed acquisition. Seven Python source/notice tests and the Node fixtures exercise selected changes, absence, digest/origin/FP16 mismatch and unsupported notice output. This qualifies the exercised 3.54.0 × 1.1.2 pair, not arbitrary future upstreams or an independent legal assessment.
+
+**Shared forecast and rollback — verified.** Preparation still calls the release-owned calculator. The actual run observed latest 0.2.1 and forecast 0.3.0/MINOR for the Vector transition, without reservation or cross-engine numerical ordering. [Executed fixture cases](https://github.com/at-rama/sqlite-vector-wasm/actions/runs/39319168619/job/118288403841) additionally cover changed state/forecast, prerelease/next, rollback comments and unavailable/colliding state; hypothetical prereleases are not actual upstream qualification. No numbering registry or alternative policy was added.
+
+**Clean revision-bound qualification — verified.** The [actual acceptance bundle](https://github.com/at-rama/sqlite-vector-wasm/actions/runs/39319168726/artifacts/12219527204), `acceptance/run-*/acceptance.json`, records clean temporary candidate `ec4550856ab9e8eeeb09a13ae3325c80ce61ab6c`, all nine production stages and 22 real-browser cases passed. This includes native Vector Float32/Hamming, retained SQLite loading/Worker/FTS5/baseline and all required OPFS restart cases. The archive is 1,164,979 bytes, SHA-256 `dcb258dedd8fd7608a79cd1acfa8e381b410908282834c0632e5c16686022d8f`. Chrome 153.0.8010.12 and the recorded secure/isolation/tool prerequisites bound the result. No synthetic runtime replaced production. Wrong engine/source/head/archive cases stop before PR writes in the executed suite.
+
+**Descriptor and provenance handoff — verified.** [Candidate preparation implementation](https://github.com/at-rama/sqlite-vector-wasm/blob/b1c28ced5743b7b3d4c3958e2520caef48747251/tools/updates/run.mjs) retains the unchanged schema-2 descriptor, exact lock/notices, aggregated comment, real preparation run/attempt and qualified archive provenance. The artifact contains `candidate.json`, `release.json`, acceptance/package/build records and logs. Inspection confirmed every package document's source digest equals the corresponding jointly committed source digest. Missing or contradictory invocation/lock/repository/comment identities fail. The product remains Vector; isolated legacy acquisition/build/package capabilities were not removed or exposed as a production dispatch choice.
+
+**Temporary PR and repeated preparation — verified by execution and scoped service tests.** [Current candidate inventory reuse](https://github.com/at-rama/sqlite-vector-wasm/blob/b1c28ced5743b7b3d4c3958e2520caef48747251/tools/updates/run.mjs), `candidate-state`, now references existing exact-pair PRs or other active preparations before resolution/build/writes. It excludes this active run/attempt and leaves other pairs independent. The actual run observed no existing match and continued successfully. The executed tests cover existing PR/run references, unavailable inventory, create-only branch collisions/races, wrong pushed/created head and partial PR failure. No existing candidate is rewritten. Inventory is an observed, non-atomic snapshot, not a reservation or a guarantee against every concurrent race; no new coordination registry is introduced. Native transport privilege remains an operational prerequisite, not proven by mocked service success.
+
+**Joint documentation and preview readiness — verified within these boundaries.** [Documentation composition/check implementation](https://github.com/at-rama/sqlite-vector-wasm/blob/b1c28ced5743b7b3d4c3958e2520caef48747251/tools/updates/documentation.mjs) selects the candidate profile and snapshots public README/Usage, Vector package guides and common browser guide before commit. The real post-qualification example consumed the exact temporary candidate archive, observed SQLite 3.54.0/Vector 1.1.2 and neighbors 1/2 at distances 0/1.4142135381698608 in both main and module Worker. Its record rejects replay, head/source/archive/composition/forecast mismatch and dirty changes. The PR body exposes shared unpublished preview and exact-head check links while its creation snapshot remains `previewState: pending`, `integrationEligible: false`. Site now triggers even for a same-pair descriptor-only candidate. [Actual implementation-PR Pages observation](https://github.com/at-rama/sqlite-vector-wasm/actions/runs/39317851549/job/118287621144) passed for c087478 and independent stable 741b26d, widths 1280/390, links and navigation. That is a real separate fixture preview, not a remote preview of the rehearsal's unpushed ec455 candidate. Current candidate readiness is determined by its own successful applicable Site checks; opening a PR or copying a URL cannot establish it. The dependent Release/Shell changes consume and enforce that bound handoff.
+
+**Diagnostics and human boundary — verified.** Failed steps preserve available source/operation evidence; missing later operations are not reported as executed. Canonical/tests, qualification and documentation failures precede remote writes; a failed PR transport retains any pushed branch state without compensation or overwrite. [Successful rehearsal evidence](https://github.com/at-rama/sqlite-vector-wasm/actions/runs/39319168726/artifacts/12219527204) ends `qualified-without-pr`, `publicationCalls: 0`; no remote candidate branch, PR, tag, merge or product publication was created. Actual native writes remain outside this mission. The previously produced scoped Pages previews are distinct from distribution publication.
+
+**Dependencies and institution.** Evidence shares repository-authored harnesses/checkers, agentic authorship, locked browser/tooling and upstream/GitHub services; correlated errors remain possible. The same-pair gap found during examination was corrected and the complete real rehearsal renewed afterward, rather than accepting the earlier positive core run as proof of that new check. This unit is satisfactory and permits proceeding to A-release. Final integration must recheck any later changes to its shared qualification/document handoffs. Archival remains deliberately unperformed.
+
+## Detailed verification record
+
+### Official OpenSpec verify
+
+The repository composition and unchanged generated verification skills were used. Pinned 1.14.0 CLI project resolution, status and apply context were loaded from `.42p`; proposal/design/delta/tasks were read, with synchronized `distribution-candidates` plus delta as the effective contract. Completion metadata was not used as implementation proof.
+
+| Dimension | Result |
+| --- | --- |
+| Completeness | 4/4 tasks, 2 added/modified requirements implemented; all 9 effective requirements retained. |
+| Correctness | All 7 delta scenarios and all 47 effective scenarios mapped to current implementation, actual production/qualification and applicable injected failure/transport controls. No applicable check skipped. |
+| Coherence | Single coherent source/notice/document commit, explicit Vector production, shared policy, unchanged schema-2 descriptor, exact retained archive, existing Watch inventory and Site handoff. No new framework, distribution API, permanent branch or reservation mechanism. |
+
+No critical issues, warnings or skipped applicable checks remain in the examined unit. The stated operational prerequisites and evidence boundaries are not claims of live native PR authorization or future publication. Advisory archive readiness does not authorize an archive in this mission.
+
+### Coverage and implementation locators
+
+The exhaustive forward/reverse correspondence remains in [coverage](coverage.md). Dispatch/descriptor/PR presentation map to `context.mjs`; pinned source resolution, notices and commit/qualification/diagnostics to `run.mjs`, `notices.mjs`/`notices.py`; fixed doc sources and exact execution identity to `documentation.mjs`; create-only transport to `services.mjs`; least-privilege inventory/real rehearsal to Updates workflow; descriptor/lock/document trigger inputs to Site workflow. Retained shared calculator and Watch inventory are consumed without changing their policy contracts. Semantic inspection found no missing or ungrounded unit contribution in those objects.
+
+### Execution and identity record
+
+- `sh tools/check-repository.sh`: passed on the clean checked snapshot.
+- Strict OpenSpec validation: complete corpus 17/17 passed on b1c28; selected Change passed again after task completion, 4/4 reported by fresh status/apply context.
+- `node --test tools/updates/tests/*.test.mjs tools/watch/tests/state.test.mjs`: 59/59 passed, zero skipped (46 Updates plus 13 Watch state).
+- Python Updates acquisition/notice suite: 7/7 passed; Site renderer/shell checks: 42/42 passed during Apply.
+- [Repository CI on b1c28](https://github.com/at-rama/sqlite-vector-wasm/actions/runs/39319168619): tests job 118288403841 and canonical job 118288404415 succeeded, including registered full suites and locked OpenSpec validation.
+- [Final real Updates rehearsal](https://github.com/at-rama/sqlite-vector-wasm/actions/runs/39319168726/job/118288405422) succeeded, including the newly added real candidate inventory. Read-only rehearsal permissions are contents/actions/pull-requests read; nominal preparation retains existing contents/PR writes and adds only actions read.
+
+Downloaded/verified artifact `updates-39319168726-1`, ID 12219527204, ZIP SHA-256 `a2cdaee2a0fe89d88e074c3f2adf901af650e0d830931c00aa353a8d969fe40e`; expires 2026-11-18. Locators: `updates/run-*/candidate.json`, `documentation-example.json`, `documentation-example.log`, `documentation-install.log`, `notices.json`, `release.json`; `acceptance/run-*/acceptance.json`, `package.json`, `build.json`, `browser.json`, `payload.tgz` and stage logs; `release/run-*/publication.json`/handoff. Every listed operation passed; candidate inventory was empty, forecast unchanged, and no publication adapter was supplied.
+
+The CI checkout was test-merge `2cd04bb6abc8d997f7eae5d7e7c7e7a961a51a20`, whose GitHub Git-data response was checked: parents 741b26d/b1c28 and tree `bcd1901c46ba589404744e2127a39d5830e3152e`, exactly the b1c28 implementation tree. Rehearsal then committed invocation-specific inputs locally as ec455085; its qualification/source evidence identifies that new commit, not b1c28 or PR #76. The checked 5ef7cf commit differs from b1c28 only in two completed task markers, establishing applicability of reused implementation execution without inventing commit equivalence.
+
+The earlier successful c087 core rehearsal (39317851345/artifact 12218082902) remains supporting history, superseded for combined-path proof by the final run. Distinct actual Site execution 39317851549 has downloaded/inspected `site-checks` artifact 12218479456, ZIP SHA-256 `819eb0ff6fac82c98fcf3b89a838bec77a78c586af22c114d64814996bc83514`, and `site-live` artifact 12219486323, ZIP SHA-256 `87c2476e5bb181aa413f5abc9c616b780440e5aa2d56703ce8ad285fec996dfe`; its `live-pages.json` identifies PR 76/c087478 and stable 741b26d. Its own separately qualified archive is not the Updates temporary candidate archive. Shared URLs may subsequently advance; artifact identity, not the current URL alone, is the evidence.
+
+Aggregate Repository Verification/Archive gates remain incomplete for the later units and deliberate no-archive boundary; this scoped pass is not permission to merge the PR.

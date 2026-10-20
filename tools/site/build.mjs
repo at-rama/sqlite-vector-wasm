@@ -22,7 +22,7 @@ export async function install(root = repository) {
   run('npm', ['ci', '--include=dev', '--no-audit', '--no-fund'], work);
 }
 
-export async function build({ root = repository, prepared, preview, docs = true } = {}) {
+export async function build({ root = repository, prepared, preview, docs = true, allowDirtyDocumentation = false } = {}) {
   const work = join(root, '.work/site');
   const installed = JSON.parse(await readFile(join(work, 'node_modules/vitepress/package.json'), 'utf8'));
   if (installed.version !== '1.6.4') throw Error('Run sh tools/site.sh install for locked VitePress 1.6.4.');
@@ -39,7 +39,7 @@ export async function build({ root = repository, prepared, preview, docs = true 
       }
     }
   }
-  const result = await prepare(root, prepared, { preview, docs });
+  const result = await prepare(root, prepared, { preview, docs, allowDirtyDocumentation });
   try {
     run(process.execPath, [join(work, 'node_modules/vitepress/bin/vitepress.js'), 'build', result.source, '--outDir', result.output], root);
     return await checkOutput(result);

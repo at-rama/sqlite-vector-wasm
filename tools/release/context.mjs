@@ -3,6 +3,7 @@ import { channelFor, commitPattern } from './policy.mjs';
 import { selectedEngine } from '../build/build.mjs';
 import { vectorLock } from '../acceptance/contracts.mjs';
 import { pages, repositoryName } from './state.mjs';
+import { reviewedDocumentation } from './documentation.mjs';
 
 export function descriptor(value, lock) {
   const key = value?.schemaVersion === 2 ? 'sqliteVector' : 'sqliteVec';
@@ -18,14 +19,26 @@ export function descriptor(value, lock) {
   return { selection: { sqlite: value.sqlite, [key]: value[key] }, comment: value.releaseComment, preparation: value.preparation };
 }
 
-export async function candidateDescriptorChanged({ repository, pullRequest, get }) {
+async function candidateFiles({ repository, pullRequest, get }) {
   assert.ok(Number.isSafeInteger(pullRequest?.number) && pullRequest.number > 0, 'Missing candidate PR identity');
   assert.ok(Number.isSafeInteger(pullRequest.changed_files) && pullRequest.changed_files >= 0 && pullRequest.changed_files <= 3000, 'Truncated candidate file list');
   const files = await pages(repository, `pulls/${pullRequest.number}/files`, get);
   assert.equal(files.length, pullRequest.changed_files, 'Truncated candidate file list');
-  return files.some(file => file.filename === 'inputs/release.json' && ['added','modified'].includes(file.status));
+  return files;
 }
-export async function integratedContext({ repository, event, get, readAt }) {
+export async function candidateDescriptorChanged(input) {
+  return (await candidateFiles(input)).some(file => file.filename === 'inputs/release.json' && ['added','modified'].includes(file.status));
+}
+
+export async function documentationQualificationNeeded({ repository, pullRequest, profile, candidate, get }) {
+  if (profile.mode !== 'candidate') return false;
+  const files = await candidateFiles({ repository, pullRequest, get });
+  // Nominal release PRs already carry their exact Updates-qualified archive.
+  if (candidate.schemaVersion === 2 && /^candidate\/run-[1-9][0-9]*-[1-9][0-9]*$/.test(pullRequest.head?.ref || '') &&
+      files.some(f => f.filename === 'inputs/release.json' && ['added','modified'].includes(f.status))) return false;
+  return files.some(f => /^(?:README\.md$|docs\/(?:usage\.md$|sqlite-vector\/|common\/browser\.md$)|site\/|inputs\/|tools\/(?:site|release|updates|package|build|harness)(?:\/|\.sh$)|\.github\/workflows\/(?:site|release|updates)\.yml$)/.test(f.filename));
+}
+export async function integratedContext({ repository, event, get, readAt, siteRunId, review = reviewedDocumentation }) {
   repositoryName(repository);
   assert.equal(event.action, 'closed');
   assert.equal(event.repository?.full_name, repository);
@@ -51,5 +64,6 @@ export async function integratedContext({ repository, event, get, readAt }) {
   assert.equal(run.data?.id, selected.preparation.runId, 'Preparation run mismatch');
   assert.equal(run.data?.html_url, selected.preparation.url, 'Preparation run URL mismatch');
   assert.equal(run.data?.repository?.full_name, repository, 'Preparation run repository mismatch');
-  return { ...selected, commit: pr.merge_commit_sha, repository, pullRequest: number };
+  const documentation = await review({ repository, pr, selected, readAt, get, siteRunId });
+  return { ...selected, commit: pr.merge_commit_sha, repository, pullRequest: number, documentation };
 }

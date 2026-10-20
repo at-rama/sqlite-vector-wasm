@@ -1,13 +1,13 @@
 # Using sqlite-vector-wasm
 
-A short guide to SQLite's browser JavaScript/WASM APIs, with sqlite-vec available in each new connection.
+A short guide to SQLite's browser JavaScript/WASM APIs, with SQLite-Vector available in each new connection.
 
-This guide’s minimal browser example is checked against published version **0.2.0**.
+Use an identified SQLite-Vector archive. Install a release candidate from its supplied archive; a published distribution can also be installed using its exact npm version. A prepared archive does not itself establish npm availability.
 
 ## Host and initialize
 
 ```sh
-npm install @at-rama/sqlite-vector-wasm@0.2.0
+npm install ./payload.tgz
 ```
 
 From your project's root, copy **all eleven runtime files** into one public asset directory. For example, with a POSIX shell:
@@ -33,31 +33,28 @@ const db = new sqlite3.oo1.DB(':memory:');
 
 ## Float32 nearest neighbors
 
-Use sqlite-vec's `vec0` virtual table. This small two-dimensional example uses JSON vector literals; real embeddings can have many more dimensions.
+SQLite-Vector uses ordinary tables and BLOB columns. This two-dimensional Float32 example uses exact L2 full-scan search; quantization is optional. Existing sqlite-vec `vec0` tables and `vec_*` SQL require adaptation, without automatic migration of existing vector structures.
 
 ```js
-db.exec('CREATE VIRTUAL TABLE items USING vec0(embedding float[2])');
-db.exec({sql: 'INSERT INTO items(rowid, embedding) VALUES(?, ?)', bind: [1, '[1,0]']});
-db.exec({sql: 'INSERT INTO items(rowid, embedding) VALUES(?, ?)', bind: [2, '[0,1]']});
+db.exec('CREATE TABLE items(embedding BLOB)');
+db.exec("INSERT INTO items(rowid, embedding) VALUES(1, vector_as_f32('[1,0]')), (2, vector_as_f32('[0,1]'))");
+db.exec("SELECT vector_init('items', 'embedding', 'type=FLOAT32,dimension=2,distance=L2')");
 const neighbors = db.selectArrays(
-  "SELECT rowid, distance FROM items WHERE embedding MATCH '[1,0]' AND k = 2 ORDER BY distance"
+  "SELECT rowid, distance FROM vector_full_scan('items', 'embedding', '[1,0]', 2) ORDER BY distance"
 );
 console.log(neighbors);
 ```
 
 ## Binary vectors and Hamming distance
 
-`vec_bit()` converts byte data for bit-vector storage and querying. The following table declares eight bits per vector.
+Native binary vectors use BLOBs and Hamming distance. This example stores one byte (eight bits) per vector; a query of `01` is one bit away from `03`.
 
 ```js
-db.exec('CREATE VIRTUAL TABLE bits USING vec0(embedding bit[8])');
-db.exec({
-  sql: 'INSERT INTO bits(rowid, embedding) VALUES(?, vec_bit(?))',
-  bind: [1, new Uint8Array([0x03])]
-});
+db.exec('CREATE TABLE bits(embedding BLOB)');
+db.exec("INSERT INTO bits(rowid, embedding) VALUES(1, x'03')");
+db.exec("SELECT vector_init('bits', 'embedding', 'type=BIT,dimension=8,distance=HAMMING')");
 const matches = db.selectArrays(
-  'SELECT rowid, distance FROM bits WHERE embedding MATCH vec_bit(?) AND k = 1 ORDER BY distance',
-  [new Uint8Array([0x01])]
+  "SELECT rowid, distance FROM vector_full_scan('bits', 'embedding', x'01', 1) ORDER BY distance"
 );
 console.log(matches);
 ```
@@ -90,7 +87,7 @@ const promiser = await createPromiser();
 const { dbId } = await promiser('open', { filename: ':memory:' });
 const response = await promiser({
   type: 'exec', dbId,
-  args: { sql: 'SELECT vec_version()', resultRows: [], rowMode: 'array' }
+  args: { sql: 'SELECT vector_version()', resultRows: [], rowMode: 'array' }
 });
 console.log(response.result.resultRows);
 await promiser({ type: 'close', dbId });

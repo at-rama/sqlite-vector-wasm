@@ -60,7 +60,7 @@ Final packaged loaders, workers, promisers and proxies SHALL resolve their compa
 
 ### Requirement: Consumer-ready distribution envelope
 
-Packaging SHALL supply an npm-compatible archive usable for npm publication and GitHub Release download, with the same runtime payload for both channels and no consumer native/WASM compilation. It SHALL carry explicit supplied package identity and actual composition metadata without selecting A-release's version/revision/publication policy. Composition-dependent documentation SHALL follow the selected engine from explicit per-engine sources and common material, with stable consumer paths and honest verification/publication references.
+Packaging SHALL supply an npm-compatible archive usable for npm publication and GitHub Release download, with the same runtime payload for both channels and no consumer native/WASM compilation. It SHALL carry explicit supplied package identity and actual composition metadata without selecting A-release's version/revision/publication policy. Composition-dependent documentation SHALL follow the selected engine from explicit per-engine sources and common material, with stable consumer paths and honest verification/publication references. Candidate/final documentation SHALL describe the enclosed supplied identity and selected upstreams, without fixed fixture-only claims or invented existing npm publication. Identity-dependent rendering SHALL be deterministic from the supplied package identity and build handoff, preserving both isolated engine document paths.
 
 #### Scenario: Consumer installation and download
 - **WHEN** the archive is installed locally as an npm package or extracted for static hosting
@@ -81,6 +81,10 @@ Packaging SHALL supply an npm-compatible archive usable for npm publication and 
 #### Scenario: Honest example reference
 - **WHEN** a guide identifies the archive or published composition used to check its examples
 - **THEN** it retains the exact observed reference and does not claim publication of an unlisted fixture archive or silently follow latest
+
+#### Scenario: Render the enclosed candidate or final identity
+- **WHEN** a qualified candidate or definitive distribution archive is assembled
+- **THEN** documents identify that exact package/composition; preparation references are explicitly unpublished, native SQL adaptation is explained, and neither another engine guide nor fixed fixture version is shipped as the released composition
 
 ### Requirement: Preserved behavior and glue boundary
 
@@ -137,6 +141,10 @@ Successful packaging SHALL identify final runtime paths/sizes/SHA-256, archive i
 #### Scenario: New supplied distribution number
 - **WHEN** the caller supplies a different package name or version
 - **THEN** a fresh archive and final-file identities reflect that supplied identity and remain available for renewed downstream checks rather than relabeling previously qualified bytes
+
+#### Scenario: Trace document rendering
+- **WHEN** selected authored documents are rendered into an archive
+- **THEN** the handoff identifies source document hashes, supplied identity and final document hashes, and a changed version requires fresh archive identities and applicable renewed checks
 
 ### Requirement: Generated outputs remain uncommitted
 

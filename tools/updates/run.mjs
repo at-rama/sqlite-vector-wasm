@@ -7,6 +7,8 @@ import { command } from '../acceptance/run.mjs';
 import { calculate, commitPattern } from '../release/policy.mjs';
 import { qualify } from '../release/run.mjs';
 import { candidateDescriptor, candidateBody } from './context.mjs';
+import { candidateDocumentPaths, prepareDocumentation, checkDocumentation, assertDocumentation, documentSnapshot } from './documentation.mjs';
+import { pairKey } from '../watch/state.mjs';
 
 const json = async path => JSON.parse(await readFile(path, 'utf8'));
 const saveJson = (path, value) => writeFile(path, JSON.stringify(value, null, 2) + '\n');
@@ -31,8 +33,9 @@ export async function resolveSources({ repository, directory, context, run = com
   return json(lockPath);
 }
 
-export async function prepareCandidate({ context, readSnapshot, services, repository = root,
-  resolve = resolveSources, reconcile = reconcileNotices, qualification = qualify, run = command }) {
+export async function prepareCandidate({ context, readSnapshot, readCandidates, services, repository = root,
+  resolve = resolveSources, reconcile = reconcileNotices, qualification = qualify,
+  prepareDocuments = prepareDocumentation, documentation = checkDocumentation, run = command }) {
   await mkdir(join(repository, '.work/updates'), { recursive: true });
   const directory = await mkdtemp(join(repository, '.work/updates/run-'));
   const result = { schemaVersion: 1, status: 'in-progress', ...context, directory, operations: [] };
@@ -54,12 +57,24 @@ export async function prepareCandidate({ context, readSnapshot, services, reposi
       }
       return base;
     });
+    result.observedCandidates = await step('candidate-state', async () => {
+      assert.equal(typeof readCandidates, 'function', 'Candidate inventory unavailable');
+      const candidates = await readCandidates();
+      assert.ok(Array.isArray(candidates), 'Malformed candidate inventory');
+      return candidates.filter(candidate => pairKey(candidate.selection) === pairKey(context.selection) &&
+        !(candidate.kind === 'run' && candidate.runId === context.preparation.runId && candidate.attempt === context.attempt));
+    });
+    if (result.observedCandidates.length) {
+      result.status = 'existing-candidate'; result.integrationEligible = false; result.publicationCalls = 0;
+      await save(); return { ...result, path };
+    }
     const lock = await step('resolve-vector', () => resolve({ repository, directory, context, run }));
     const selected = candidateDescriptor(context, lock);
     result.preflightState = await step('state', readSnapshot);
     result.preflight = calculate({ selection: context.selection, snapshot: result.preflightState, comment: context.comment });
     result.noticeReport = join(directory, 'notices.json');
     const notices = await step('notices', () => reconcile({ repository, directory, lock, run }));
+    result.documentSources = await step('documentation-preparation', () => prepareDocuments({ repository, lock, context }));
     result.commit = await step('commit', async () => {
       await run('git', ['switch', '-c', context.branch], { cwd: repository });
       const lockPath = join(repository, 'inputs/sqlite-vector.sources.lock.json');
@@ -70,7 +85,7 @@ export async function prepareCandidate({ context, readSnapshot, services, reposi
         if (!(await regularBytes(join(repository, path))).equals(data)) await writeFile(join(repository, path), data);
       }
       await noticeInputs({ inputs: lock }, repository);
-      await run('git', ['add', '--', 'inputs/sqlite-vector.sources.lock.json', 'inputs/release.json', ...noticePaths], { cwd: repository });
+      await run('git', ['add', '--', 'inputs/sqlite-vector.sources.lock.json', 'inputs/release.json', ...noticePaths, ...candidateDocumentPaths], { cwd: repository });
       await run('git', ['-c', 'user.name=sqlite-vector-wasm preparation', '-c', 'user.email=41898282+github-actions[bot]@users.noreply.github.com',
         'commit', '-m', 'chore: prepare distribution candidate'], { cwd: repository });
       const commit = await run('git', ['rev-parse', 'HEAD'], { cwd: repository }); assert.match(commit, commitPattern);
@@ -103,6 +118,15 @@ export async function prepareCandidate({ context, readSnapshot, services, reposi
     result.identity = qualified.identity; result.archive = evidence.archive; result.bundle = qualified.bundle;
     result.qualificationEvidence = qualified.evidencePath;
     result.forecastChanged = JSON.stringify(result.preflight) !== JSON.stringify(result.identity);
+    result.documentation = await step('documentation-example', async () => {
+      const example = await documentation({ repository, qualified, directory, run });
+      assertDocumentation(example, { commit: result.commit, selection: context.selection, archive: evidence.archive,
+        sourceHashes: result.documentSources, identity: result.identity });
+      assert.deepEqual(await documentSnapshot(repository), result.documentSources, 'Candidate documentation changed after commit');
+      return { example, sourceHashes: result.documentSources, previewState: 'pending', integrationEligible: false,
+        previewUrl: `https://${context.repository.split('/')[0]}.github.io/${context.repository.split('/')[1]}/preview/`,
+        checksUrl: `https://github.com/${context.repository}/commit/${result.commit}/checks` };
+    });
     assert.equal(await run('git', ['rev-parse', 'HEAD'], { cwd: repository }), result.commit);
     assert.equal(await run('git', ['status', '--porcelain', '--untracked-files=all'], { cwd: repository }), '', 'Candidate changed after qualification');
     await save();

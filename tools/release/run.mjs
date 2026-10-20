@@ -1,11 +1,12 @@
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, writeFile, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { root, regularBytes, hash, validatePackagedBuild, documentInputs, engineIdentity, noticeInputs, manifest, packageMetadata, inspectArchive } from '../package/package.mjs';
+import { root, regularBytes, hash, validatePackagedBuild, preparedDocuments, engineIdentity, noticeInputs, manifest, packageMetadata, inspectArchive } from '../package/package.mjs';
 import { production, command } from '../acceptance/run.mjs';
 import { vectorLock, recordedSelection, assertSelected, assertSelectionEvidence, assertApplicable } from '../acceptance/contracts.mjs';
 import { engineKey, calculate } from './policy.mjs';
 import { publicationIdentity, npmState, download, sha256 } from './state.mjs';
+import { assertReviewedSources, assertFinalDocumentation, renewDocumentation } from './documentation.mjs';
 
 const jsonBytes = value => Buffer.from(JSON.stringify(value, null, 2) + '\n');
 const json = async path => JSON.parse(await regularBytes(path));
@@ -34,10 +35,11 @@ export async function acceptedPayload({ bundle, identity, commit, repository = r
   const inspection = await mkdtemp(join(bundle, 'release-inspect-'));
   const extracted = join(inspection, 'extracted');
   await inspectArchive(archivePath, packaged.files, extracted);
-  const documents = await documentInputs(build, repository);
+  const { documents, records: documentRecords } = await preparedDocuments(build, repository, identity);
   for (const [path, data] of documents) {
     assert.equal(hash(await regularBytes(join(extracted, path))), hash(data), `Published ${path} differs from selected source revision`);
   }
+  assert.deepEqual(packaged.documents, documentRecords, 'Packaged document provenance mismatch');
   // The retained archive is the downstream input; original build directories may be gone.
   const runtime = await validatePackagedBuild({ ...build, runtimeDirectory: extracted }, repository);
   const contents = await noticeInputs(build, repository);
@@ -71,8 +73,10 @@ export function bindSelection(context, accepted, { product = false } = {}) {
   }
 }
 
-export function provenance(context, identity, accepted) {
+export function provenance(context, identity, accepted, documentation) {
   bindSelection(context, accepted);
+  assert.ok(!documentation || context.pullRequest, 'Documentation publication requires reviewed integration');
+  if (context.pullRequest) assertFinalDocumentation(context, identity, accepted, documentation);
   const evidence = { schemaVersion: 1, ...identity, commit: context.commit, repository: context.repository,
     upstreams: { ...context.selection }, ...(engineKey(context.selection) === 'sqliteVector' ? {engine:engineIdentity(accepted.build)} : {}), sourceLock: accepted.sourceLock,
     sourceLockSha256: accepted.report.sourceLockSha256, build: accepted.build.build,
@@ -80,7 +84,8 @@ export function provenance(context, identity, accepted) {
     acceptance: { verdict: accepted.report.verdict, source: accepted.report.source, stages: accepted.report.stages,
       browser: accepted.report.browserResults.browser, hosting: accepted.report.browserResults.hosting,
       reportSha256: hash(jsonBytes(accepted.report)) },
-    invocation: { pullRequest: context.pullRequest || null, preparation: context.preparation || null, comment: context.comment } };
+    invocation: { pullRequest: context.pullRequest || null, preparation: context.preparation || null, comment: context.comment },
+    ...(documentation ? { documentation } : {}) };
   publicationIdentity(evidence);
   const key = engineKey(context.selection), label = key === 'sqliteVector' ? 'SQLite-Vector' : 'sqlite-vec';
   const breaking = identity.transition ? '\nBREAKING CHANGE: SQLite-Vector replaces sqlite-vec. Adapt native vector SQL using vec0/vec_* to SQLite-Vector SQL. Official SQLite JavaScript APIs remain; vector SQL is not interchangeable. No automatic database migration or compatibility of existing vector structures is established.\n' : '';
@@ -88,20 +93,30 @@ export function provenance(context, identity, accepted) {
   return { evidence, notes };
 }
 
-export async function qualify({ context, readSnapshot, produce = production, verify = acceptedPayload, repository = root, run = command }) {
+export async function qualify({ context, readSnapshot, produce = production, verify = acceptedPayload, repository = root, run = command,
+  documentationCheck = renewDocumentation }) {
   assert.equal(await run('git', ['rev-parse','HEAD'], { cwd: repository }), context.commit, 'Wrong authoritative checkout');
   assert.equal(await run('git', ['status','--porcelain','--untracked-files=all'], { cwd: repository }), '', 'Dirty release checkout');
   await run('sh', ['tools/check-repository.sh'], { cwd: repository });
+  if (context.pullRequest) await assertReviewedSources(context, repository);
   const identity = calculate({ selection: context.selection, snapshot: await readSnapshot(), comment: context.comment });
   assert.equal(engineKey(context.selection), 'sqliteVector', 'New product publication requires SQLite-Vector');
   const result = await produce({ repository, lockPath: vectorLock, metadata: { name: identity.name, version: identity.version } });
   const accepted = await verify({ bundle: result.bundle, identity, commit: context.commit, repository });
   bindSelection(context, accepted, {product:true});
-  const { evidence, notes } = provenance(context, identity, accepted);
   const parent = join(repository, '.work/release'); await mkdir(parent, { recursive: true });
   const directory = await mkdtemp(join(parent, 'run-'));
+  let documentation;
+  if (context.pullRequest) {
+    const renewed = await documentationCheck({ repository, qualified: { bundle: result.bundle }, directory, run });
+    documentation = { reviewed: context.documentation, sourceHashes: context.documentation.sourceHashes,
+      ...renewed, packageDocuments: accepted.packaged.documents };
+    await assertReviewedSources(context, repository);
+  }
+  const { evidence, notes } = provenance(context, identity, accepted, documentation);
   const evidencePath = join(directory, 'publication.json'); await writeFile(evidencePath, jsonBytes(evidence));
-  const handoff = { schemaVersion: 1, context, identity, bundle: result.bundle, evidencePath, directory, archivePath: accepted.archivePath, notes };
+  const handoff = { schemaVersion: 1, context, identity, bundle: result.bundle, evidencePath, directory, archivePath: accepted.archivePath, notes,
+    ...(documentation ? { documentation } : {}) };
   const path = join(directory, 'handoff.json'); await writeFile(path, jsonBytes(handoff));
   return { ...handoff, path };
 }
@@ -119,15 +134,16 @@ export function attestSubject(bundle, evidence) {
 export async function publish({ handoff, readSnapshot, services, attestation, repository = root, verify = acceptedPayload }) {
   const outcomes = [];
   const outcomePath = join(handoff.directory, 'outcome.json');
-  const save = value => writeFile(outcomePath, jsonBytes({ ...value, outcomes }));
+  const save = value => writeFile(outcomePath, jsonBytes({ stableDocumentationEligible: false, ...value, outcomes }));
   const step = async (operation, action) => {
     try { const result = await action(); outcomes.push({ operation, status:result?.status === 'verification-pending' ? 'pending' : 'succeeded', result }); await save({ status:'in-progress' }); return result; }
     catch (error) { outcomes.push({ operation, status:'failed', diagnostic:error.message }); throw error; }
   };
   try {
+    if (handoff.context.pullRequest) await assertReviewedSources(handoff.context, repository);
     const accepted = await verify({ bundle: handoff.bundle, identity: handoff.identity, commit: handoff.context.commit, repository });
     bindSelection(handoff.context, accepted, {product:true});
-    const expected = provenance(handoff.context, handoff.identity, accepted);
+    const expected = provenance(handoff.context, handoff.identity, accepted, handoff.documentation);
     assert.deepEqual(await json(handoff.evidencePath), expected.evidence, 'Publication evidence changed');
     assert.equal(handoff.notes, expected.notes); assert.equal(handoff.archivePath, accepted.archivePath);
     const snapshot = await readSnapshot();
@@ -155,7 +171,8 @@ export async function publish({ handoff, readSnapshot, services, attestation, re
       const result = { status:'published-verification-pending', identity:handoff.identity, release, verification };
       await save(result); return result;
     }
-    const result = { status:'complete', identity:handoff.identity, release }; await save(result); return result;
+    const result = { status:'complete', identity:handoff.identity, release, publication: expected.evidence,
+      stableDocumentationEligible: Boolean(handoff.context.pullRequest && handoff.documentation) }; await save(result); return result;
   } catch (error) {
     await save({ status:'failed', diagnostic:error.message }); error.message += `; per-operation evidence: ${outcomePath}`; throw error;
   }
@@ -164,11 +181,38 @@ export async function publish({ handoff, readSnapshot, services, attestation, re
 export async function checkInitialCompletion({ evidence, get, verifyGitHub }) {
   publicationIdentity(evidence);
   assert.ok(evidence.initial && evidence.version === '0.1.0' && evidence.channel === 'latest', 'Completion check is bounded to selected initial publication');
+  if (evidence.documentation) {
+    assert.ok(evidence.invocation?.pullRequest, 'Missing initial documentation integration');
+    assertFinalDocumentation({ commit: evidence.commit, selection: evidence.upstreams, documentation: evidence.documentation.reviewed },
+      evidence, { archive: evidence.archive, packaged: { documents: evidence.documentation.packageDocuments } }, evidence.documentation);
+  }
   await verifyGitHub(evidence);
   const npm = await npmState(get);
   if (!npm.versions[evidence.version]) return { status:'npm-pending', version:evidence.version };
   assert.equal(npm['dist-tags'].latest, evidence.version, 'Initial npm channel mismatch');
   const bytes = await download(npm.versions[evidence.version].dist.tarball, get);
   assert.equal(bytes.length, evidence.archive.size); assert.equal(sha256(bytes), evidence.archive.sha256, 'Initial npm archive mismatch');
-  return { status:'complete', version:evidence.version };
+  return { status:'complete', version:evidence.version, publication: evidence,
+    stableDocumentationEligible: Boolean(evidence.documentation) };
+}
+
+// Re-observe an already executed normal publication, including visibility lag.
+// This adapter has no publishing/tagging methods and cannot repair failures.
+export async function inspectPublicationCompletion({ evidence, outcome, verifyGitHub, verifyNpm }) {
+  publicationIdentity(evidence);
+  assert.ok(['complete', 'published-verification-pending'].includes(outcome.status), 'Publication is incomplete or failed');
+  for (const key of ['name','version','tag','channel']) assert.equal(outcome.identity?.[key], evidence[key], 'Completion identity mismatch');
+  const operations = ['tag','draft','archive','provenance','attestation','npm','github','github-identity','npm-identity'];
+  assert.deepEqual(outcome.outcomes?.map(o => o.operation), operations, 'Incomplete publication operations');
+  for (const operation of outcome.outcomes) assert.equal(operation.status,
+    outcome.status === 'published-verification-pending' && operation.operation === 'npm-identity' ? 'pending' : 'succeeded');
+  assert.ok(evidence.invocation?.pullRequest && evidence.documentation, 'Missing publication documentation');
+  assertFinalDocumentation({ commit: evidence.commit, selection: evidence.upstreams, documentation: evidence.documentation.reviewed },
+    evidence, { archive: evidence.archive, packaged: { documents: evidence.documentation.packageDocuments } }, evidence.documentation);
+  if (outcome.status === 'complete') assert.deepEqual(outcome.publication, evidence, 'Completion provenance mismatch');
+  await verifyGitHub(evidence);
+  const result = await verifyNpm(evidence);
+  assert.ok(['verified','verification-pending'].includes(result?.status));
+  if (result.status !== 'verified') return { status: 'published-verification-pending', stableDocumentationEligible: false, verification: result };
+  return { status: 'complete', stableDocumentationEligible: true, publication: evidence, completion: 'read-only-confirmation' };
 }

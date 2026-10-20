@@ -32,7 +32,7 @@ try {
   if (buildRecord.runtime && Object.keys(buildRecord.runtime).some(p => p.endsWith('/sqlite3.wasm'))) {
     await prepareData(repository, join(repository, '.work/demo-reference-data'));
     const demoBase = record.preview ? new URL('preview/', base).href : base.href;
-    const expectedSelection = JSON.parse(await readFile(join(repository, 'tools/site/demo-runtime.json'), 'utf8'));
+    const expectedSelection = (record.preview ? JSON.parse(await readFile(join(repository, 'tools/site/demo-runtime.json'), 'utf8')) : record.stableDocumentation?.demoSelection ?? JSON.parse(await readFile(join(repository, 'tools/site/demo-runtime.json'), 'utf8')));
     const actual = await (await fetch(new URL('demo-runtime.json', demoBase))).json();
     for (const [key, value] of Object.entries(expectedSelection)) assert.deepEqual(actual[key], value);
     results.push(await checkDemo(demoBase, { root: repository, expectedPreview: record.preview,

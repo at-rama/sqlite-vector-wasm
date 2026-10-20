@@ -188,3 +188,5 @@ binding, reads selected document sources through the same explicit map, compares
 their exact bytes and reconstructs the complete expected inventory, including the
 common guide. Changed/missing documents, metadata, notices or provenance still fail.
 Numbering, channel policy, triggers and publication adapters are unchanged.
+
+Vector consumer documents are rendered from their selected authored sources and the supplied package/build identity. The package handoff records each source path/hash and final document hash, with the rendered identity/composition. Local fixture packages remain explicitly unpublished; preparing a production archive does not assert registry availability. A different supplied version produces new document/archive bytes and requires applicable renewed checks. The release consumer recomputes this rendering and provenance from the selected source revision.
