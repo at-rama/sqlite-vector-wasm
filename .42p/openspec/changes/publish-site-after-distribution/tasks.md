@@ -14,4 +14,4 @@
 
 ## 4. 42P Verification and completion
 
-- [ ] 4.1 Reconfirm complete bidirectional unit/effective-Change coverage, run post-Apply `42p-verify-change` with applicable real execution evidence, and record its genuine verdict. Do not archive before satisfactory Verification; integration/publication remain human-controlled lifecycle actions.
+- [x] 4.1 Reconfirm complete bidirectional unit/effective-Change coverage, run post-Apply `42p-verify-change` with applicable real execution evidence, and record its genuine verdict. Do not archive before satisfactory Verification; integration/publication remain human-controlled lifecycle actions.

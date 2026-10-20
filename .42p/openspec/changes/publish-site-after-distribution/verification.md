@@ -1,0 +1,69 @@
+---
+schema_version: 1
+change: publish-site-after-distribution
+allocation_unit: A-site_shell
+checked_commit: 7f82f3733815a3a73d4ffede77e23f8b0d22fe46
+verdict: failed
+coverage:
+  allocation_to_change: 100
+  change_to_allocation: 100
+openspec_verify: failed
+repository_checks: passed
+applicable_tests: passed
+---
+# A-site_shell Verification
+
+## Institutional view
+
+**Verification failed at the completion marker, not at an observed runtime assertion.** The clean checked commit has three of four tasks complete; task 4.1 still requires recording this invocation. Both coverage directions, the repository checks and applicable executable checks pass. The official completeness control therefore prevents a passing aggregate verdict until the marker is completed and Verification is repeated. Actual browser/build/Pages evidence is from `67d5feb9245666e3f046718fc828d47dfae3efd7`; the checked commit changes only task 3's marker. That execution is explicitly reused after checking byte identity, not relabeled as execution on this administrative commit. Future Vector publication and human integration are controlled fixtures, not live publication observations.
+
+**Command provenance.** The [reconciled Allocation](https://github.com/at-rama/sqlite-vector-wasm/blob/41c7d36e2f67118d507deb0005eda887bfa12334/.42p/engineering/2026-10-04_sqlite-vec-wasm_allocation_edit-0.1.md), A-site_shell, derives its complete command from Site C-site/C-readme/C-demo-release/C-demo-checks/Q-realization and Distribution C-release-review. Those complete passages were reread forward and backward against the [effective mapping](coverage.md), the synchronized site-shell baseline and this delta: both semantic directions remain 100%. This examination does not independently reaudit the original historical conversations or treat the four related Captures as independent corroboration. Their institution and historical provenance remain governed by AGENTS.md.
+
+**Construction, navigation and mobile envelope — supported by renewed execution.** The [Site build job](https://github.com/at-rama/sqlite-vector-wasm/actions/runs/39328793220/job/118324339864), step “Check real builds and browser integration”, constructs independent documentation/demo fixtures, stable/preview/project prefixes and real integration. Sixteen exercise records include copied relative images, missing-image rejection, docs-only/demo-only construction, preview/bootstrap/stable-only assembly, real documentation edits and corrupted-runtime rejection. The [hosted observation job](https://github.com/at-rama/sqlite-vector-wasm/actions/runs/39328793220/job/118325999325) observes all three destinations at 1280/390 pixels, six direct visits and six client transitions per side. npm adjacency/menu checks pass on the new candidate and stable fixtures. The preserved older stable source predates that link and its hosted npm check is explicitly false; it is not presented as an upgraded stable implementation.
+
+**Independent integration and demo preservation — supported by renewed fixture and real-runtime checks.** The same build's `site/exercise.json` compares explicit fixture identities/assets across documentation edits and rejects changed bytes; `site/demo-results.json` checks the real pinned 0.2.0 demo and its documentation-only rebuild. The [downloaded Site evidence](https://github.com/at-rama/sqlite-vector-wasm/actions/runs/39328793220/artifacts/12224306302), those two files, preserves the results. No demo refresh, engine build in Site or new runtime selection is introduced. The separate Vector demo change in PR #77 is outside this unit.
+
+**Preview and publication ordering — supported by controlled failure tests, actual historical-publication reads and a real identified preview.** The [eligibility test definitions](https://github.com/at-rama/sqlite-vector-wasm/blob/67d5feb9245666e3f046718fc828d47dfae3efd7/tools/site/tests/eligibility.test.mjs) cover pending/failed/partial publication, push/manual/other-PR entry, exact matching completion, wrong repository/preparation/revision/provenance, stale attempts and the failed-attempt/older-success regression. Their successful execution is in the [repository tests job](https://github.com/at-rama/sqlite-vector-wasm/actions/runs/39328793243/job/118321380630), alongside the real completion inspector's Release tests. The actual Site run independently checks GitHub and npm bytes for the declared historical 0.2.0 selection, builds source `741b26df750b3c1f0f5a00c1dd1e579b4e7c6d9e` with its own locked tooling, and deploys that stable root beside the exact unpublished candidate. The success path for a future integrated Vector publication uses injected service/artifact boundaries; this mission performs no product publish or human merge.
+
+**Concurrency, unknown inputs and scoped verification — supported by semantic inspection and executed guards.** The [workflow](https://github.com/at-rama/sqlite-vector-wasm/blob/67d5feb9245666e3f046718fc828d47dfae3efd7/.github/workflows/site.yml) retains shared Pages serialization, independent trusted fork/actor checks, least read permissions outside deployment and final guards in both jobs. Git/Pages/publication evidence supplies the previous source; unknown eligibility stops deployment. The [implementation](https://github.com/at-rama/sqlite-vector-wasm/blob/67d5feb9245666e3f046718fc828d47dfae3efd7/tools/site/eligibility.mjs), functions publicationCompletion/eligibleSource/stableSource/assertStableCurrent, is traced to those tests. Artificially advanced main/PR/publication identities reject obsolete inputs. This is bounded freshness checking, not a claim of an atomic remote snapshot or FIFO scheduling. Fork/Dependabot validation and stale concurrency cases are controlled tests, not live fork deployments or races.
+
+**Dependencies and limits.** Browser observations use Chrome 153.0.8010.12 and the repository's pinned harness/VitePress tooling. Implementation, test definitions and this examination share agentic authorship; finite observations and injected services are not independent proof of every future service response. Actual browser loading/SQL and read-only destination bytes exercise external boundaries. Artifact availability is retention-bound; missing/expired or inconsistent required handoffs fail closed. These checks complement, rather than replace, product acceptance and the documentation/demo units. The local executor was unavailable during initial implementation; remote edits used the GitHub connector with CAS and exact readback. It recovered for final local check/test/strict validation and artifact inspection.
+
+**Institution decision.** The supported realization is available for review, but this invocation is failed while task 4.1 remains incomplete. No archive, synchronization, fusion or distribution publication is authorized by these findings.
+
+## Detailed record
+
+### Identity and evidence
+
+Allocation snapshot: `41c7d36e2f67118d507deb0005eda887bfa12334`; SHA-256 `bd990a1bea53e94184349837794489648d27e68b7327e76be9ddeea318df9217`. Effective contract: six requirements/23 scenarios, including one modified requirement/11 delta scenarios. Proposal/design/delta/coverage/tasks and the complete qualified unit were examined; the original baseline remains unsynchronized.
+
+Actual implementation snapshot: `67d5feb9245666e3f046718fc828d47dfae3efd7`, tree `109f628cf2ee2968229c4f420acdfbbb6a2d3836`. All four evidence ZIPs below were downloaded, SHA-256 checked against GitHub metadata and inspected. The actual preview reports that exact head and original archive; no current shared URL is treated as a permanent candidate identity.
+
+- Site checks: artifact `12224306302`, SHA-256 `7133264ae34f32b97f97d37d605b28fc5e95f7e001f7830f4386dd372eb234ca`; locators `site/selection.json`, `site/exercise.json`, `site/build.json`, `site/assembled.json`, `site/demo-results.json`, `docs-input/handoff.json`, `docs-example/result.json`, `pages/site-publication.json`.
+- [Actual Pages observations](https://github.com/at-rama/sqlite-vector-wasm/actions/runs/39328793220/artifacts/12224226705): artifact `12224226705`, SHA-256 `655c310f87853ea6624532058f3e1a1f3c0a71259270905e8ed7c054b88c3482`; locator `live-pages.json`, stable/candidate identity, rendered source hashes, viewport/navigation and unchanged 0.2.0 runtime results.
+- [Release exercise](https://github.com/at-rama/sqlite-vector-wasm/actions/runs/39328793248/artifacts/12224170572): artifact `12224170572`, SHA-256 `2b130befa5d4337664b6e6ecb42b4be31264966a7e94655e31d09e63cea453be`; actual archive 1,164,980 bytes, SHA-256 `9ac1ec39c45ef6d71bbd1b90b07da32c8f373be3f6e283f429a2181961b9f203`. Nine stages and 22 browser cases pass; the real documented example runs in main thread and Worker with SQLite 3.54.0/Vector 1.1.2 and neighbors 1/2, distances 0/1.4142135381698608. Site's consumed artifact ID/digest and example archive match this producer. Its 0.2.4 → 0.3.0 publication state is an explicit fixture; publisher jobs are skipped.
+- [Updates rehearsal](https://github.com/at-rama/sqlite-vector-wasm/actions/runs/39328793448/artifacts/12223038098): artifact `12223038098`, SHA-256 `d0a1ecb369b5ba841841578838f2ebb217590cd334dc90faea8c157889e7a16c`. It observes actual latest 0.2.1 and creates temporary local candidate `78f67706b86c7e1f69ca357b6032c6ca3abaea5c`, nine passed qualification stages and the exact-archive browser example, with no remote candidate-write adapter. Base `790e0691368505a59e3902996fddf0e28c396da1` has the same tree as the implementation snapshot. This is separately identified, not called the PR preview's archive.
+
+### Official OpenSpec verify
+
+Selected generated skill: openspec-verify-change 1.14.0, unchanged. Local `list --json` resolves `.42p`; `status` returns spec-driven and the existing change root; `instructions apply` returns all four readable artifacts and four tracked tasks. Its project context was applied without copying it into product prose. No Store or generated-skill update was used.
+
+| Dimension | Finding |
+| --- | --- |
+| Completeness | 3/4 tasks; CRITICAL: task 4.1 is still unchecked. One modified requirement is implemented; no removal/rename entries. |
+| Correctness | All 11 delta scenarios mapped to code and suitable execution/semantic evidence; all 23 effective scenarios retained in the unit review. |
+| Coherence | Previous eligible source, existing preview/publication handoffs, no new registry/main write, unchanged demo identity and final freshness design followed; repository module/test patterns retained. |
+
+CRITICAL finding: complete the task 4.1 administrative marker after recording this invocation, then repeat Verification on a clean committed candidate. No other unresolved warning or suggestion was found in the examined unit. Aggregate verdict remains failed; task completion is not substituted for realization evidence.
+
+### Scenario dispositions and reverse grounding
+
+Common construction/project-prefix scenarios map to build/prepare and the real fixture compilation. Navigation/mobile/npm scenarios map to browser checks, stable/candidate fixtures and hosted observations with the historical-stable qualification above. Independent integration maps to docs-only/demo-only fixtures. All three runtime-preservation scenarios map to fixture hashes, the real 0.2.0 rebuild and corrupted/missing input rejection. Scoped local/deployed checks map to the build/observe jobs and retained artifacts.
+
+For the modified deployment requirement: internal preview and identity/navigation use independent checkouts plus actual Pages; fork checks use selector/workflow restrictions; bootstrap and stable-only removal use actual loopback assembly; push/manual and pending-main paths use the same selector and controlled tests; replacement/closure use the existing trigger filter and freshness tests; concurrency uses shared workflow serialization plus main/PR/publication-change rejection; relevant inputs use workflow tests; complete publication uses the existing final-documentation inspector after exact repository/run/attempt/provenance checks; stale/unrelated/failed or partial completion rejects. Each code contribution is bounded by the corresponding qualified A-site_shell responsibility; content, demo refresh, distribution policy and publication remain with their source units. Coverage is an explicit semantic judgment, not inferred from test counts.
+
+### Commands, failures and corrections
+
+On the implementation snapshot, CI `sh tools/check-repository.sh` and the complete `sh tools/test-repository.sh` pass; locked OpenSpec strict validation passes 17/17. Both isolated engine compositions pass in [Acceptance](https://github.com/at-rama/sqlite-vector-wasm/actions/runs/39328793298). Site's build/deploy/observe all pass. Local canonical check, `node --test tools/site/tests/*.test.mjs tools/site/checks/*.test.mjs` (62/62), and strict validation were renewed after the executor recovered. The task-only difference is checked explicitly before reuse.
+
+Earlier failed executions remain failures: Site 39327709446 exposed a controller profile leaking into the temporary relative-image fixture; its scoped override is now cleared/restored around that fixture. A later exact-attempt regression prevents a failed Release retry from borrowing an older successful handoff. Two repository test attempts failed in temporary Git-directory cleanup with ENOTEMPTY; bounded removal retries were added without altering product assertions. The final complete suite passes with both corrections. Neither failed execution supplies acceptance evidence. The repository Verification gate currently lacks a passing report for this unit; the Archive gate intentionally remains failed because archive is excluded from this mission.
