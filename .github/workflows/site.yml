@@ -30,6 +30,10 @@ permissions:
   pull-requests: read
   actions: read
 
+# Builds execute selected source revisions. Deny cache tokens access even on
+# manual default-branch runs; disabling setup-node caching alone is insufficient.
+cache-mode: none
+
 # Covers main selection/build, assembly, freshness checks and publication.
 # GitHub may replace a pending run; neither ordering nor FIFO is assumed.
 concurrency:
@@ -203,9 +207,10 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      # Use this event's controller revision. In particular workflow_run must
+      # never execute a checkout selected by the triggering workflow or PR.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:

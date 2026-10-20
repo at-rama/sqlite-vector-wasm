@@ -4,6 +4,17 @@ import { readFile } from 'node:fs/promises';
 
 const source = () => readFile(new URL('../../../.github/workflows/site.yml', import.meta.url), 'utf8');
 
+test('selected sources cannot access Actions caches and privileged deployment executes the event controller', async () => {
+  const workflow = await source();
+  assert.match(workflow.split('\njobs:')[0], /^cache-mode: none$/m);
+  assert.equal([...workflow.matchAll(/^\s*cache-mode:/gm)].length, 1, 'No job may override cache isolation');
+  const deploy = workflow.split('\n  deploy:')[1].split('\n  observe:')[0];
+  assert.equal([...deploy.matchAll(/uses: actions\/checkout@/g)].length, 1);
+  assert.match(deploy, /uses: actions\/checkout@[0-9a-f]{40}[^\n]*\n        with:\n          persist-credentials: false\n/);
+  assert.doesNotMatch(deploy, /\bref:|pull_request\.head|stable_commit|workflow_run\.head|npm (?:install|ci)|harness\.sh/);
+  assert.match(deploy, /run: node tools\/site\/publication\.mjs guard evidence\/pages\/site-publication\.json/);
+});
+
 test('the complete publication sequence shares concurrency; builds and observers receive no Pages credentials', async () => {
   const workflow = await source();
   const build = workflow.split('\n  build:')[1].split('\n  deploy:')[0];
