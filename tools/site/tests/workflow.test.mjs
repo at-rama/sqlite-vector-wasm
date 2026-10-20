@@ -13,6 +13,9 @@ test('selected sources cannot access Actions caches and privileged deployment ex
   assert.match(deploy, /uses: actions\/checkout@[0-9a-f]{40}[^\n]*\n        with:\n          persist-credentials: false\n/);
   assert.doesNotMatch(deploy, /\bref:|pull_request\.head|stable_commit|workflow_run\.head|npm (?:install|ci)|harness\.sh/);
   assert.match(deploy, /run: node tools\/site\/publication\.mjs guard evidence\/pages\/site-publication\.json/);
+  assert.doesNotMatch(workflow, /ref: \$\{\{/);
+  assert.equal([...workflow.matchAll(/run: node tools\/site\/checkout\.mjs preview/g)].length, 2);
+  assert.match(workflow, /run: node tools\/site\/checkout\.mjs stable/);
 });
 
 test('the complete publication sequence shares concurrency; builds and observers receive no Pages credentials', async () => {
@@ -32,7 +35,7 @@ test('the complete publication sequence shares concurrency; builds and observers
   assert.match(build, /publication.mjs assemble/);
   assert.match(build, /publication.mjs guard \.work\/pages\/site-publication.json/);
   assert.match(build, /steps.assemble.outcome == 'success'/);
-  assert.match(build, /ref: \$\{\{ steps\.selection\.outputs\.stable_commit \}\}\n          path: stable\n          persist-credentials: false/);
+  assert.match(build, /ref: main\n          fetch-depth: 0\n          path: stable\n          persist-credentials: false/);
   assert.match(build, /cd \.\.\/stable/);
   assert.match(build, /STABLE_PROFILE/);
   assert.match(build, /eligibility\.mjs select/);

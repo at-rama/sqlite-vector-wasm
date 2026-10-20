@@ -52,12 +52,16 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          # The event checkout is main for workflow_run/manual main runs, and
+          # GitHub's merge for PRs. Include its parents without fetching a PR ref.
+          fetch-depth: 2
           path: candidate
           persist-credentials: false
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: '24.19.0'
+      - name: Bind the exact candidate to the event checkout
+        run: node tools/site/checkout.mjs preview
       - name: Resolve eligible documentation sources
         id: selection
         env:
@@ -115,13 +119,17 @@ jobs:
            github.actor != 'dependabot[bot]') ||
           (github.ref == 'refs/heads/main' && github.event_name != 'pull_request'))
         run: echo 'publish=true' >> "$GITHUB_OUTPUT"
-      - name: Checkout eligible stable source independently
+      - name: Checkout trusted main independently
         if: steps.eligible.outputs.publish == 'true'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ steps.selection.outputs.stable_commit }}
+          ref: main
+          fetch-depth: 0
           path: stable
           persist-credentials: false
+      - name: Bind eligible stable source to observed main history
+        if: steps.eligible.outputs.publish == 'true'
+        run: node tools/site/checkout.mjs stable
       - name: Build stable root using its own locked tooling
         if: steps.eligible.outputs.publish == 'true'
         env:
@@ -235,11 +243,13 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 2
           persist-credentials: false
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: '24.19.0'
+      - name: Bind the exact candidate to the event checkout
+        run: node tools/site/checkout.mjs preview
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: site-checks-${{ github.run_id }}
