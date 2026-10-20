@@ -2,13 +2,13 @@
 
 ## Context
 
-See [proposal](proposal.md) for the target and [inventory](inventory.md) for observed paths. Current main retains both technical engines by explicit design, although prospective Watch/Updates/Release are already Vector. This draft is conditional on [upstream decisions D1/D2](authority-amendment.md); no applicable allocated authorization is invented.
+See [proposal](proposal.md) for the target and [inventory](inventory.md) for observed paths. Current main retains both technical engines by explicit design, although prospective Watch/Updates/Release are already Vector. The adopted [D1/D2 decision record](authority-amendment.md) and current A-composition-cleanup unit govern this bounded implementation.
 
 ## Goals / Non-Goals
 
 **Goals:** delete only the abandoned current composition; make omitted/current invocations unambiguously Vector; preserve exact identity and the complete existing browser contract; close the demo transition truthfully.
 
-**Non-Goals:** rebuild the release system, introduce backend abstractions, maintain old CLI/result compatibility, rewrite historical evidence, alter general 42P rules or perform implementation in this proposal PR.
+**Non-Goals:** rebuild the release system, introduce backend abstractions, maintain old CLI/result compatibility, rewrite historical evidence, alter general 42P rules or refactor the future complete demo.
 
 ## Decisions
 

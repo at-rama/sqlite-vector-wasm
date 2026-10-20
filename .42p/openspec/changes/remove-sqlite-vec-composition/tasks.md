@@ -1,11 +1,11 @@
 # Tasks
 
-Conditional planning only. All boxes remain open. This list does not authorize Apply or institute the upstream amendment.
+Adopted A-composition-cleanup implementation under S-composition-cleanup. Complete tasks only when their entire required behavior and checks are established; archive, merge and publication remain separate.
 
 ## 1. Resolve authority and integration prerequisites
 
-- [ ] 1.1 Confirm explicit human adoption of D1/D2 in `authority-amendment.md`, reconcile the four current Captures and derived Allocation using their repository skills, and verify the resulting exact snapshots and full bounded U1–U7 attribution before any implementation; stop if adoption or one-unit attribution remains absent.
-- [ ] 1.2 Rebase on current main and compare #78's actual head/merge state; verify its editorial corrections are retained and refresh this draft, inventory and bidirectional derivation against the adopted unit until all applicable properties pass.
+- [x] 1.1 Confirm explicit human adoption of D1/D2 in `authority-amendment.md`, reconcile the four current Captures and derived Allocation using their repository skills, and verify the resulting exact snapshots and full bounded U1–U7 attribution before any implementation; stop if adoption or one-unit attribution remains absent.
+- [x] 1.2 Rebase on current main and compare #78's actual head/merge state; verify its editorial corrections are retained and refresh this draft, inventory and bidirectional derivation against the adopted unit until all applicable properties pass.
 
 ## 2. Preserve history and remove obsolete production admission
 

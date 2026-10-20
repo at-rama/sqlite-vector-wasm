@@ -1,10 +1,10 @@
-# Upstream amendments — D1/D2 pending; temporary demo decision adopted
+# Adopted upstream amendments — composition cleanup
 
-D1/D2 remain decision proposals, not effective Capture/Allocation revisions. D3 alone is adopted by S-demo-placeholder and reconciled in the current Site Capture/Allocation. The user's 2026-10-20 cleanup mission authorizes preparing it and requires an explicit decision if the instituted design must change. Its objective conflicts with the retained-capability decision read on main. No adoption is inferred from this draft, CLI validation or a PR merge.
+D1/D2 are adopted under S-composition-cleanup by the user’s explicit agreement and Apply/Verification instruction on 2026-10-20. D3 is adopted under S-demo-placeholder. Current Captures/Allocation record the bounded revisions before implementation. The user's 2026-10-20 cleanup mission authorizes preparing it and requires an explicit decision if the instituted design must change. Its objective conflicts with the retained-capability decision read on main. No adoption is inferred from this draft, CLI validation or a PR merge.
 
 ## Decision D1 — replace technical retention
 
-Proposed adoption text:
+Adopted text:
 
 > Replace S-retained-capability's obligation to keep consumable sqlite-vec acquisition, build, packaging and acceptance with a single active composition: SQLite plus SQLite-Vector. Remove obsolete current paths and their compatibility conventions. Prior releases, immutable source revisions, archived Changes and evidence retain their exact recorded identities. Current tooling need not rebuild an abandoned composition; historical reconstruction uses its historical source revision and recorded prerequisites. Keep narrowly necessary read-only interpretation of actual historical publication records for transition calculation, source integrity, channel progression and uniqueness. Such reading cannot accept an old engine as a new selection or qualify its bytes as SQLite-Vector.
 
@@ -20,7 +20,7 @@ This explicitly replaces the current obligation for separate corresponding old-S
 
 The current Allocation has twelve units; its A-inputs/A-build/A-acceptance references require technical retention, and no unit owns removal across them and Site. A single Change cannot truthfully claim complete coverage of all those continuing units. Do not alter the one-unit-per-Change canon or silently choose A-build as an umbrella.
 
-Proposed additional unit, effective only after D1 and explicit adoption of this local attribution:
+Adopted additional bounded unit:
 
 ### A-composition-cleanup — Remove the abandoned active composition
 
@@ -40,6 +40,6 @@ S-demo-placeholder records the user's 2026-10-20 instruction to apply only this 
 
 A real stable Vector archive and complete native identity/SQL, corpus/modes/UI/memory and independent runtime qualification remain required for the separate future demo return. PR #77 stays distinct and needs reevaluation against the amended Site snapshot before use; do not edit or implement it here. No replacement publication or demo qualification blocks placeholder delivery, composition-cleanup completion or product publication. Placeholder checks prove only its static/no-runtime behavior; they do not count as successful vector checks.
 
-## Institution handoff
+## Implementation handoff
 
-Adopt D1 and D2 explicitly; D3's bounded placeholder decision is already adopted. Then reconcile the current Captures and derived Allocation under their repository skills, renew fingerprints and downstream derivation, and update this conditional draft against that exact adopted snapshot. Until then its actual derivation verdict is FAIL, not a provisional PASS. The only upstream files revised here are Site Capture and its derived Allocation for S-demo-placeholder; all other amendments remain pending.
+D1/D2 are adopted and reconciled under S-composition-cleanup; D3 remains the temporary placeholder. Verify the exact adopted Capture/Allocation→Change derivation before Apply, then implement and perform 42P Verification. Archive, merge and publication remain outside this instruction. Historical proposal wording above records the original decision rationale; it is not a continuing adoption blocker.
