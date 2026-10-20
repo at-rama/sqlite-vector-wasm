@@ -2,7 +2,7 @@
 
 Use the SQLite-Vector runtime in `@at-rama/sqlite-vector-wasm@0.3.0`. The enclosed `package.json` identifies the package version and `runtime.json` records the exact SQLite and extension versions.
 
-Initialize the official runtime as described in the [browser guide](../browser.md), then execute the following SQL through `db.exec()` on an OO1 database. The example creates an in-memory Float32 dataset and returns rowids 1 then 2, at distances 0 and approximately 1.414214.
+Initialize the official runtime as described in the [browser guide](browser.md), then execute the following SQL through `db.exec()` on an OO1 database. The example creates an in-memory Float32 dataset and returns rowids 1 then 2, at distances 0 and approximately 1.414214.
 
 ```sql
 CREATE TABLE documents(embedding BLOB);
