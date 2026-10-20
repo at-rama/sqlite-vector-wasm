@@ -20,13 +20,14 @@ export function selectDocumentationRun({ descriptor, fixture, runs, repository, 
 export async function acquireDocumentationBundle({ root, repository, commit = sourceCommit(root), token, get = fetch, wait = ms => new Promise(r=>setTimeout(r,ms)), attempts = 40 }) {
   assert.match(repository, /^[\w.-]+\/[\w.-]+$/); assert.match(commit, /^[a-f0-9]{40}$/);
   const profile = await documentationSelection(root);
-  const fixture = process.env.SITE_DOCUMENTATION_PREVIEW_INPUT === 'exercise' || (profile.mode === 'candidate' && JSON.parse(await readFile(join(root,'inputs/release.json'),'utf8')).schemaVersion !== 2);
-  const descriptor=JSON.parse(await readFile(join(root,'inputs/release.json'),'utf8'));
+  const raw = await readFile(join(root,'inputs/release.json'),'utf8').catch(error => { if (error.code === 'ENOENT') return null; throw error; });
+  const descriptor = raw === null ? null : JSON.parse(raw);
+  const fixture = process.env.SITE_DOCUMENTATION_PREVIEW_INPUT === 'exercise' || (profile.mode === 'candidate' && descriptor?.schemaVersion !== 2);
   const api=`https://api.github.com/repos/${repository}`;
   const headers={Accept:'application/vnd.github+json',...(token?{Authorization:`Bearer ${token}`}:{})};
   const json=async url=>{const response=await get(url,{headers});assert.equal(response.status,200,'Documentation input API unavailable');return response.json();};
   for(let i=0;i<attempts;i++){
-    const response = !fixture && descriptor.schemaVersion===2 ? {workflow_runs:[await json(`${api}/actions/runs/${descriptor.preparation.runId}`)]} : await json(`${api}/actions/runs?head_sha=${commit}&event=pull_request&per_page=100`);
+    const response = !fixture && descriptor?.schemaVersion===2 ? {workflow_runs:[await json(`${api}/actions/runs/${descriptor.preparation.runId}`)]} : await json(`${api}/actions/runs?head_sha=${commit}&event=pull_request&per_page=100`);
     const selected=selectDocumentationRun({descriptor,fixture,runs:response.workflow_runs,repository,commit});
     if(!selected || selected.run.status!=='completed'){await wait(15000);continue;}
     assert.equal(selected.run.conclusion,'success','Candidate qualification workflow failed');
