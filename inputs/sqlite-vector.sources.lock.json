@@ -1,13 +1,13 @@
 {
   "schemaVersion": 2,
   "sqlite": {
-    "version": "3.54.0",
-    "archiveUrl": "https://sqlite.org/2026/sqlite-src-3540000.zip",
+    "version": "3.54.1",
+    "archiveUrl": "https://sqlite.org/2026/sqlite-src-3540100.zip",
     "digest": {
       "algorithm": "sha3-256",
-      "value": "a5c29342ca185abcda332448fbb27c536661245be27e20199b46c49099b0e15e"
+      "value": "877c6f4996ce7adb368686bce21638de9e3d91534832ad3d9d119037d1bc22ad"
     },
-    "releaseUrl": "https://sqlite.org/releaselog/3_54_0.html",
+    "releaseUrl": "https://sqlite.org/releaselog/3_54_1.html",
     "digestUrl": "https://sqlite.org/download.html"
   },
   "sqliteVector": {
