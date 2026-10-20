@@ -230,6 +230,10 @@ Publication SHALL recalculate the definitive version against current Git/npm sta
 - **WHEN** the general build/acceptance default still identifies sqlite-vec but the authorized product context selects Vector
 - **THEN** release qualification explicitly supplies the exact recorded Vector lock and rejects a successful default-engine bundle as unrelated
 
+#### Scenario: Definitive documentation identity
+- **WHEN** final calculation changes candidate version or the authoritative revision differs
+- **THEN** final package/docs/example identity is reconciled through deterministic reviewed inputs and affected qualification/link/example checks are preserved or renewed before publication, without relabeling qualified bytes
+
 ### Requirement: Applicable complete acceptance evidence
 
 Every publication SHALL require successful mandatory build, compatibility, packaging, integrity and complete real-browser acceptance evidence applicable to the authoritative revision and exact final payload. For the product this SHALL be the exact selected Vector engine/source lock and upstream identities; Vector Float32, native binary/Hamming, all required loading/JS APIs, Workers, FTS5, baseline and every default OPFS restart gate SHALL remain mandatory. Returned successful evidence for another engine or input selection SHALL NOT qualify even when archive name/version or SQLite version matches. Failed, unavailable, incomplete, different-revision or different-payload evidence SHALL prevent release tagging and npm/GitHub publication; human approval SHALL NOT waive these gates.
@@ -358,3 +362,19 @@ The common policy SHALL use the target-channel HEAD (latest if absent) for SQLit
 #### Scenario: No fabricated reference or per-engine history
 - **WHEN** a coherent snapshot supplies no Vector reference or incomplete required publication state
 - **THEN** no arbitrary older release, pinned candidate, new engine registry or foreign version is used as a substitute; incomplete required state still fails under publication-state rules
+
+### Requirement: Reviewed documentation publication handoff
+
+Release SHALL require applicable reviewed candidate-document context and bind it to the authoritative integrated revision, definitive distribution identity and exact qualified archive. Substantive documentation changes outside the reviewed sources SHALL prevent publication readiness pending renewed review. Only complete matching GitHub and npm publication SHALL supply a successful handoff for stable documentation deployment. Partial publication, npm pending or any mismatch SHALL remain explicit and SHALL NOT authorize that deployment. Release SHALL NOT own Pages deployment or republish an existing distribution to repair a site failure.
+
+#### Scenario: Complete matching publication
+- **WHEN** authorized integration, definitive qualification and both distribution destinations complete successfully
+- **THEN** the retained publication evidence supplies Site the exact revision/version/archive and applicable documentation/example context, allowing stable promotion only for that matching identity
+
+#### Scenario: Publication is incomplete
+- **WHEN** GitHub succeeds but npm fails or is pending, qualification fails, or document/archive context disagrees
+- **THEN** the outcome remains failed or explicitly incomplete, Site receives no successful stable-promotion authorization, and ordinary failure/collision/bootstrap rules remain intact
+
+#### Scenario: Site deployment fails after publication
+- **WHEN** a completely published matching distribution cannot be deployed by Site
+- **THEN** the site failure is reported separately and a bounded site retry uses the same verified publication identity without a new distribution/tag or changed payload
