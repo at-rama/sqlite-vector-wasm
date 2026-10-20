@@ -10,7 +10,7 @@
 
 sqlite-vector-wasm distributes SQLite's browser WebAssembly runtime with [SQLite-Vector](https://github.com/sqliteai/sqlite-vector) statically integrated. Use SQLite's own browser APIs, with vector search available in every new connection. No compilation or extension registration is needed.
 
-[Try the demo](https://at-rama.github.io/sqlite-vector-wasm/demo/) · [Get started](https://at-rama.github.io/sqlite-vector-wasm/usage/)
+[Get started](https://at-rama.github.io/sqlite-vector-wasm/usage/)
 
 ## Quick start
 
