@@ -25,6 +25,8 @@ export async function pages(repository, path, get) {
   const origin = `https://api.github.com/repos/${repositoryName(repository)}/`;
   let url = `${origin}${path}${path.includes('?') ? '&' : '?'}per_page=100`;
   const result = [], seen = new Set();
+  const endpoint = path.split('?')[0];
+  let repositoryId;
   while (url) {
     assert.ok(!seen.has(url) && seen.size < 10000, 'Cyclic/truncated pagination'); seen.add(url);
     const response = await get(url);
@@ -34,7 +36,25 @@ export async function pages(repository, path, get) {
     const next = link?.match(/<([^>]+)>;\s*rel="next"/);
     if (link?.includes('rel="next"')) assert.ok(next, 'Malformed pagination link');
     url = next?.[1] || null;
-    if (url) assert.ok(url.startsWith(origin) && new URL(url).searchParams.has('page'), 'Unsafe pagination reference');
+    if (url) {
+      const target = new URL(url);
+      assert.ok(target.origin === 'https://api.github.com' && !target.username && !target.password && !target.hash
+        && /^[1-9][0-9]*$/.test(target.searchParams.get('page') || ''), 'Unsafe pagination reference');
+      if (target.pathname !== new URL(origin + endpoint).pathname) {
+        // GitHub may canonicalize pagination links to the repository's numeric ID.
+        // Bind that alternate path to the requested repository before following it.
+        const match = /^\/repositories\/([1-9][0-9]*)\/(.+)$/.exec(target.pathname);
+        assert.ok(match && match[2] === endpoint, 'Unsafe pagination reference');
+        if (repositoryId === undefined) {
+          const identity = await get(origin.slice(0, -1));
+          assert.equal(identity.status, 200, 'Repository pagination identity unavailable');
+          assert.equal(identity.data?.full_name, repository);
+          assert.ok(Number.isSafeInteger(identity.data.id) && identity.data.id > 0);
+          repositoryId = identity.data.id;
+        }
+        assert.equal(match[1], String(repositoryId), 'Unsafe pagination repository');
+      }
+    }
   }
   return result;
 }

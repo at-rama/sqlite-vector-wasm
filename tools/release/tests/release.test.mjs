@@ -147,3 +147,24 @@ test('ordinary documentation qualification tolerates no candidate descriptor',as
  const exercise=await documentationQualificationNeeded({repository:'a/b',pullRequest:{number:1,changed_files:1},profile:{mode:'candidate'},candidate:null,get:async()=>({status:200,headers:{},data:[{filename:'README.md',status:'modified'}]})});
  assert.equal(exercise,true);
 });
+
+
+test('large cleanup PR pagination binds canonical numeric paths to the same repository and endpoint', async () => {
+  const origin = 'https://api.github.com/repos/a/b';
+  const run = async (next, id = 123) => {
+    const calls = [];
+    const result = await pages('a/b', 'pulls/79/files', async url => {
+      calls.push(url);
+      if (url === origin) return ok({ id, full_name: 'a/b' });
+      if (calls.length === 1) return { ...ok([1]), headers: { link: `<${next}>; rel="next"` } };
+      return ok([2]);
+    });
+    return { result, calls };
+  };
+  const next = 'https://api.github.com/repositories/123/pulls/79/files?per_page=100&page=2';
+  assert.deepEqual(await run(next), { result: [1,2], calls: [origin + '/pulls/79/files?per_page=100', origin, next] });
+  await assert.rejects(run(next, 456), /Unsafe pagination repository/);
+  for (const url of [next.replace('/pulls/79/', '/pulls/80/'), next.replace('api.github.com', 'evil.invalid'), next.replace('page=2', 'page=bad')]) {
+    await assert.rejects(run(url), /Unsafe pagination reference/);
+  }
+});
