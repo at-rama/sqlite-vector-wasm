@@ -4,53 +4,19 @@ Run these commands from the repository root on Linux with Bash, Python 3.9 or ne
 Git, tar and unzip. Source acquisition uses existing system tools; it does not
 install or require the WASM SDK, Node.js, npm or browser tooling.
 
-The SQLite-Vector product uses `resolve-vector` and the Vector source lock. The retained `resolve` command is an internal legacy acquisition path; neither resolver switches engines on failure.
-
-For an internal legacy-source reproduction, resolve a sqlite-vec candidate:
-
-```sh
-mkdir -p .work/inputs
-bash tools/inputs.sh resolve --output .work/inputs/candidate.lock.json
-```
-
-Use `--sqlite-version 3.53.4` or `--sqlite-vec-version v0.1.9` to override either
-project independently; both options can be supplied together. These are command
-examples, not default pins. Explicit sqlite-vec overrides also accept published
-`alpha`, `beta` and `rc` releases, such as `v0.1.10-alpha.4`; the complete suffix
-is preserved in the pin, archive URL and handoff. The optional official `v`
-prefix is normalized for sqlite-vec. Omitted versions still select each project's
-latest stable release independently. Ranges, `latest`, development snapshots,
-drafts and unpublished releases are rejected. SQLite selection uses its published
-numbered releases and full source archives; the unofficial prerelease snapshots
-on its download page are not eligible. No numbered SQLite prerelease archive
-convention is implemented by this helper; a newly published format needs review
-before support, rather than guessing URLs or substituting a stable version.
-Missing official releases, sufficient
-archives or published digests cause failure. There is no older-version fallback
-or compatibility search.
-
-The resolver uses `inputs/sources.lock.json` as its baseline when it exists.
-Use `--baseline-lock PATH` to supply another retained baseline. Matching pins retain their recorded digest; changed official digest/archive
-metadata for an established pin fails. An older explicit SQLite release whose
-archive digest is no longer listed can use a retained baseline pin only after
-its official release identity is confirmed. New SQLite and sqlite-vec pins always need an
-official published digest. Resolution stores the metadata endpoints, observations
-and selected pins under a fresh ignored `.work/inputs/resolve-*` directory.
-It writes the complete candidate atomically and does not acquire sources or
-commit/adopt the candidate. Inspect the candidate and its provenance before
-recording reviewed pins in `inputs/sources.lock.json`.
-
 Prepare a SQLite-Vector candidate:
 
 ```sh
 bash tools/inputs.sh resolve-vector --sqlite-version 3.54.0 --vector-version 1.1.2 --output .work/inputs/vector-candidate.lock.json
 ```
 
+Ranges, development snapshots, drafts and unpublished releases are rejected without fallback. SQLite uses official numbered full-source releases and SHA3-256 pins; development snapshots and unestablished numbered-prerelease conventions are not admitted.
+
 Omit either version for that upstream's latest stable release, or select an exact
 published alpha/beta/rc version. This fixed command uses only
 `sqliteai/sqlite-vector`, not the `sqliteai/sqlite-wasm` distribution or native
 binary assets. The default baseline is `inputs/sqlite-vector.sources.lock.json`
-when present, otherwise `inputs/sources.lock.json` for the shared SQLite pin.
+when present.
 `--baseline-lock PATH` overrides it. Component keys distinguish upstream identities;
 matching textual versions in different engines never share a pin.
 
@@ -67,20 +33,19 @@ URL or digest for an established pin fails; no automatic refresh is performed.
 A newly prepared candidate is not extracted or adopted by resolution.
 
 Inspect the identities and provenance, then record the reviewed candidate as
-`inputs/sqlite-vector.sources.lock.json`. Both lock schemas are validated offline;
-there is no conversion between them. The legacy default source lock does not select a Vector build. Specify the Vector lock explicitly for construction and qualification.
+`inputs/sqlite-vector.sources.lock.json`. Only this SQLite/SQLite-Vector lock schema is admitted. Omitted selection uses the same recorded Vector lock.
 
 Validate a lock without network access:
 
 ```sh
-bash tools/inputs.sh validate inputs/sources.lock.json
+bash tools/inputs.sh validate inputs/sqlite-vector.sources.lock.json
 ```
 
 After reviewing the lock, record it in the candidate Git snapshot before use:
 
 ```sh
-git add inputs/sources.lock.json
-bash tools/inputs.sh acquire --lock inputs/sources.lock.json
+git add inputs/sqlite-vector.sources.lock.json
+bash tools/inputs.sh acquire --lock inputs/sqlite-vector.sources.lock.json
 ```
 
 The production command requires the lock bytes to match the Git index, so an
@@ -90,18 +55,8 @@ archives into a new ignored `.work/inputs/acquire-*` workspace. Transport retrie
 are bounded and repeat the same URL, with HTTP failures treated as failures.
 There is no source cache or reuse of earlier trees.
 
-For the additional recorded source option, run:
-
-```sh
-git add inputs/sqlite-vector.sources.lock.json
-bash tools/inputs.sh validate inputs/sqlite-vector.sources.lock.json
-bash tools/inputs.sh acquire --lock inputs/sqlite-vector.sources.lock.json
-```
-
 The command verifies each archive before extraction, retains executable modes
-needed by SQLite and checks its full build/WASM tree. Schema 1 retains the existing
-strict path/link checks and sqlite-vec amalgamation C/header validation. Schema 2
-inspects all archive paths and copies only unchanged regular `src/` files, the
+needed by SQLite and checks its full build/WASM tree. Acquisition inspects all archive paths and copies only unchanged regular `src/` files, the
 three `libs/fp16/` headers and root `LICENSE.md` into `sqliteVector/`, preserving
 relative layout. It requires the pinned version in `src/sqlite-vector.h`, the
 extension C/header pair and distance C/header set. Missing inputs, unsafe paths,
@@ -115,7 +70,7 @@ failure it removes only its own partial workspace and returns nonzero without a
 pair handoff. Older workspaces remain untouched.
 
 Only complete success emits JSON on stdout and writes `handoff.json` in the new
-workspace. `sqlite.sourcePath` and either `sqliteVec.sourcePath` or `sqliteVector.sourcePath`
+workspace. `sqlite.sourcePath` and `sqliteVector.sourcePath`
 locate the verified sources; the component key identifies the chosen engine; each entry also identifies its exact version, local archive, official archive/release
 origins, digest metadata URL and verified digest. The Vector entry additionally
 retains release id, tag, commit and tag/commit metadata URLs.
@@ -126,7 +81,7 @@ not compatibility of the selected pair, a completed build or product acceptance.
 Source admissibility does not select a publication channel: that policy belongs
 to `A-release`. A future dispatch supplies exact versions; helper defaults do not
 relax that obligation. Construction consumes the exact verified pair, including
-published sqlite-vec prereleases, under the [canonical build checks](build.md).
+published SQLite-Vector prereleases, under the [canonical build checks](build.md).
 Acquisition and raw-runtime construction do not establish final-package acceptance
 or complete product support for prereleases.
 

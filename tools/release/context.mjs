@@ -6,11 +6,12 @@ import { pages, repositoryName } from './state.mjs';
 import { reviewedDocumentation } from './documentation.mjs';
 
 export function descriptor(value, lock) {
-  const key = value?.schemaVersion === 2 ? 'sqliteVector' : 'sqliteVec';
+  assert.equal(value?.schemaVersion, 2, 'Current candidate requires SQLite-Vector');
+  const key = 'sqliteVector';
   assert.deepEqual(Object.keys(value || {}).sort(), ['preparation', 'releaseComment', 'schemaVersion', 'sqlite', key].sort());
-  assert.equal(value.schemaVersion, key === 'sqliteVector' ? 2 : 1, 'Unsupported candidate descriptor');
+  assert.equal(value.schemaVersion, 2, 'Unsupported candidate descriptor');
   channelFor({ sqlite: value.sqlite, [key]: value[key] });
-  if (key === 'sqliteVector') assert.equal(selectedEngine(lock), key, 'Wrong candidate lock engine');
+  assert.equal(selectedEngine(lock), key, 'Wrong candidate lock engine');
   assert.equal(value.sqlite, lock.sqlite.version); assert.equal(value[key], lock[key]?.version, 'Selection/source lock mismatch');
   assert.equal(typeof value.releaseComment, 'string');
   assert.ok(Number.isSafeInteger(value.preparation?.runId) && value.preparation.runId > 0);
@@ -34,7 +35,7 @@ export async function documentationQualificationNeeded({ repository, pullRequest
   if (profile.mode !== 'candidate') return false;
   const files = await candidateFiles({ repository, pullRequest, get });
   // Nominal release PRs already carry their exact Updates-qualified archive.
-  if (candidate.schemaVersion === 2 && /^candidate\/run-[1-9][0-9]*-[1-9][0-9]*$/.test(pullRequest.head?.ref || '') &&
+  if (candidate?.schemaVersion === 2 && /^candidate\/run-[1-9][0-9]*-[1-9][0-9]*$/.test(pullRequest.head?.ref || '') &&
       files.some(f => f.filename === 'inputs/release.json' && ['added','modified'].includes(f.status))) return false;
   return files.some(f => /^(?:README\.md$|docs\/(?:usage\.md$|sqlite-vector\/|common\/browser\.md$)|site\/|inputs\/|tools\/(?:site|release|updates|package|build|harness)(?:\/|\.sh$)|\.github\/workflows\/(?:site|release|updates)\.yml$)/.test(f.filename));
 }

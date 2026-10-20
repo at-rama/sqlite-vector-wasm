@@ -1,3 +1,4 @@
+import {mainPlaceholder,buildStablePlaceholder} from './placeholder.mjs';
 import { example } from './example.mjs';
 import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, writeFile, rm, readFile, cp, symlink } from 'node:fs/promises';
@@ -23,6 +24,7 @@ export async function exercise() {
   }
   try {
     results.push(...await exerciseRelativeImages());
+    results.push(...await exerciseStablePlaceholder());
     const docs = join(temporary, 'docs');
     await mkdir(join(docs, 'usage'), { recursive: true });
     await mkdir(join(docs, 'demo'), { recursive: true });
@@ -130,7 +132,7 @@ This is an integration fixture, not the emoji demo.
     await assert.rejects(readFile(join(repository, '.work/site/dist/index.html')), { code: 'ENOENT' });
     results.push({ name: 'corrupted-runtime', result: 'rejected; stale output removed' });
 
-    await observe('shell-only', undefined, { screenshot: join(repository, '.work/site/mobile.png') });
+    await observe('shell-only', undefined, { requirePlaceholder: true, screenshot: join(repository, '.work/site/mobile.png') });
     await writeFile(join(repository, '.work/site/exercise.json'), JSON.stringify(results, null, 2) + '\n');
     console.log(JSON.stringify(results, null, 2));
   } finally {
@@ -177,5 +179,38 @@ export async function exerciseRelativeImages() {
     if (selectedDocumentation === undefined) delete process.env.SITE_DOCUMENTATION_SELECTION;
     else process.env.SITE_DOCUMENTATION_SELECTION = selectedDocumentation;
     await rm(root, { recursive: true, force: true });
+  }
+}
+
+
+// A published-documentation fixture stays independent from the current candidate.
+export async function exerciseStablePlaceholder() {
+  const root=await mkdtemp(join(repository,'.work/stable-placeholder-fixture-'));
+  const selected=process.env.SITE_DOCUMENTATION_SELECTION;
+  delete process.env.SITE_DOCUMENTATION_SELECTION;
+  try {
+    await cp(join(repository,'site'),join(root,'site'),{recursive:true});
+    await mkdir(join(root,'docs'));await mkdir(join(root,'tools/site'),{recursive:true});await mkdir(join(root,'.work/site'),{recursive:true});
+    await symlink(join(repository,'.git'),join(root,'.git'));
+    await symlink(join(repository,'.work/site/node_modules'),join(root,'.work/site/node_modules'));
+    await writeFile(join(root,'README.md'),'# Published fixture\n\nOnly the independently selected stable documentation.\n');
+    await writeFile(join(root,'docs/usage.md'),'# Published Usage\n\nPublished usage fixture, no candidate content.\n');
+    await writeFile(join(root,'tools/site/docs-example.json'),JSON.stringify({version:'0.2.0',commit:'b'.repeat(40)}));
+    const markdown=await readFile(join(repository,'site/demo/index.md'),'utf8');
+    const placeholder=await mainPlaceholder(async()=>markdown,'a'.repeat(40));
+    const result=await buildStablePlaceholder({root,placeholder});
+    const source=await readFile(join(result.source,'index.md'),'utf8');
+    assert.match(source,/Only the independently selected stable documentation/);
+    assert.doesNotMatch(source,/Unpublished release candidate|SQLite-Vector 1.1.2/);
+    assert.equal(result.runtime,null);assert.deepEqual(result.placeholder,{sourceCommit:'a'.repeat(40),sha256:placeholder.sha256});
+    const server=await serveSite(result.output,result.base);let observed;
+    try{observed=await checkBrowser(server.url,{requireDocs:true,requirePlaceholder:true});}finally{await server.close();}
+    await assert.rejects(buildStablePlaceholder({root,placeholder:{...placeholder,markdown:markdown+'<script>throw 1</script>'}}),/Invalid static placeholder handoff/);
+    await assert.rejects(readFile(join(root,'.work/site/dist/index.html')),{code:'ENOENT'});
+    return [{name:'published-docs-with-main-placeholder',...observed,sourceCommit:placeholder.sourceCommit,placeholderSha256:placeholder.sha256},
+      {name:'invalid-placeholder-handoff',result:'rejected; stale output removed'}];
+  } finally {
+    if(selected===undefined)delete process.env.SITE_DOCUMENTATION_SELECTION;else process.env.SITE_DOCUMENTATION_SELECTION=selected;
+    await rm(root,{recursive:true,force:true});
   }
 }

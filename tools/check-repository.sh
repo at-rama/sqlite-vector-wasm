@@ -107,5 +107,5 @@ fi
 empty_tree=$(git hash-object -t tree /dev/null)
 git -c core.whitespace=blank-at-eol,blank-at-eof,space-before-tab diff --check "$empty_tree" --
 # Source-lock integrity is offline; automated suites run in test-repository.sh.
-PYTHONDONTWRITEBYTECODE=1 python3 tools/inputs.py validate inputs/sources.lock.json
+PYTHONDONTWRITEBYTECODE=1 python3 tools/inputs.py validate inputs/sqlite-vector.sources.lock.json
 echo 'Repository checks passed (product acceptance not evaluated).'

@@ -77,22 +77,23 @@ test('only the validated exact boolean stub is recognized; raw observations surv
 });
 
 test('projected stable/experimental history and shared forecasts ignore only the recognized placeholder',async()=>{
+  const current=(sqliteVector='1.1.2')=>({sqlite:'3.53.4',sqliteVector});
   for(const configuration of [{versions:['0.2.0']},{versions:['0.2.0','0.3.0-alpha.2'],next:'0.3.0-alpha.2'}]) {
     const withStage=await state(observations(configuration));
     const withoutStage=await state(observations({...configuration,stage:false}));
     assert.deepEqual(withStage,withoutStage);
-    for(const selection of [pair(),pair('0.2.0-alpha.2'),pair('0.2.0'),pair('0.1.8')]) {
+    for(const selection of [current(),current('0.2.0-alpha.2'),current('0.2.0'),current('0.1.8')]) {
       const input={selection,snapshot:withStage,comment:'reviewed selection'};
       assert.deepEqual(calculate(input),calculate({...input,snapshot:withoutStage}));
     }
-    const forecast=calculate({selection:pair(),snapshot:withStage});
-    assert.equal(forecast.version,'0.2.1');
+    const forecast=calculate({selection:current(),snapshot:withStage});
+    assert.equal(forecast.version,'0.3.0');
     for(const key of ['tags','releaseTags','npmVersions']){
       const collision=structuredClone(withStage);collision[key].push(key==='npmVersions'?forecast.version:forecast.tag);
-      assert.throws(()=>calculate({selection:pair(),snapshot:collision}),/collision/);
+      assert.throws(()=>calculate({selection:current(),snapshot:collision}),/collision/);
     }
-    assert.throws(()=>calculate({selection:pair('0.1.8'),snapshot:withStage}),/rollback/);
-    if(configuration.next)assert.equal(calculate({selection:pair('0.2.0-alpha.2'),snapshot:withStage}).version,'0.3.0-alpha.3');
+    assert.throws(()=>calculate({selection:pair(),snapshot:withStage}),/requires SQLite-Vector/);
+    if(configuration.next)assert.equal(calculate({selection:current('0.2.0-alpha.2'),snapshot:withStage}).version,'0.3.0-alpha.3');
   }
 });
 

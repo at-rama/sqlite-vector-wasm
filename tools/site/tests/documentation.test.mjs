@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { documentationHashes, sourceCommit, checkedDocumentation, renderPublicDocument, documentHash } from '../documentation.mjs';
-import { selectDocumentationRun } from '../candidate-input.mjs';
+import { selectDocumentationRun, acquireDocumentationBundle } from '../candidate-input.mjs';
 
 test('candidate presentation never claims npm availability and published identity changes are mechanical', () => {
   const text='# Usage\n\nnpm install ./payload.tgz\n\nSELECT vector_version();\n';
@@ -64,4 +64,21 @@ test('documentation input selects only the bound preparation or exact-head publi
  assert.equal(selectDocumentationRun({descriptor,runs:[update],repository,commit}).prefix,'updates');
  assert.throws(()=>selectDocumentationRun({descriptor,runs:[{...update,event:'push'}],repository,commit}));
  assert.throws(()=>selectDocumentationRun({descriptor,runs:[{...update,repository:{full_name:'other/repo'}}],repository,commit}));
+});
+
+
+test('cleanup preview without a descriptor waits for exact-head exercise; malformed descriptors fail', async t => {
+  const root = await mkdtemp(join(tmpdir(), 'docs-input-'));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  await mkdir(join(root, 'tools/site'), { recursive: true });
+  await writeFile(join(root, 'tools/site/docs-example.json'), JSON.stringify({ mode: 'candidate', engine: 'sqliteVector', sourceLockPath: 'inputs/sqlite-vector.sources.lock.json' }));
+  const commit = 'a'.repeat(40), calls = [];
+  const options = { root, repository: 'a/b', commit, attempts: 1, wait: async () => {}, get: async url => {
+    calls.push(url); return { status: 200, json: async () => ({ workflow_runs: [] }) };
+  } };
+  await assert.rejects(acquireDocumentationBundle(options), /Timed out waiting for exact-head qualified documentation input/);
+  assert.deepEqual(calls, [`https://api.github.com/repos/a/b/actions/runs?head_sha=${commit}&event=pull_request&per_page=100`]);
+  await mkdir(join(root, 'inputs'));
+  await writeFile(join(root, 'inputs/release.json'), '{broken');
+  await assert.rejects(acquireDocumentationBundle(options), SyntaxError);
 });

@@ -38,22 +38,6 @@
       "extraction": "Initial /* @preserve license block through first */; subsequent version/template code excluded."
     },
     {
-      "name": "sqlite-vec-MIT.txt",
-      "project": "sqliteVec",
-      "version": "0.1.9",
-      "origin": "https://github.com/asg017/sqlite-vec/blob/v0.1.9/LICENSE-MIT",
-      "sha256": "6ce72bbe12d975bd5286e5ab0a064c069693300c47bccbc57bec18485f1621ea",
-      "normalization": "Trailing horizontal whitespace and blank EOF lines removed; notice wording preserved."
-    },
-    {
-      "name": "sqlite-vec-APACHE.txt",
-      "project": "sqliteVec",
-      "version": "0.1.9",
-      "origin": "https://github.com/asg017/sqlite-vec/blob/v0.1.9/LICENSE-APACHE",
-      "sha256": "a38070a94d4afd9cd710e3ce67bd1de78097cfe1784c1f0109ac95d3c196bfdc",
-      "normalization": "Trailing horizontal whitespace and blank EOF lines removed; notice wording preserved."
-    },
-    {
       "name": "Emscripten-LICENSE.txt",
       "project": "emscripten",
       "version": "4.0.23",

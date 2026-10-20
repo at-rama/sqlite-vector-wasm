@@ -6,22 +6,6 @@ Realize A-release by supplying one deterministic distribution calculation and pu
 
 ## Requirements
 
-### Requirement: Shared deterministic calculation
-
-Watch forecasts, dispatch, preparation and publication SHALL consume one shared calculation based on exact upstream selections, actual engine identities and publication state. New product publication SHALL select SQLite-Vector only. Historical sqlite-vec records and any retained low-level legacy calculation compatibility SHALL NOT authorize a new sqlite-vec product publication or require a maintained parallel offer. Identical inputs and state SHALL return identical channel/version results without AI. Forecasts SHALL reserve no identity; different forecast/final results SHALL be explained by changed inputs or state.
-
-#### Scenario: Same calculation across consumers
-- **WHEN** different consumers supply the same selected pair and published references
-- **THEN** they receive the same channel, numerical signal and distribution version without independent numbering policies
-
-#### Scenario: Publication state changes after forecast
-- **WHEN** a candidate's forecast precedes another relevant publication
-- **THEN** publication recalculates against actual state rather than treating the forecast as a reservation
-
-#### Scenario: Product policy versus retained legacy callers
-- **WHEN** an existing caller supplies a legacy same-engine selection or historical record
-- **THEN** any retained compatibility is explicit and keeps its recorded meaning, while active Vector publication cannot accept that selection as its product candidate
-
 ### Requirement: Single distribution identity
 
 The assembled browser distribution SHALL use product name `sqlite-vector-wasm`, npm package identifier `@at-rama/sqlite-vector-wasm`, one project SemVer, Git tag `dist/v<version>` and the same unprefixed npm version. Exact Git commit SHALL identify code. There SHALL be no code SemVer, separate code publication, permanent distribution branch or upstream-composition version string. Calculation, supplied package metadata, publication provenance, registry state and initial completion SHALL consistently identify this npm package; another package SHALL NOT supply its history or satisfy publication completion.
@@ -378,3 +362,18 @@ Release SHALL require applicable reviewed candidate-document context and bind it
 #### Scenario: Site deployment fails after publication
 - **WHEN** a completely published matching distribution cannot be deployed by Site
 - **THEN** the site failure is reported separately and a bounded site retry uses the same verified publication identity without a new distribution/tag or changed payload
+
+### Requirement: Vector-only shared deterministic calculation
+Watch forecasts, dispatch, preparation and publication SHALL consume one shared calculation based on exact upstream selections, actual engine identities and publication state. New product publication SHALL select SQLite-Vector only. Only read-only historical publication interpretation SHALL retain sqlite-vec identities required by current state, transition and uniqueness rules; current selection/calculation/qualification SHALL reject sqlite-vec and supply no legacy caller compatibility. Identical inputs and state SHALL return identical channel/version results without AI. Forecasts SHALL reserve no identity; different forecast/final results SHALL be explained by changed inputs or state.
+
+#### Scenario: Same calculation across consumers
+- **WHEN** different consumers supply the same selected pair and published references
+- **THEN** they receive the same channel, numerical signal and distribution version without independent numbering policies
+
+#### Scenario: Publication state changes after forecast
+- **WHEN** a candidate's forecast precedes another relevant publication
+- **THEN** publication recalculates against actual state rather than treating the forecast as a reservation
+
+#### Scenario: Current selection versus historical reference
+- **WHEN** an old-engine selection is supplied to current calculation, preparation or qualification, or an actual historical publication is read as a reference
+- **THEN** the selection is rejected, while the validated historical reference retains its exact source/engine identity and transition, channel and collision effects without enabling new old-engine production

@@ -70,7 +70,6 @@ fi
 if [ -f tools/site/build.mjs ]; then
     test -f tools/site/tests/example.test.mjs
     test -f tools/site/tests/demo-data.test.mjs
-    test -f tools/site/tests/demo-runtime.test.mjs
     test -f tools/site/tests/demo-reference.test.mjs
     test -f tools/site/tests/docs-policy.test.mjs
     test -f tools/site/tests/site.test.mjs

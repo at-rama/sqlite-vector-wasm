@@ -99,7 +99,6 @@ jobs:
           if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
             bash tools/harness.sh exec sh tools/site.sh example
             bash tools/harness.sh exec sh tools/site.sh exercise
-            bash tools/harness.sh exec sh tools/site.sh demo
           fi
       - name: Build exact PR preview
         if: github.event_name == 'pull_request'
@@ -135,6 +134,7 @@ jobs:
         env:
           HARNESS_STATE: ${{ runner.temp }}/site-harness
           STABLE_PRESENT: ${{ steps.selection.outputs.stable_present }}
+          STABLE_PLACEHOLDER: ${{ steps.selection.outputs.stable_placeholder }}
           STABLE_PROFILE: ${{ steps.selection.outputs.stable_profile }}
         run: |
           if [ "$STABLE_PRESENT" = true ]; then
@@ -146,7 +146,11 @@ jobs:
               if [ -f tools/site/example.mjs ]; then
                 bash ../candidate/tools/harness.sh exec sh tools/site.sh example
               fi
-              sh tools/site.sh build
+              if [ "$STABLE_PLACEHOLDER" = true ]; then
+                node ../candidate/tools/site/placeholder.mjs "$PWD" ../candidate/.work/site/selection.json
+              else
+                sh tools/site.sh build
+              fi
             )
             if [ "$GITHUB_EVENT_NAME" != pull_request ]; then
               cp ../stable/.work/site/build.json .work/site/build.json
@@ -180,11 +184,7 @@ jobs:
             candidate/.work/site/preview-mobile.png
             candidate/.work/site/assembled.json
             candidate/.work/site/docs-mobile.png
-            candidate/.work/site/demo-results.json
-            candidate/.work/site/demo-stable-mobile.png
-            candidate/.work/site/demo-preview-mobile.png
             candidate/.work/site/*-initial-*.png
-            candidate/.work/site/assembled-demo-mobile.png
             candidate/.work/docs-example/result.json
             candidate/.work/docs-input/handoff.json
             candidate/.work/pages/site-publication.json
@@ -276,7 +276,5 @@ jobs:
           overwrite: true
           path: |
             live-pages.json
-            live-pages-demo-mobile.png
-            live-pages-demo-initial-*.png
           retention-days: 30
           if-no-files-found: error

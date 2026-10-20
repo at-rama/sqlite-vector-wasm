@@ -69,7 +69,8 @@ export async function example(root = repository, options = {}) {
   } else {
     selection = selected;
     ({ publication, archive } = await downloadExample(selection));
-    const engine = publication.upstreams?.sqliteVector ? 'sqliteVector' : 'sqliteVec';
+    assert.ok(publication.upstreams?.sqliteVector && !publication.upstreams?.sqliteVec, 'Current documentation requires SQLite-Vector');
+    const engine = 'sqliteVector';
     context = { mode: 'published', engine, version: selection.version, commit, publicationCommit: publication.commit,
       archive: { size: archive.length, sha256: sha(archive) }, upstreams: publication.upstreams, sourceHashes, sourceDirty };
   }
@@ -107,7 +108,7 @@ export async function example(root = repository, options = {}) {
   assert.equal(snippets.length, 2, 'Missing actual initialization/minimal SQL snippets');
   const exampleCode = snippets.join('\n') + `
 const sqliteVersion = db.selectValue('SELECT sqlite_version()');
-const engineVersion = db.selectValue('SELECT ${context.engine === 'sqliteVector' ? 'vector_version' : 'vec_version'}()');
+const engineVersion = db.selectValue('SELECT vector_version()');
 db.close();
 const result = { neighbors, sqliteVersion, engineVersion };
 `;

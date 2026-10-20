@@ -2,10 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { calculate, channelFor, upstream, signalFor, distribution, compareUpstream } from '../policy.mjs';
 import { readState, pages, npmState, sha256 } from '../state.mjs';
-import { candidateDescriptorChanged, descriptor, integratedContext } from '../context.mjs';
+import { candidateDescriptorChanged, descriptor, integratedContext, documentationQualificationNeeded } from '../context.mjs';
 
 const commit = 'a'.repeat(40);
-const pair = (sqliteVec = '0.1.9', sqlite = '3.53.4') => ({ sqlite, sqliteVec });
+const pair = (sqliteVector = '0.1.9', sqlite = '3.53.4') => ({ sqlite, sqliteVector });
 const empty = () => ({ schemaVersion: 1, tags: [], npmVersions: [], releaseTags: [], heads: { latest: null, next: null } });
 function state(latest = '0.2.0', next = null, stablePair = pair(), nextPair = pair('0.2.0-alpha.1')) {
   const s = empty();
@@ -20,11 +20,11 @@ const calc = (selection, snapshot = empty(), comment = '') => calculate({ select
 test('exact upstreams, four channels, numerical signals and suffix ordering', () => {
   for (const [sqlite, vec, channel] of [['3.53.4','0.1.9','latest'], ['3.53.4-alpha.1','0.1.9','next'], ['3.53.4','0.1.9-beta.2','next'], ['3.53.4-rc.1','0.1.9-alpha.1','next']])
     assert.equal(channelFor(pair(vec, sqlite)), channel);
-  assert.equal(signalFor('0.1.10-alpha.1', '0.1.9', 'sqliteVec'), 1);
-  assert.equal(signalFor('0.2.0-alpha.1', '0.1.10', 'sqliteVec'), 2);
+  assert.equal(signalFor('0.1.10-alpha.1', '0.1.9', 'sqliteVector'), 1);
+  assert.equal(signalFor('0.2.0-alpha.1', '0.1.10', 'sqliteVector'), 2);
   assert.equal(signalFor('4.0.0', '3.53.4', 'sqlite'), 3);
   assert.equal(signalFor('3.53.4.1', '3.53.4', 'sqlite'), 1);
-  assert.equal(signalFor('0.2.0-alpha.2', '0.2.0-alpha.1', 'sqliteVec'), 0);
+  assert.equal(signalFor('0.2.0-alpha.2', '0.2.0-alpha.1', 'sqliteVector'), 0);
   assert.equal(compareUpstream('0.1.9-alpha.10', '0.1.9-alpha.2'), 1);
   assert.equal(compareUpstream('0.1.9', '0.1.9-rc.1'), 1);
   for (const bad of ['v0.1.9', '0.01.9', '0.1.9-alpha.01', '0.1.9.1', '0.1.9+build', '9007199254740992.0.0']) assert.throws(() => upstream(bad));
@@ -100,12 +100,12 @@ test('state distinguishes genuine bootstrap, complete pagination, errors and par
   await assert.rejects(readState({ repository:'a/b',get:async () => { throw Error('transport'); } }), /transport/);
 });
 
-const candidate = () => ({ schemaVersion:1,...pair(),releaseComment:'reviewed; $(data)',preparation:{runId:17,url:'https://github.com/a/b/actions/runs/17'} });
-const lock = () => ({ sqlite:{version:'3.53.4'},sqliteVec:{version:'0.1.9'} });
+const candidate = () => ({ schemaVersion:2,...pair(),releaseComment:'reviewed; $(data)',preparation:{runId:17,url:'https://github.com/a/b/actions/runs/17'} });
+const lock = () => ({ schemaVersion:2,sqlite:{version:'3.53.4'},sqliteVector:{version:'0.1.9'} });
 test('descriptor validates exact handoff and treats comments as data', () => {
   assert.equal(descriptor(candidate(),lock()).comment,'reviewed; $(data)');
   assert.throws(() => descriptor({...candidate(),channel:'latest'},lock()));
-  assert.throws(() => descriptor({...candidate(),sqliteVec:'0.1.8'},lock()));
+  assert.throws(() => descriptor({...candidate(),sqliteVector:'0.1.8'},lock()));
   assert.throws(() => descriptor({...candidate(),preparation:{runId:18,url:'https://github.com/a/b/actions/runs/17'}},lock()));
 });
 
@@ -140,4 +140,31 @@ test('unpublished documentation preview qualification survives archival without 
  assert.equal(await invoke(['inputs/release.json'],{mode:'candidate'},{schemaVersion:2},{...pr,head:{ref:'candidate/run-17-1'}}),false);
  assert.equal(await invoke(['README.md'],{mode:'candidate'},{schemaVersion:2}),true);
  await assert.rejects(invoke(['README.md'],undefined,undefined,{...pr,changed_files:2}),/Truncated/);
+});
+
+
+test('ordinary documentation qualification tolerates no candidate descriptor',async()=>{
+ const exercise=await documentationQualificationNeeded({repository:'a/b',pullRequest:{number:1,changed_files:1},profile:{mode:'candidate'},candidate:null,get:async()=>({status:200,headers:{},data:[{filename:'README.md',status:'modified'}]})});
+ assert.equal(exercise,true);
+});
+
+
+test('large cleanup PR pagination binds canonical numeric paths to the same repository and endpoint', async () => {
+  const origin = 'https://api.github.com/repos/a/b';
+  const run = async (next, id = 123) => {
+    const calls = [];
+    const result = await pages('a/b', 'pulls/79/files', async url => {
+      calls.push(url);
+      if (url === origin) return ok({ id, full_name: 'a/b' });
+      if (calls.length === 1) return { ...ok([1]), headers: { link: `<${next}>; rel="next"` } };
+      return ok([2]);
+    });
+    return { result, calls };
+  };
+  const next = 'https://api.github.com/repositories/123/pulls/79/files?per_page=100&page=2';
+  assert.deepEqual(await run(next), { result: [1,2], calls: [origin + '/pulls/79/files?per_page=100', origin, next] });
+  await assert.rejects(run(next, 456), /Unsafe pagination repository/);
+  for (const url of [next.replace('/pulls/79/', '/pulls/80/'), next.replace('api.github.com', 'evil.invalid'), next.replace('page=2', 'page=bad')]) {
+    await assert.rejects(run(url), /Unsafe pagination reference/);
+  }
 });

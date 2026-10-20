@@ -69,8 +69,18 @@ test('documentation checks run separately from example execution and retain its 
 });
 
 
-test('the real demo exercise and hosted mobile evidence remain in the existing publication path', async () => {
+test('placeholder stays in existing publication checks without old runtime exercise', async () => {
   const workflow = await source();
-  assert.match(workflow, /bash tools\/harness.sh exec sh tools\/site.sh demo/);
-  for (const file of ['demo-results.json', 'demo-stable-mobile.png', 'demo-preview-mobile.png', 'live-pages-demo-mobile.png']) assert.ok(workflow.includes(file));
+  assert.doesNotMatch(workflow, /sh tools\/site.sh demo/);
+  assert.match(workflow, /sh tools\/site.sh exercise/);
+  assert.match(workflow, /tools\/site\/observe.mjs/);
+});
+
+
+test('stable placeholder is bound to main while historical docs keep their own profile',async()=>{
+ const workflow=await source();
+ assert.match(workflow,/STABLE_PLACEHOLDER: \$\{\{ steps.selection.outputs.stable_placeholder \}\}/);
+ assert.match(workflow,/node \.\.\/candidate\/tools\/site\/placeholder.mjs/);
+ assert.match(workflow,/unset SITE_CANDIDATE_BUNDLE SITE_DOCUMENTATION_SELECTION SITE_DOCUMENTATION_PREVIEW_INPUT/);
+ assert.match(workflow,/export SITE_DOCUMENTATION_SELECTION="\$STABLE_PROFILE"/);
 });

@@ -9,6 +9,7 @@ import {candidateDescriptorChanged,descriptor} from '../release/context.mjs';
 import {githubServices} from '../release/services.mjs';
 import {inspectPublicationCompletion,checkInitialCompletion} from '../release/run.mjs';
 import {runArtifact,uniqueRecord} from '../release/artifacts.mjs';
+import {mainPlaceholder} from './placeholder.mjs';
 import {candidateProfile} from '../updates/documentation.mjs';
 function api(repository) { return `https://api.github.com/repos/${repository}`; }
 
@@ -140,24 +141,27 @@ async function siteSelection({repository,eventName,event,ref,sha,actor,readAt,ge
   const pr=event.pull_request;assert.equal(pr.state,"open");assert.match(pr.head.sha,/^[a-f0-9]{40}$/);assert.ok(Number.isSafeInteger(event.number)&&event.number>0);
   preview={branch:pr.head.ref,commit:pr.head.sha};
   const profile=JSON.parse(await readAt(preview.commit,"tools/site/docs-example.json"));
-  const value=JSON.parse(await readAt(preview.commit,"inputs/release.json"));
-  const nominal=value.schemaVersion===2&&new RegExp('^candidate/run-'+value.preparation?.runId+'-[1-9][0-9]*$').test(pr.head.ref)&&await candidateDescriptorChanged({repository,pullRequest:pr,get});
+  const descriptorRaw=await readAt(preview.commit,"inputs/release.json",true);
+  const value=descriptorRaw===null?null:JSON.parse(descriptorRaw);
+  const nominal=value?.schemaVersion===2&&new RegExp('^candidate/run-'+value.preparation?.runId+'-[1-9][0-9]*$').test(pr.head.ref)&&await candidateDescriptorChanged({repository,pullRequest:pr,get});
   if(nominal){assert.deepEqual(profile,candidateProfile);descriptor(value,JSON.parse(await readAt(preview.commit,"inputs/sqlite-vector.sources.lock.json")));previewSelection=profile;input="updates";}
   else{
    try{const ready=await resolveSource({repository,commit:preview.commit,readAt,get,directory});previewSelection=ready?.selection;}
    catch(error){assert.equal(profile.mode,"candidate","Unpublished preview must declare the candidate profile");assert.deepEqual(profile,candidateProfile);previewSelection=profile;input="exercise";}
   }
  }
+ const stablePlaceholder=(!pull||internal)?await mainPlaceholder(readAt,mainCommit):null;
  const stable=(!pull||internal)?await selectStable({repository,mainCommit,readAt,get,trigger,directory}):null;
  if(!pull)assert.ok(stable,"Stable source absent");
  return {relevant:true,publish:!pull||internal,repository,mainCommit,mode:pull?"preview":"stable",
- ...(pull?{pullRequest:event.number}:{}),preview,previewSelection,input,stable};
+ ...(pull?{pullRequest:event.number}:{}),preview,previewSelection,input,stable,...(stablePlaceholder?{stablePlaceholder}:{})};
 }
 
 async function assertStableCurrent(record,{get,readAt,directory,selectStable=stableSource}) {
  const selected=await selectStable({repository:record.repository,mainCommit:record.mainCommit,get,readAt,directory});
  const identity=value=>value?{sourceCommit:value.sourceCommit,selection:value.selection,publication:value.publication,demoSelection:value.demoSelection}:null;
  assert.deepEqual(identity(selected),identity(record.stableDocumentation),"Stable publication eligibility changed; rerun Site");
+ assert.deepEqual(await mainPlaceholder(readAt,record.mainCommit),record.stablePlaceholder??null,"Stable placeholder source changed");
 }
 
 async function main() {
@@ -169,7 +173,7 @@ async function main() {
   await mkdir(join(root,".work/site"),{recursive:true});
   await writeFile(path,JSON.stringify(decision,null,2)+"\n");
   for(const [label,selection]of[["preview",decision.previewSelection],["stable",decision.stable?.selection]])if(selection)await writeFile(join(root,`.work/site/${label}-selection.json`),JSON.stringify(selection,null,2)+"\n");
-  if(env.GITHUB_OUTPUT)await appendFile(env.GITHUB_OUTPUT,`relevant=${decision.relevant}\npublish=${decision.publish}\nstable_commit=${decision.stable?.sourceCommit??decision.mainCommit}\nstable_present=${Boolean(decision.stable)}\nstable_profile=${decision.stable?.selection?join(root,".work/site/stable-selection.json"):""}\n`);
+  if(env.GITHUB_OUTPUT)await appendFile(env.GITHUB_OUTPUT,`relevant=${decision.relevant}\npublish=${decision.publish}\nstable_commit=${decision.stable?.sourceCommit??decision.mainCommit}\nstable_present=${Boolean(decision.stable)}\nstable_placeholder=${Boolean(decision.stablePlaceholder)}\nstable_profile=${decision.stable?.selection?join(root,".work/site/stable-selection.json"):""}\n`);
   console.log(JSON.stringify(decision));
  }else if(command==="environment"){
   const decision=JSON.parse(await readFile(path,"utf8"));
