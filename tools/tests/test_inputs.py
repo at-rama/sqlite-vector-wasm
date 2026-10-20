@@ -215,9 +215,33 @@ def vector_metadata(url):
 
 
 class VectorResolutionTests(unittest.TestCase):
-    def resolve(self, releases=None, fetch=vector_metadata, **kwargs):
-        return inputs.resolve_vector_pair(sqlite_metadata(), releases if releases is not None else [vector_release()],
+    def resolve(self, releases=None, fetch=vector_metadata, sql=None, **kwargs):
+        return inputs.resolve_vector_pair(sqlite_metadata() if sql is None else sql, releases if releases is not None else [vector_release()],
             fetch=fetch, archive_digest=lambda url: 'd' * 64, **kwargs)
+
+    def test_sqlite_latest_and_older_override_are_independent(self):
+        older = 'PRODUCT,3.52.0,2026/sqlite-src-3520000.zip,100,' + 'c' * 64
+        for sv, vv, expected_s, expected_v in [(None,None,'3.53.4','1.1.2'), ('3.52.0',None,'3.52.0','1.1.2'),
+                (None,'1.1.3-alpha.1','3.53.4','1.1.3-alpha.1'), ('3.52.0','1.1.3-alpha.1','3.52.0','1.1.3-alpha.1')]:
+            result = self.resolve(sql=older+'\n'+sqlite_metadata(), releases=[vector_release(),vector_release('1.1.3-alpha.1')], sqlite_version=sv,vector_version=vv)
+            self.assertEqual((result['sqlite']['version'], result['sqliteVector']['version']), (expected_s,expected_v))
+
+    def test_sqlite_snapshots_malformed_latest_and_duplicate_sources(self):
+        snapshot = 'PRODUCT,3.54.0,2026/sqlite-snapshot-202607312245.tar.gz,100,' + 'c' * 64
+        self.assertEqual(self.resolve(sql=snapshot+'\n'+sqlite_metadata()),vector_lock())
+        for text in [snapshot, sqlite_metadata()+'\nPRODUCT,3.54.0,2026/sqlite-src-3540000.zip,100', sqlite_metadata()+'\n'+sqlite_metadata()]:
+            with self.subTest(text=text), self.assertRaises(inputs.InputError): self.resolve(sql=text)
+        for version in ['snapshot','trunk','3.54.0-alpha.1','3.52.0']:
+            with self.subTest(version=version), self.assertRaises(inputs.InputError): self.resolve(sqlite_version=version)
+
+    def test_sqlite_release_and_recorded_pin_fail_closed(self):
+        baseline=vector_lock();before=copy.deepcopy(baseline)
+        for text in [sqlite_metadata().replace('a'*64,'c'*64),sqlite_metadata().replace('2026/sqlite','2025/sqlite')]:
+            with self.subTest(text=text), self.assertRaises(inputs.InputError):self.resolve(sql=text,baseline=baseline)
+        self.assertEqual(self.resolve(sql='',sqlite_version='3.53.4',baseline=baseline),baseline)
+        self.assertEqual(self.resolve(sql=sqlite_metadata().replace('a'*64,''),baseline=baseline),baseline)
+        with self.assertRaises(inputs.InputError):self.resolve(fetch=lambda url: 'not a release' if url.startswith('https://sqlite.org/') else vector_metadata(url))
+        self.assertEqual(baseline,before)
 
     def test_fixed_schema_and_independent_selection(self):
         self.assertEqual(self.resolve(), vector_lock())
