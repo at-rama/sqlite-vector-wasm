@@ -30,7 +30,8 @@ Packaging does not select a release name/version policy, tag or publish it.
 The explicit name/version supplied by the caller are carried into metadata;
 the fixture identity above is never published by these commands. For the product,
 use `--name @at-rama/sqlite-vector-wasm` and an independently selected SemVer according to
-the [release-version policy](publication.md). For the SQLite-Vector product documentation, the selected target is `0.3.0`; this guide does not itself select or publish a release. `package.json` holds that product identity;
+the [release-version policy](publication.md). The documentation targets `0.3.0`; packaging does not itself publish a release.
+`package.json` holds the selected identity;
 `runtime.json` preserves exact `inputs.sqlite` and selected engine versions
 and digests (`inputs.sqliteVec` or `inputs.sqliteVector`). These identify upstream
 components, not the project version. Packaging performs no registry publication.
@@ -130,7 +131,7 @@ against the candidate source tree, without requiring an unpublished branch to be
 available on main. External upstream links are authored references, not a promise
 of network availability during offline assembly.
 
-Root `README.md` and `docs/usage.md` are the Site presentation and usage sources for the SQLite-Vector `0.3.0` target;
+Root `README.md` and `docs/usage.md` are the Site presentation and usage sources for the SQLite-Vector `0.3.0` target.
 its local fixture evidence must not be described as a registry release.
 
 ## Selected notices and FP16 provenance
