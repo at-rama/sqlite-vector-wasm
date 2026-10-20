@@ -19,8 +19,9 @@ export function renderPublicDocument(text, context) {
   if (!context) return text;
   assert.ok(['candidate', 'published'].includes(context.mode), 'Invalid documentation mode');
   assert.match(context.version, /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/);
-  const engine = context.upstreams.sqliteVector ? 'SQLite-Vector' : 'sqlite-vec';
-  const engineVersion = context.upstreams.sqliteVector ?? context.upstreams.sqliteVec;
+  assert.ok(context.upstreams.sqliteVector && !context.upstreams.sqliteVec, 'Current documentation requires SQLite-Vector');
+  const engine = 'SQLite-Vector';
+  const engineVersion = context.upstreams.sqliteVector;
   assert.ok(context.upstreams.sqlite && engineVersion, 'Missing documentation composition');
   const label = context.mode === 'candidate' ? 'Unpublished release candidate' : 'Published distribution';
   const status = `> ${label} **${context.version}** · SQLite ${context.upstreams.sqlite} · ${engine} ${engineVersion}. ${context.mode === 'candidate' ? 'Use the supplied qualified archive; no npm availability is asserted.' : 'The example uses the matching published archive.'}\n\n`;

@@ -41,3 +41,7 @@ Independent reverse reading of requirements, scenarios, design and tasks grounds
 **PASS** for the affected Capture→Allocation→Change segment: coverage, grounding, preservation and consistency established; **100% in both directions** for A-composition-cleanup. This resolves the known D1/D2 blockers and permits Apply under the adopted scope. It does not establish task completion, runtime behavior, implementation Verification, archive, merge or publication readiness.
 
 Repository integrity and strict OpenSpec validation are executed separately on this snapshot. Runtime/Pages observations and production acceptance must be obtained during implementation/Verification; no old artifact or agent report supplies those results.
+
+## Apply refinement and renewed derivation
+
+The browser-build documentation requirement is now included as a fifth affected block: commands describe the sole recorded Vector lock, retaining both reproduction and VFS-specific prerequisite scenarios verbatim otherwise. This is the same U1/U6 removal/preservation obligation, with no new authority or scope. Reexamining this addition and the seven synchronized specs preserves 100% coverage in both directions. Untouched baseline requirements/scenarios remain present; eleven obsolete requirement names are replaced by full current blocks, not dropped obligations. Strict validation reports 13 passed and zero failed. Its informational already-synchronized ADDED notices mean a later archive must account for prior synchronization; no archive is performed here.

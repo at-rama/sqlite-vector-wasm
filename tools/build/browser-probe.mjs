@@ -1,14 +1,7 @@
 // Executed inside the browser, using upstream APIs without runtime glue.
-// Fixed native smoke queries for the two concrete build compositions.
+// Fixed native smoke queries for the current Vector composition and SQLite-only reference.
 export function nativeProbeSql(vector) {
-  const key = typeof vector === 'string' ? 'sqliteVec' : vector?.key;
-  if (key === 'sqliteVec') return {
-    versionSql: "select sqlite_version(), vec_version(), (select count(*) from pragma_function_list where name='vector_version')",
-    expectedVersion: `v${typeof vector === 'string' ? vector : vector.version}`,
-    setup: "create virtual table v using vec0(embedding float[2]); insert into v(rowid,embedding) values(1,'[1,0]'),(2,'[0,1]');",
-    query: "select rowid,distance from v where embedding match '[1,0]' and k=2 order by distance",
-    otherVersion: 'vector_version',
-  };
+  const key = vector?.key;
   if (key === 'sqliteVector') return {
     versionSql: "select sqlite_version(), vector_version(), (select count(*) from pragma_function_list where name='vec_version')", expectedVersion: vector.version,
     setup: "create table v(embedding blob); insert into v(rowid,embedding) values(1,vector_as_f32('[1,0]')),(2,vector_as_f32('[0,1]')); select vector_init('v','embedding','type=FLOAT32,dimension=2,distance=L2');",

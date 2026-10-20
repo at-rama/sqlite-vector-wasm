@@ -56,6 +56,18 @@ Integration SHALL be limited to building, initializing, locating and exposing up
 - **WHEN** the pinned pair cannot satisfy the retained behavior without an upstream source patch or semantic change
 - **THEN** construction fails and the required revision is escalated rather than applied locally
 
+### Requirement: Reproduction and browser prerequisites are documented
+
+Contributor documentation SHALL describe the build's system prerequisites, pinned tooling setup, commands for the current recorded SQLite-Vector lock, selected-engine provenance and output lifetime. It SHALL document upstream Worker, secure-hosting and VFS-specific isolation/header requirements and limitations without promising main-thread OPFS or broader browser, storage or bundler compatibility than the pinned baseline.
+
+#### Scenario: Reproduction instructions
+- **WHEN** a contributor follows the documented build sequence from a clean checkout
+- **THEN** required system tools, harness setup, acquisition/build commands and temporary output handling are explicit
+
+#### Scenario: Storage prerequisites
+- **WHEN** a consumer evaluates the documented persistence conditions
+- **THEN** Worker and secure-context requirements and each VFS's distinct isolation/header and browser prerequisites are stated without generalizing one VFS's requirements to all others
+
 ## REMOVED Requirements
 
 ### Requirement: Fresh verified build inputs

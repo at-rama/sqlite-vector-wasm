@@ -7,8 +7,7 @@ Publish the project presentation and getting-started guide from their single Mar
 ## Requirements
 
 ### Requirement: Single-source public documentation
-
-Presentation SHALL render the repository README and Usage SHALL render `docs/usage.md` in the common English mobile-adapted site envelope. Both documents SHALL remain directly readable on GitHub, with no separately maintained copy of their content. Usage SHALL provide getting-started instructions and a minimal selected-distribution example. Vector candidate documentation SHALL include native SQL/version guidance and the vec0/vec_* adaptation notice without automatic migration claims; candidate preview SHALL explicitly identify its unpublished state.
+Presentation SHALL render the repository README and Usage SHALL render `docs/usage.md` in the common English mobile-adapted site envelope. Both documents SHALL remain directly readable on GitHub, with no separately maintained copy of their content. Usage SHALL provide getting-started instructions and a minimal selected-distribution example. Vector candidate documentation SHALL include current native SQL/version guidance without an extra sqlite-vec adaptation or migration guide; candidate preview SHALL explicitly identify its unpublished state.
 
 #### Scenario: Render both existing sources
 - **WHEN** the site is built from a checkout

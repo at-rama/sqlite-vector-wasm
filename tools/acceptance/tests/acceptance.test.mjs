@@ -74,13 +74,13 @@ test('each production failure retains a failed record and never runs downstream 
   for (const failAt of productionStages.filter(n => !['checkout', 'bundle'].includes(n))) {
     const repo = await mkdtemp(join(tmpdir(), 'acceptance-test-'));
     try {
-      await mkdir(join(repo, 'inputs')); await copyFile(join(root,'inputs/sources.lock.json'),join(repo,'inputs/sources.lock.json'));
+      await mkdir(join(repo, 'inputs')); await copyFile(join(root,'inputs/sqlite-vector.sources.lock.json'),join(repo,'inputs/sqlite-vector.sources.lock.json'));
       const archive = join(repo, 'archive.tgz'); await writeFile(archive, 'abc');
-      const lockBytes = await readFile(join(repo,'inputs/sources.lock.json')), lock=JSON.parse(lockBytes);
+      const lockBytes = await readFile(join(repo,'inputs/sqlite-vector.sources.lock.json')), lock=JSON.parse(lockBytes);
       const inputs = {...lock,lockDigest:{algorithm:'sha256',value:hash(lockBytes)}}; delete inputs.schemaVersion;
-      for (const key of ['sqlite','sqliteVec']) inputs[key].sourcePath=join(repo,key);
+      for (const key of ['sqlite','sqliteVector']) inputs[key].sourcePath=join(repo,key);
       const buildHandoff={schemaVersion:1,inputs,build:{},logPath:'fixture'};
-      const compact=Object.fromEntries(['sqlite','sqliteVec'].map(k=>[k,{version:lock[k].version,digest:lock[k].digest}]));
+      const compact=Object.fromEntries(['sqlite','sqliteVector'].map(k=>[k,{version:lock[k].version,digest:lock[k].digest}]));
       const commands = []; let browserPath;
       const run = async (cmd, args, { log }) => {
         commands.push(args);
@@ -121,9 +121,9 @@ test('invalid final-package identities produce a failure report before launching
   const dir = await mkdtemp(join(tmpdir(), 'acceptance-package-test-'));
   try {
     const archive = join(dir, 'package.tgz'); await writeFile(archive, 'corrupt archive');
-    const lockBytes = await readFile(join(root, 'inputs/sources.lock.json')); const lock = JSON.parse(lockBytes);
+    const lockBytes = await readFile(join(root, 'inputs/sqlite-vector.sources.lock.json')); const lock = JSON.parse(lockBytes);
     const handoff = { schemaVersion: 1, lockDigest: { algorithm: 'sha256', value: hash(lockBytes) },
-      inputs: Object.fromEntries(['sqlite', 'sqliteVec'].map(k => [k, { version: lock[k].version, digest: lock[k].digest }])),
+      inputs: Object.fromEntries(['sqlite', 'sqliteVector'].map(k => [k, { version: lock[k].version, digest: lock[k].digest }])),
       runtimeFiles: runtimeNames.map(name => ({ name })), archive: { path: archive, size: 15, sha256: '0'.repeat(64) } };
     const reportPath = join(dir, 'report.json');
     await assert.rejects(() => checkFinalPackage(handoff, reportPath));

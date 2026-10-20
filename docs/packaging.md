@@ -33,7 +33,7 @@ use `--name @at-rama/sqlite-vector-wasm` and an independently selected SemVer ac
 the [release-version policy](publication.md). The documentation targets `0.3.0`; packaging does not itself publish a release.
 `package.json` holds the selected identity;
 `runtime.json` preserves exact `inputs.sqlite` and selected engine versions
-and digests (`inputs.sqliteVec` or `inputs.sqliteVector`). These identify upstream
+and digests (`inputs.sqliteVector`). These identify upstream
 components, not the project version. Packaging performs no registry publication.
 
 The result identifies the archive path/size/SHA-256, every shipped file, runtime
@@ -96,18 +96,16 @@ notices remain preserved.
 
 The CLI remains `bash tools/package.sh --build-handoff PATH --name NAME --version VERSION`.
 The successful A-build handoff supplies the selected recorded lock and exact engine
-identity. Both retained compositions use SQLite 3.54.0 and Emscripten 4.0.23;
+identity. The recorded Vector composition uses SQLite 3.54.0 and Emscripten 4.0.23;
 source versions, origins, digests and actual template/bridge/Make input identities
 must agree. Annotated handoffs also have their configure, compile and link command
-shapes checked. Legacy unannotated handoffs retain only the exact default vec
-interpretation; they cannot represent Vector. All eleven runtime assets retain
+shapes checked. Incomplete, legacy or mixed-engine handoffs are rejected. All eleven runtime assets retain
 regular-file, size and SHA-256 checks. Nothing is acquired or rebuilt by packaging.
 
-`runtime.json` retains compact `inputs.sqlite` and `inputs.sqliteVec` objects for
-default consumers. Vector instead has `inputs.sqliteVector`. Additive `engine`,
+`runtime.json` retains compact `inputs.sqlite` and `inputs.sqliteVector` objects. Required `engine`,
 `sourceLockPath` and `sourceOrigins` describe the concrete composition. Source/build
 paths in every recorded command become symbolic `<sqlite-source>`,
-`<sqliteVec-source>`, `<sqliteVector-source>` or `<build>` paths. Flags, argument
+`<sqliteVector-source>` or `<build>` paths. Flags, argument
 order, filenames and integration hashes remain. The success handoff retains actual
 commands and a digest of the consumed build handoff; the complete `files` inventory
 identifies notices, documentation and metadata as well as runtime bytes.
@@ -118,7 +116,7 @@ Package documents are copied byte for byte from this explicit map:
 
 | Source | Archive |
 | --- | --- |
-| `docs/sqlite-vec/README.md` or `docs/sqlite-vector/README.md` | `README.md` |
+| `docs/sqlite-vector/README.md` | `README.md` |
 | Matching engine directory's `usage.md` | `docs/usage.md` |
 | `docs/common/browser.md` | `docs/browser.md` |
 

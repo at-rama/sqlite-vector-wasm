@@ -133,3 +133,11 @@ test('a failed completion attempt cannot borrow an older successful handoff from
  inspect:async()=>({status:'complete',stableDocumentationEligible:true})});
  await assert.rejects(invoke(),/No complete matching/);
 });
+
+
+test('a cleanup PR without release.json still selects an unpublished preview and preserves stable eligibility',async()=>{
+ const absent=async(commit,path)=>path==='inputs/release.json'?null:readAt(commit,path);
+ const result=await siteSelection({...common,readAt:absent,eventName:'pull_request',selectStable:selected,resolveSource:async()=>{throw Error('unpublished');}});
+ assert.equal(result.input,'exercise');assert.deepEqual(result.previewSelection,candidateProfile);
+ assert.equal(result.stable.sourceCommit,prior);
+});

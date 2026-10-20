@@ -12,15 +12,15 @@ export const browserCases = [
   ...vfsNames.map(name => `restart-${name}`), 'persistence-negative-control', 'final-hashes',
 ];
 
-export const defaultLock = 'inputs/sources.lock.json';
+export const defaultLock = 'inputs/sqlite-vector.sources.lock.json';
 export const vectorLock = 'inputs/sqlite-vector.sources.lock.json';
 
 export function recordedSelection(bytes, sourceLockPath = defaultLock) {
   assert.ok([defaultLock, vectorLock].includes(sourceLockPath), 'Unsupported recorded acceptance lock');
   const sourceLock = JSON.parse(bytes), key = selectedEngine(sourceLock);
-  assert.equal(sourceLockPath, key === 'sqliteVec' ? defaultLock : vectorLock, 'Selected lock/engine mismatch');
+  assert.equal(sourceLockPath, vectorLock, 'Selected lock/engine mismatch');
   return { sourceLockPath, sourceLock, sourceLockSha256: hash(bytes),
-    engine: {key, upstream: key === 'sqliteVec' ? 'asg017/sqlite-vec' : 'sqliteai/sqlite-vector', version: sourceLock[key].version} };
+    engine: {key, upstream: 'sqliteai/sqlite-vector', version: sourceLock[key].version} };
 }
 
 export function assertSelected(handoff, selection, acquired = false) {
@@ -83,10 +83,10 @@ export function assertApplicable(report, revision, archive) {
   if (report.engine || report.sourceLockPath || report.browserResults.engine) assert.ok(report.sourceLock, 'Missing selected source lock');
   if (report.sourceLock) {
     const key = selectedEngine(report.sourceLock);
-    const path = report.sourceLockPath || (key === 'sqliteVec' ? defaultLock : vectorLock);
+    const path = report.sourceLockPath || (vectorLock);
     const selection = {sourceLockPath:path, sourceLock:report.sourceLock, sourceLockSha256:report.sourceLockSha256,
-      engine:{key,upstream:key === 'sqliteVec' ? 'asg017/sqlite-vec' : 'sqliteai/sqlite-vector',version:report.sourceLock[key].version}};
-    assert.equal(path,key === 'sqliteVec' ? defaultLock : vectorLock,'Evidence source lock/engine mismatch');
+      engine:{key,upstream:'sqliteai/sqlite-vector',version:report.sourceLock[key].version}};
+    assert.equal(path,vectorLock,'Evidence source lock/engine mismatch');
     assert.match(selection.sourceLockSha256,/^[0-9a-f]{64}$/);
     if (report.engine || report.sourceLockPath) {
       assertSelectionEvidence(report,selection);

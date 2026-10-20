@@ -26,7 +26,7 @@ class RepositoryGateway(unittest.TestCase):
                           (SOURCE / MANIFEST).read_text().splitlines()]
         files = ['README.md', '.gitignore', MANIFEST, *self.protected,
                  'tools/check-repository.sh',
-                 'tools/inputs.py', 'inputs/sources.lock.json']
+                 'tools/inputs.py', 'inputs/sqlite-vector.sources.lock.json']
         files += [str(p.relative_to(SOURCE)) for p in
                   (SOURCE / '.42p/engineering').glob('*_capture_edit-*.md')]
         files += [str(p.relative_to(SOURCE)) for p in
@@ -286,7 +286,7 @@ class RepositoryGateway(unittest.TestCase):
         self.check(False, 'trailing whitespace')
 
     def test_invalid_source_lock_still_fails(self):
-        self.write('inputs/sources.lock.json', '{}\n')
+        self.write('inputs/sqlite-vector.sources.lock.json', '{}\n')
         self.check(False)
 
 

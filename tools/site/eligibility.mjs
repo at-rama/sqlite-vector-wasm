@@ -140,8 +140,9 @@ async function siteSelection({repository,eventName,event,ref,sha,actor,readAt,ge
   const pr=event.pull_request;assert.equal(pr.state,"open");assert.match(pr.head.sha,/^[a-f0-9]{40}$/);assert.ok(Number.isSafeInteger(event.number)&&event.number>0);
   preview={branch:pr.head.ref,commit:pr.head.sha};
   const profile=JSON.parse(await readAt(preview.commit,"tools/site/docs-example.json"));
-  const value=JSON.parse(await readAt(preview.commit,"inputs/release.json"));
-  const nominal=value.schemaVersion===2&&new RegExp('^candidate/run-'+value.preparation?.runId+'-[1-9][0-9]*$').test(pr.head.ref)&&await candidateDescriptorChanged({repository,pullRequest:pr,get});
+  const descriptorRaw=await readAt(preview.commit,"inputs/release.json",true);
+  const value=descriptorRaw===null?null:JSON.parse(descriptorRaw);
+  const nominal=value?.schemaVersion===2&&new RegExp('^candidate/run-'+value.preparation?.runId+'-[1-9][0-9]*$').test(pr.head.ref)&&await candidateDescriptorChanged({repository,pullRequest:pr,get});
   if(nominal){assert.deepEqual(profile,candidateProfile);descriptor(value,JSON.parse(await readAt(preview.commit,"inputs/sqlite-vector.sources.lock.json")));previewSelection=profile;input="updates";}
   else{
    try{const ready=await resolveSource({repository,commit:preview.commit,readAt,get,directory});previewSelection=ready?.selection;}

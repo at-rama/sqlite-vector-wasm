@@ -130,7 +130,7 @@ This is an integration fixture, not the emoji demo.
     await assert.rejects(readFile(join(repository, '.work/site/dist/index.html')), { code: 'ENOENT' });
     results.push({ name: 'corrupted-runtime', result: 'rejected; stale output removed' });
 
-    await observe('shell-only', undefined, { screenshot: join(repository, '.work/site/mobile.png') });
+    await observe('shell-only', undefined, { requirePlaceholder: true, screenshot: join(repository, '.work/site/mobile.png') });
     await writeFile(join(repository, '.work/site/exercise.json'), JSON.stringify(results, null, 2) + '\n');
     console.log(JSON.stringify(results, null, 2));
   } finally {

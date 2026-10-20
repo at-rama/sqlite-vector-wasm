@@ -36,12 +36,11 @@ export async function checkFinalPackage(handoff, reportPath) {
       await test(`${mode}-${kind}`, () => {
         const result = report.packaging.positive.results[`${mode}-${kind}`];
         assert.equal(result.version, handoff.inputs.sqlite.version);
-        assert.equal(result.vecVersion, selection.engine.key === 'sqliteVec' ? `v${selection.engine.version}` : selection.engine.version);
+        assert.equal(result.vecVersion, selection.engine.version);
         if (kind === 'main' || kind === 'worker') assert.equal(result.independentVersionsChecked, true);
         else {
           assert.equal(result.registrationRows[0][2],0);
-          if (selection.engine.key === 'sqliteVec') assert.equal(result.sqlRows[0][2], 2);
-          else assert.deepEqual(result.sqlRows,result.registrationRows);
+          assert.deepEqual(result.sqlRows,result.registrationRows);
         }
         return result;
       });

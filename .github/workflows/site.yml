@@ -99,7 +99,6 @@ jobs:
           if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
             bash tools/harness.sh exec sh tools/site.sh example
             bash tools/harness.sh exec sh tools/site.sh exercise
-            bash tools/harness.sh exec sh tools/site.sh demo
           fi
       - name: Build exact PR preview
         if: github.event_name == 'pull_request'
@@ -180,11 +179,7 @@ jobs:
             candidate/.work/site/preview-mobile.png
             candidate/.work/site/assembled.json
             candidate/.work/site/docs-mobile.png
-            candidate/.work/site/demo-results.json
-            candidate/.work/site/demo-stable-mobile.png
-            candidate/.work/site/demo-preview-mobile.png
             candidate/.work/site/*-initial-*.png
-            candidate/.work/site/assembled-demo-mobile.png
             candidate/.work/docs-example/result.json
             candidate/.work/docs-input/handoff.json
             candidate/.work/pages/site-publication.json
@@ -276,7 +271,5 @@ jobs:
           overwrite: true
           path: |
             live-pages.json
-            live-pages-demo-mobile.png
-            live-pages-demo-initial-*.png
           retention-days: 30
           if-no-files-found: error

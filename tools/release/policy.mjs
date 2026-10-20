@@ -7,7 +7,7 @@ const identifier = '(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)';
 const upstreamPattern = new RegExp(`^(${number})\\.(${number})\\.(${number})(?:\\.(${number}))?(?:-(${identifier}(?:\\.${identifier})*))?$`);
 export const commitPattern = /^[0-9a-f]{40}$/;
 
-export function upstream(version, component = 'sqliteVec') {
+export function upstream(version, component = 'sqliteVector') {
   assert.equal(typeof version, 'string', 'Exact upstream version required');
   const match = upstreamPattern.exec(version);
   assert.ok(match && (component === 'sqlite' || match[4] === undefined), `Unsupported ${component} version: ${version}`);
@@ -119,6 +119,7 @@ export function validateSnapshot(snapshot) {
 }
 
 export function calculate({ selection, snapshot, comment = '' }) {
+  assert.equal(engineKey(selection), 'sqliteVector', 'Current calculation requires SQLite-Vector');
   const channel = channelFor(selection);
   validateSnapshot(snapshot);
   assert.equal(typeof comment, 'string', 'Release comment must be data');

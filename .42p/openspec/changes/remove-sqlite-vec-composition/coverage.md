@@ -1,4 +1,4 @@
-# Coverage mapping — conditional draft
+# Coverage mapping — adopted cleanup
 
 ## Current authority and exact source
 
@@ -23,7 +23,7 @@ Semantic examination of the complete selected unit, qualified Capture passages a
 Every modified/removed/replacement requirement belongs to one of the seven existing capabilities declared by the proposal. Their complete blocks were compared to the synchronized baseline: new names replace old requirements when obsolete scenario removal is required by the CLI; unaffected scenarios in each replaced block remain present with unchanged obligations. A REMOVED entry points to its full ADDED replacement rather than merely dropping the composite requirement. This is a specification operation, not a consumer migration guide.
 
 - `upstream-inputs`: all five affected requirement blocks ground in U1/U3 and D/C-inputs/R-inputs. Changed defaults, rejected obsolete locks and removal of vec acquisition are grounded in adopted D1. Existing digest-preservation and verification-before-use blocks remain unchanged and mandatory.
-- `browser-build`: all four affected blocks ground in U1/U6 and D/C-browser/C-inputs/C-nonmodification. The recorded-default replacement is grounded in adopted D1; retained baseline, clean reconstruction and glue limitations preserve existing duties rather than adding generic architecture.
+- `browser-build`: all five affected blocks ground in U1/U6 and D/C-browser/C-inputs/C-nonmodification. The recorded-default replacement is grounded in adopted D1; retained baseline, clean reconstruction, documented browser prerequisites and glue limitations preserve existing duties rather than adding generic architecture.
 - `browser-package`: all seven affected blocks ground in U2/U7 and D/C-release/C-browser/C-inputs. Old helper/document/notice removal is grounded in adopted D1; generic behavior/glue boundaries remain untouched. Identity-bound docs and licensing integrity are preserved.
 - `browser-acceptance`: all eight affected blocks ground in U6 and D/C-verification. Removing the default result/dual-CI promises is grounded in adopted D1; independent math, final assets and fail-closed evidence retain their original conditions. Connection versions, browser prerequisites, exact evidence applicability and every retained OPFS restart obligation remain in the unchanged baseline.
 - `distribution-release`: the one replacement block grounds in U3/U4. Historical records' semantics remain governed by the unchanged complete-state/numerical-transition/component-reference requirements. Elimination of current legacy calculation support is grounded in adopted D1; it does not authorize ignoring history.

@@ -33,7 +33,7 @@ None. No runtime facade, adapter framework or additional product is introduced.
 
 ## Impact
 
-The [inventory](inventory.md) identifies concrete removal/adaptation/conservation targets, PR #78 overlaps and reproducibility boundaries. Watch, Updates, notifications, bootstrap and Site shell keep their existing responsibilities; prune obsolete technical paths and renew affected handoff checks without redesigning their policy. Synchronized base specs and implementation remain unchanged in this PR.
+The [inventory](inventory.md) identifies concrete removal/adaptation/conservation targets, PR #78 overlaps and reproducibility boundaries. Watch, Updates, notifications, bootstrap and Site shell keep their existing responsibilities; prune obsolete technical paths and renew affected handoff checks without redesigning their policy. The implementation and synchronized realization specs are updated within this bounded cleanup.
 
 Adopted single-unit attribution is `A-composition-cleanup`, recorded in the current Allocation. It owns this bounded removal and regression proof, not the continuing duties of the existing twelve units. Existing whole-unit responsibilities cannot legitimately be replaced by a partial multi-unit coverage claim.
 

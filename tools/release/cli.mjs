@@ -32,7 +32,7 @@ try {
     assert.equal(event.repository?.full_name,repositoryName(env.GITHUB_REPOSITORY));
     result = { exercise: await documentationQualificationNeeded({ repository: env.GITHUB_REPOSITORY,
       pullRequest: event.pull_request, get, profile: await json(join(root,'tools/site/docs-example.json')),
-      candidate: await json(join(root,'inputs/release.json')) }) };
+      candidate: await json(join(root,'inputs/release.json')).catch(error=>{if(error.code==='ENOENT')return null;throw error;}) }) };
     if (env.GITHUB_OUTPUT) await appendFile(env.GITHUB_OUTPUT,`exercise=${result.exercise}\n`);
   } else if (mode === 'candidate') {
     assert.equal(args.length,0,'Usage: release.sh candidate');

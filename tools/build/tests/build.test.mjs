@@ -11,7 +11,7 @@ import { reference, assertReference, assertNeighbors } from '../check.mjs';
 import { nativeProbeSql } from '../browser-probe.mjs';
 
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
-async function fixture(t, { fail, absent, empty, extra, badIdentity, vecVersion, mutateHandoff, vector = false, objectFailure } = {}) {
+async function fixture(t, { fail, absent, empty, extra, badIdentity, vecVersion, mutateHandoff, vector = true, objectFailure } = {}) {
   const root = await mkdtemp(join(tmpdir(), 'sqlite-build-test-'));
   t.after(() => rm(root, { recursive: true, force: true }));
   const sqlite = join(root, 'sources/sqlite');
@@ -19,11 +19,11 @@ async function fixture(t, { fail, absent, empty, extra, badIdentity, vecVersion,
   for (const directory of ['tools/build', 'tools/harness', 'inputs', 'sources/sqlite/ext/wasm/api', 'sources/vec']) {
     await mkdir(join(root, directory), { recursive: true });
   }
-  for (const path of ['tools/build/config.mjs', 'tools/build/extra-init.c.in', 'tools/build/vector-extra-init.c.in', 'tools/harness.sh', 'tools/harness/package-lock.json', 'inputs/sources.lock.json', 'inputs/sqlite-vector.sources.lock.json']) {
+  for (const path of ['tools/build/config.mjs', 'tools/build/vector-extra-init.c.in', 'tools/harness.sh', 'tools/harness/package-lock.json', 'inputs/sqlite-vector.sources.lock.json']) {
     await copyFile(join(repositoryRoot, path), join(root, path));
   }
-  const selectedLock = vector ? 'inputs/sqlite-vector.sources.lock.json' : 'inputs/sources.lock.json';
-  const engine = vector ? 'sqliteVector' : 'sqliteVec';
+  const selectedLock = 'inputs/sqlite-vector.sources.lock.json';
+  const engine = 'sqliteVector';
   const lockPath = join(root, selectedLock);
   const pins = JSON.parse(await readFile(lockPath));
   if (vecVersion) {
@@ -34,8 +34,6 @@ async function fixture(t, { fail, absent, empty, extra, badIdentity, vecVersion,
     await writeFile(lockPath, JSON.stringify(pins) + '\n');
   }
   const lock = await readFile(lockPath);
-  await writeFile(join(vec, 'sqlite-vec.c'), '/* unchanged extension fixture */');
-  await writeFile(join(vec, 'sqlite-vec.h'), '/* unchanged header fixture */');
   await mkdir(join(vec,'src')); await mkdir(join(vec,'libs'));
   await writeFile(join(vec,'src/sqlite-vector.h'),'int sqlite3_vector_init(void);');
   for(const name of ['sqlite-vector', ...['cpu','avx2','avx512','neon','rvv','sse2'].map(x=>`distance-${x}`)]) await writeFile(join(vec,'src',`${name}.c`),'/* unchanged Vector unit */');
@@ -75,15 +73,15 @@ async function fixture(t, { fail, absent, empty, extra, badIdentity, vecVersion,
 for (const vecVersion of ['0.1.10-alpha.4', '0.1.10-beta.1', '0.1.10-rc.0']) {
   test(`published ${vecVersion} keeps exact frozen identity and build provenance`, async t => {
     const f = await fixture(t, { vecVersion });
-    const lock = await readFile(join(f.root, 'inputs/sources.lock.json'));
+    const lock = await readFile(join(f.root, 'inputs/sqlite-vector.sources.lock.json'));
     const result = await construct({ root: f.root, run: f.run });
-    assert.equal(result.inputs.sqliteVec.version, vecVersion);
-    assert.deepEqual(result.inputs.sqliteVec.digest, f.pins.sqliteVec.digest);
+    assert.equal(result.inputs.sqliteVector.version, vecVersion);
+    assert.deepEqual(result.inputs.sqliteVector.digest, f.pins.sqliteVector.digest);
     assert.deepEqual(result.inputs.lockDigest, { algorithm: 'sha256', value: digest(lock) });
-    assert.equal(await readFile(join(f.root, 'inputs/sources.lock.json'), 'utf8'), lock.toString());
+    assert.equal(await readFile(join(f.root, 'inputs/sqlite-vector.sources.lock.json'), 'utf8'), lock.toString());
     const acquisition = f.calls.filter(x => x.command === 'bash');
     assert.equal(acquisition.length, 1);
-    assert.deepEqual(acquisition[0].args, [join(f.root, 'tools/inputs.sh'), 'acquire', '--lock', join(f.root, 'inputs/sources.lock.json')]);
+    assert.deepEqual(acquisition[0].args, [join(f.root, 'tools/inputs.sh'), 'acquire', '--lock', join(f.root, 'inputs/sqlite-vector.sources.lock.json')]);
     assert.deepEqual(result.build.configure, ['env', 'CC=cc', 'CC_FOR_BUILD=cc', 'CXX=/bin/false', './configure', '--enable-all']);
     assert.deepEqual(result.build.wasm.slice(0, 5), ['make', ...targets, ...wasmOptions]);
     assert.equal(result.runtimeFiles.length, runtimeNames.length);
@@ -91,18 +89,16 @@ for (const vecVersion of ['0.1.10-alpha.4', '0.1.10-beta.1', '0.1.10-rc.0']) {
       const bytes = await readFile(join(result.runtimeDirectory, file.name));
       assert.equal(file.size, bytes.length); assert.equal(file.sha256, digest(bytes));
     }
-    assert.equal(await readFile(join(f.vec, 'sqlite-vec.c'), 'utf8'), '/* unchanged extension fixture */');
-    assert.equal(await readFile(join(f.vec, 'sqlite-vec.h'), 'utf8'), '/* unchanged header fixture */');
     assert.deepEqual(JSON.parse(await readFile(join(result.logPath, '../handoff.json'), 'utf8')), result);
     assert(!Object.hasOwn(result, 'channel'));
   });
 }
 
 for (const [label, mutateHandoff, message] of [
-  ['stripped prerelease suffix', h => { h.sqliteVec.version = '0.1.10'; }, /Wrong acquired sqliteVec identity/],
-  ['different prerelease', h => { h.sqliteVec.version = '0.1.10-alpha.3'; }, /Wrong acquired sqliteVec identity/],
-  ['source digest bytes', h => { h.sqliteVec.digest.value = 'f'.repeat(64); }, /Wrong acquired sqliteVec identity/],
-  ['source digest algorithm', h => { h.sqliteVec.digest.algorithm = 'sha3-256'; }, /Wrong acquired sqliteVec identity/],
+  ['stripped prerelease suffix', h => { h.sqliteVector.version = '0.1.10'; }, /Wrong acquired sqliteVector identity/],
+  ['different prerelease', h => { h.sqliteVector.version = '0.1.10-alpha.3'; }, /Wrong acquired sqliteVector identity/],
+  ['source digest bytes', h => { h.sqliteVector.digest.value = 'f'.repeat(64); }, /Wrong acquired sqliteVector identity/],
+  ['source digest algorithm', h => { h.sqliteVector.digest.algorithm = 'sha3-256'; }, /Wrong acquired sqliteVector identity/],
   ['source lock bytes', h => { h.lockDigest.value = '0'.repeat(64); }, /Source lock changed/],
   ['source lock algorithm', h => { h.lockDigest.algorithm = 'sha3-256'; }, /Source lock changed/],
 ]) {
@@ -124,12 +120,12 @@ test('fresh acquisition, exact arguments, canonical flags and complete JSON/hash
   assert.equal(result.schemaVersion,1);
   assert.equal(result.runtimeFiles.length,11);
   const acquire = f.calls.find(x=>x.command==='bash');
-  assert.deepEqual(acquire.args,[join(f.root,'tools/inputs.sh'),'acquire','--lock',join(f.root,'inputs/sources.lock.json')]);
+  assert.deepEqual(acquire.args,[join(f.root,'tools/inputs.sh'),'acquire','--lock',join(f.root,'inputs/sqlite-vector.sources.lock.json')]);
   assert.equal(f.calls.filter(x=>x.command==='bash').length,1);
   assert.deepEqual(f.calls.find(x=>x.command==='env').args,['CC=cc','CC_FOR_BUILD=cc','CXX=/bin/false','./configure','--enable-all']);
   const wasm = f.calls.find(x=>x.command==='make' && x.args[0]===targets[0]);
   assert.deepEqual(wasm.args.slice(0,4),[...targets,...wasmOptions]);
-  assert.equal(wasm.args.length,5);
+  assert.equal(wasm.args.length,9);
   assert(!('MAKEFLAGS' in wasm.env)); assert(!('CPATH' in wasm.env)); assert(!('SQLITE_OPT' in wasm.env));
   assert.deepEqual(result.build.wasm,['make',...wasm.args]);
   for (const file of result.runtimeFiles) {
@@ -137,8 +133,7 @@ test('fresh acquisition, exact arguments, canonical flags and complete JSON/hash
     assert.equal(file.sha256,digest(bytes)); assert.equal(file.size,bytes.length);
   }
   const bridge = wasm.args[4].split('=').slice(1).join('=');
-  assert((await readFile(bridge,'utf8')).includes(`#include "${join(f.vec,'sqlite-vec.c')}"`));
-  assert.equal(await readFile(join(f.vec,'sqlite-vec.c'),'utf8'),'/* unchanged extension fixture */');
+  assert((await readFile(bridge,'utf8')).includes(`#include "${join(f.vec,'src/sqlite-vector.h')}"`));
   assert.deepEqual(JSON.parse(await readFile(join(bridge,'../handoff.json'),'utf8')),result);
   assert.equal(await readFile(join(f.root,'.work/build/old-success/handoff.json'),'utf8'),'old');
 });
@@ -152,7 +147,7 @@ for (const stage of ['emcc','wasm-strip','bash','CC=cc','sqlite3.c','b-vanilla']
     assert.equal(await readFile(join(f.root,'.work/build/old-success/handoff.json'),'utf8'),'old-success');
     const runs=(await readdir(join(f.root,'.work/build'))).filter(name=>name!=='old-success');
     assert.equal(runs.length,1);
-    assert.deepEqual(await readdir(join(f.root,'.work/build',runs[0])),stage==='emcc'||stage==='wasm-strip'||stage==='bash'?['build.log']:['build.log','extra-init.c']);
+    assert(!(await readdir(join(f.root,'.work/build',runs[0]))).includes('handoff.json'));
     assert((await readFile(join(f.root,'.work/build',runs[0],'build.log'),'utf8')).includes('Build failed'));
   });
 }
@@ -191,18 +186,6 @@ test('real child execution reserves stdout for the caller and propagates failure
   await assert.rejects(commandRunner(log)(process.execPath,['-e','process.exit(7)']),/failed \(7\)/);
   await assert.rejects(commandRunner(log)('/absent-build-tool',[]),/ENOENT/);
 });
-test('compiled bridge propagates a static-registration failure',async t=> {
-  const root=await mkdtemp(join(tmpdir(),'sqlite-build-c-'));
-  t.after(()=>rm(root,{recursive:true,force:true}));
-  await writeFile(join(root,'sqlite-vec.c'),'int sqlite3_vec_init(void){return 0;}\nint sqlite3_auto_extension(void(*entry)(void)){(void)entry;return 7;}\n');
-  const bridge=join(root,'extra.c');
-  await generateBridge(root,bridge,join(repositoryRoot,'tools/build/extra-init.c.in'));
-  await writeFile(join(root,'main.c'),'int sqlite3_wasm_extra_init(const char*); int main(void){return sqlite3_wasm_extra_init(0)==7?0:1;}');
-  const compiled=spawnSync('cc',[bridge,join(root,'main.c'),'-o',join(root,'fixture')],{encoding:'utf8'});
-  assert.equal(compiled.status,0,compiled.stderr);
-  assert.equal(spawnSync(join(root,'fixture')).status,0);
-});
-
 test('entry point rejects arguments and missing or unqualified SDK state without result stdout',async t=> {
   const root=await mkdtemp(join(tmpdir(),'sqlite-build-wrapper-'));
   t.after(()=>rm(root,{recursive:true,force:true}));
@@ -232,7 +215,7 @@ test('unsupported upstream recipe and mismatched generated header fail explicitl
 
 test('bridge generation failure retains diagnostics without a success handoff',async t=> {
   const f=await fixture(t);
-  await writeFile(join(f.root,'tools/build/extra-init.c.in'),'invalid template');
+  await writeFile(join(f.root,'tools/build/vector-extra-init.c.in'),'invalid template');
   await assert.rejects(construct({root:f.root,run:f.run}),/Invalid extra-init template.*retained workspace/);
   const workspace=join(f.root,'.work/build',(await readdir(join(f.root,'.work/build')))[0]);
   assert.deepEqual(await readdir(workspace),['build.log']);
@@ -242,11 +225,11 @@ test('selection is explicit, repository-local and unambiguous',async t=> {
   assert.deepEqual(parseBuildArguments([]),{});
   assert.deepEqual(parseBuildArguments(['--lock','inputs/sqlite-vector.sources.lock.json']),{lockPath:'inputs/sqlite-vector.sources.lock.json'});
   for(const args of [['--engine','sqliteVector'],['--lock'],['--lock',''],['--lock','--other'],['--lock','a','--lock','b'],['a']]) assert.throws(()=>parseBuildArguments(args),/Usage/);
-  for(const pins of [{schemaVersion:3},{schemaVersion:1,sqlite:{},sqliteVec:{},sqliteVector:{}},{schemaVersion:2,sqlite:{},sqliteVec:{}},{schemaVersion:1,sqlite:{}}]) assert.throws(()=>selectedEngine(pins),/ambiguous/);
+  for(const pins of [{schemaVersion:3},{schemaVersion:1,sqlite:{},sqliteVector:{},sqliteVector:{}},{schemaVersion:2,sqlite:{},sqliteVec:{}},{schemaVersion:1,sqlite:{}}]) assert.throws(()=>selectedEngine(pins),/ambiguous/);
   const f=await fixture(t);
-  assert.equal((await sourceSelection(f.root)).engine,'sqliteVec');
+  assert.equal((await sourceSelection(f.root)).engine,'sqliteVector');
   await assert.rejects(sourceSelection(f.root,'inputs/absent.json'),/ENOENT/);
-  await symlink(join(repositoryRoot,'inputs/sources.lock.json'),join(f.root,'inputs/outside.json'));
+  await symlink(join(repositoryRoot,'inputs/sqlite-vector.sources.lock.json'),join(f.root,'inputs/outside.json'));
   await assert.rejects(sourceSelection(f.root,'inputs/outside.json'),/inside this repository/);
 });
 
@@ -279,7 +262,6 @@ test('Vector uses seven separate units, selected acquisition, immutable sources 
   const bridge=await readFile(join(result.logPath,'../extra-init.c'));
   assert.equal(result.build.integration.bridgeSha256,digest(bridge));
   assert.match(bridge.toString(),/sqlite3_auto_extension.*sqlite3_vector_init/);
-  assert(!bridge.toString().includes('sqlite-vec.c'));
   assert.deepEqual(result.build.commonWasmOptions,[...targets,...wasmOptions]);
   assert.equal(result.runtimeFiles.length,11);
 });
@@ -329,15 +311,15 @@ test('fresh selected-lock reference and identity/flag mismatches',async t=> {
   assertReference(candidate,baseline);
   assert.equal(f.calls.filter(x=>x.command==='bash').length,2);
   assert.equal(f.calls.filter(x=>x.command==='bash').at(-1).args.at(-1),join(f.root,f.selectedLock));
-  for(const mutate of [b=>{b.inputs.lockDigest.value='wrong';},b=>{b.inputs.sqlite.version='wrong';},b=>{b.inputs.sqlite.digest.value='wrong';},b=>{b.sourceLockPath='inputs/sources.lock.json';},b=>{b.build.commonWasmOptions.push('omit');},b=>{b.build.tools.emcc='wrong';},b=>{b.build.configure.push('--omit');}]) {
+  for(const mutate of [b=>{b.inputs.lockDigest.value='wrong';},b=>{b.inputs.sqlite.version='wrong';},b=>{b.inputs.sqlite.digest.value='wrong';},b=>{b.sourceLockPath='inputs/unsupported.lock.json';},b=>{b.build.commonWasmOptions.push('omit');},b=>{b.build.tools.emcc='wrong';},b=>{b.build.configure.push('--omit');}]) {
     const bad=structuredClone(baseline); mutate(bad); assert.throws(()=>assertReference(candidate,bad),/mismatch/);
   }
   const last=f.calls.filter(x=>x.command==='make'&&x.args[0]===targets[0]).at(-1);
   assert.deepEqual(last.args,[...targets,...wasmOptions]);
 });
 
-test('native probe branches retain vec caller compatibility and reject wrong neighbors',()=> {
-  assert.deepEqual(nativeProbeSql('0.1.9'),nativeProbeSql({key:'sqliteVec',version:'0.1.9'}));
+test('native probe branches retain obsolete caller rejection and reject wrong neighbors',()=> {
+  assert.throws(()=>nativeProbeSql('0.1.9')); assert.throws(()=>nativeProbeSql({key:'sqliteVec',version:'0.1.9'}));
   const vector=nativeProbeSql({key:'sqliteVector',version:'1.1.2'});
   assert.equal(vector.expectedVersion,'1.1.2'); assert.match(vector.setup,/vector_init/); assert.match(vector.query,/vector_full_scan/);
   assert.equal(nativeProbeSql(false).versionSql,'select sqlite_version()');

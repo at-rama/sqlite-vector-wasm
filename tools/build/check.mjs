@@ -15,7 +15,7 @@ export function assertNeighbors(rows) {
   assert.equal(rows[1][0],2,'Native second neighbor');
   assert.ok(Math.abs(rows[1][1]-Math.SQRT2)<0.00001,'Native second distance');
 }
-export async function reference(workspace, lockPath = 'inputs/sources.lock.json',
+export async function reference(workspace, lockPath = 'inputs/sqlite-vector.sources.lock.json',
   { repository = root, run = commandRunner(join(workspace, 'reference.log')), environment = process.env } = {}) {
   const env = buildEnvironment(environment);
   const execute = (command,args,cwd=repository,capture=false)=>run(command,args,{cwd,env,capture});

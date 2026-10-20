@@ -27,8 +27,8 @@ export async function acceptedPayload({ bundle, identity, commit, repository = r
   for (const key of ['engine', 'sourceLockPath', 'sourceOrigins']) {
     if (key in packaged) assert.deepEqual(packaged[key], composition[key], `Packaged ${key} identity`);
   }
-  const sourceLockPath = build.sourceLockPath || 'inputs/sources.lock.json';
-  assert.ok(['inputs/sources.lock.json', 'inputs/sqlite-vector.sources.lock.json'].includes(sourceLockPath), 'Unsupported source lock');
+  const sourceLockPath = build.sourceLockPath;
+  assert.ok(sourceLockPath === 'inputs/sqlite-vector.sources.lock.json', 'Unsupported source lock');
   const lockBytes = await regularBytes(join(repository, sourceLockPath));
   const sourceLock = JSON.parse(lockBytes);
   assert.equal(report.sourceLockSha256, hash(lockBytes), 'Acceptance source lock identity mismatch'); assert.deepEqual(report.sourceLock, sourceLock);
@@ -58,11 +58,11 @@ export async function acceptedPayload({ bundle, identity, commit, repository = r
 
 export function bindSelection(context, accepted, { product = false } = {}) {
   const key = engineKey(context.selection);
-  if (product) assert.equal(key, 'sqliteVector', 'New product publication requires SQLite-Vector');
+  assert.equal(key, 'sqliteVector', 'New product publication requires SQLite-Vector');
   assert.equal(accepted.sourceLock[key]?.version, context.selection[key], 'Context engine/version mismatch');
   assert.equal(accepted.sourceLock.sqlite.version, context.selection.sqlite, 'Context SQLite version mismatch');
-  assert.deepEqual(engineIdentity(accepted.build), {key,upstream:key === 'sqliteVec' ? 'asg017/sqlite-vec' : 'sqliteai/sqlite-vector',version:context.selection[key]}, 'Context/build engine mismatch');
-  if (key === 'sqliteVector') {
+  assert.deepEqual(engineIdentity(accepted.build), {key,upstream:'sqliteai/sqlite-vector',version:context.selection[key]}, 'Context/build engine mismatch');
+  {
     const selection = recordedSelection(jsonBytes(accepted.sourceLock), vectorLock);
     // Preserve the digest of actual lock bytes, including their formatting.
     selection.sourceLockSha256 = accepted.report.sourceLockSha256;
@@ -87,7 +87,7 @@ export function provenance(context, identity, accepted, documentation) {
     invocation: { pullRequest: context.pullRequest || null, preparation: context.preparation || null, comment: context.comment },
     ...(documentation ? { documentation } : {}) };
   publicationIdentity(evidence);
-  const key = engineKey(context.selection), label = key === 'sqliteVector' ? 'SQLite-Vector' : 'sqlite-vec';
+  const key = engineKey(context.selection), label = 'SQLite-Vector';
   const breaking = identity.transition ? '\nBREAKING CHANGE: SQLite-Vector replaces sqlite-vec. Adapt native vector SQL using vec0/vec_* to SQLite-Vector SQL. Official SQLite JavaScript APIs remain; vector SQL is not interchangeable. No automatic database migration or compatibility of existing vector structures is established.\n' : '';
   const notes = `${identity.name} ${identity.version} (${identity.channel})\n\nCommit: ${context.commit}\nSQLite: ${context.selection.sqlite}\n${label}: ${context.selection[key]}\nArchive SHA-256: ${accepted.archive.sha256}\n${breaking}${context.comment ? `\n${context.comment}\n` : ''}`;
   return { evidence, notes };
