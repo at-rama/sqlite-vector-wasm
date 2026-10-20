@@ -10,7 +10,7 @@
 
 ## 3. Site verification
 
-- [ ] 3.1 Exercise the merge-to-publication interval, release failure/partial/success, unrelated PR preview, manual entry, stale completion and concurrent runs; check stable/preview/mobile/navigation/demo preservation locally and on identified Pages; run canonical/applicable site checks and retain bounded evidence.
+- [x] 3.1 Exercise the merge-to-publication interval, release failure/partial/success, unrelated PR preview, manual entry, stale completion and concurrent runs; check stable/preview/mobile/navigation/demo preservation locally and on identified Pages; run canonical/applicable site checks and retain bounded evidence.
 
 ## 4. 42P Verification and completion
 
