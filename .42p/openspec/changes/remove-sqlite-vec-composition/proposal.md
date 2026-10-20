@@ -4,7 +4,7 @@
 
 SQLite-Vector is the sole product engine, but the repository still acquires, builds, packages and qualifies sqlite-vec as an isolated alternative. Remove that maintenance surface for the 0.3.0 product target while retaining the provenance needed to interpret actual past publications.
 
-**Status: conditional planning draft; not ready for Apply.** Main `0d344b800a4f64ff1b48c90e2c6200ab868c4ad4` explicitly requires both technical capabilities under S-retained-capability. No current Allocation unit authorizes this whole cross-cutting removal. [The proposed upstream amendment](authority-amendment.md) requires human adoption and a derived Allocation revision before the coverage gate can pass. This draft does not amend the instituted Captures or create an effective allocation unit.
+**Status: conditional planning draft; not ready for Apply.** Main `0d344b800a4f64ff1b48c90e2c6200ab868c4ad4` explicitly requires both technical capabilities under S-retained-capability. No current Allocation unit authorizes this whole cross-cutting removal. [The proposed upstream amendment](authority-amendment.md) requires human adoption and a derived Allocation revision before the coverage gate can pass. Only the separately adopted S-demo-placeholder decision is now reconciled into Site Capture/Allocation; this draft does not adopt D1/D2 or create an effective cleanup allocation unit.
 
 ## What Changes
 
@@ -12,7 +12,7 @@ SQLite-Vector is the sole product engine, but the repository still acquires, bui
 - Delete `docs/sqlite-vec/` and obsolete current callers. Remove old-engine-only defaults, manifest branches, notice inputs and fixtures. Retain SQLite-Vector/FP16 and SQLite/toolchain notices and all generic SQLite functionality.
 - Reject legacy candidate/build/package/acceptance inputs. Keep only narrowly necessary read-only interpretation of historical published records for channel history, transition numbering, integrity and collisions. No legacy build or calculation offer is retained for callers.
 - Preserve SQLite/SQLite-Vector official stable/prerelease tracking, discovery floor, shared numbering policy, exact bytes, fail-closed integrity and full browser/persistence qualification.
-- Consume the separately realized and qualified emoji demo adaptation already proposed in PR #77 under A-site_demo, then remove any residual legacy-only assumptions. This cleanup does not duplicate that adaptation or its real published-byte qualification. Completion depends on that published archive; no relabeling, unpublished substitute, permanent old-engine exception or artificial disablement.
+- Replace the running demo temporarily with a static SQLite-Vector refactoring notice and Usage link, preserving navigation and loading no demo runtime, Worker or corpus. Its separately qualified future return (PR #77) retains the full published-runtime contract but no longer blocks cleanup completion. This bounded decision is adopted as S-demo-placeholder; D1/D2 remain pending.
 - Explain the break in 0.3.0 Release notes only; native Vector usage remains documented, without an additional migration guide or old-vector compatibility promise.
 
 ## Capabilities
@@ -29,7 +29,7 @@ None. No runtime facade, adapter framework or additional product is introduced.
 - `browser-acceptance`: one production composition with the complete existing Vector matrix and independent oracles.
 - `distribution-release`: separate Vector-only current calculations/qualification from required historical publication interpretation.
 - `site-docs`: native current usage without a separate legacy adaptation guide.
-- `site-demo`: require the separately qualified published Vector demo outcome before declaring removal complete; native adaptation remains in PR #77.
+- `site-demo`: temporary placeholder with no active demo runtime/data dependencies; keep the full future demo contract deferred to its separate qualified return.
 
 ## Impact
 
@@ -39,4 +39,4 @@ Proposed single-unit attribution is `A-composition-cleanup`, defined only in the
 
 Excluded: applying this draft, archiving, merging, publishing, modifying the general 42P model/canon, broad editorial reconciliation already in [PR #78](https://github.com/at-rama/sqlite-vector-wasm/pull/78), new runtime APIs, release-system redesign, historical archive rewriting, old database migration and preservation of unused 0.x caller interfaces. No actual 0.3.0 publication is asserted.
 
-Primary risks: accidental removal of generic SQLite behavior; shared validators breaking historical publication reading; notice/provenance loss; test-count reduction hiding a weakened Vector matrix; stale demo bytes; conflict with #78. Acceptance is defined by the delta scenarios and tasks, subject to the unresolved authority and published-demo dependencies.
+Primary risks: accidental removal of generic SQLite behavior; shared validators breaking historical publication reading; notice/provenance loss; test-count reduction hiding a weakened Vector matrix; accidental old-demo reactivation; conflict with #78. Acceptance is defined by the delta scenarios and tasks, subject to the unresolved D1/D2 authority and attribution decisions; replacement-demo publication is not a cleanup prerequisite.
