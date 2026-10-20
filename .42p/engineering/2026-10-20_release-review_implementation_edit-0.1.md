@@ -1,0 +1,62 @@
+# PR #76 — Rapport d’implémentation pour institution
+
+## 1. Périmètre et décision proposée
+
+**Les cinq changes sont implémentés et vérifiés ; l’ensemble est prêt pour décision d’institution.** La PR reste ouverte en brouillon, sans archivage, fusion ni publication de distribution. Le gate Archive restera donc bloquant jusqu’à l’opération ultérieure explicitement autorisée. Cette conclusion ne signifie pas « fusionnable immédiatement ».
+
+Le candidat global examiné est `0dbb88b937542d6d5f5021da6ff1497d2236c7ad`, sur `plan/release-docs-review`, avec `main` à `741b26df750b3c1f0f5a00c1dd1e579b4e7c6d9e`. Les exécutions réelles finales portent sur `67d5feb9245666e3f046718fc828d47dfae3efd7`, arbre `109f628cf2ee2968229c4f420acdfbbb6a2d3836`. Entre ces deux commits, seuls les marqueurs de tâches et le premier rapport de vérification du dernier change diffèrent. Les preuves d’exécution sont réutilisées explicitement sur cette base ; elles ne sont pas présentées comme un déploiement du commit administratif.
+
+La source de commande reste l’[Allocation réconciliée](https://github.com/at-rama/sqlite-vector-wasm/blob/41c7d36e2f67118d507deb0005eda887bfa12334/.42p/engineering/2026-10-04_sqlite-vec-wasm_allocation_edit-0.1.md), SHA-256 `bd990a1bea53e94184349837794489648d27e68b7327e76be9ddeea318df9217`, avec ses quatre Captures et les baselines/deltas des changes. Leur sémantique n’a pas été modifiée pendant Apply. La [dérivation documentaire globale](2026-10-19_release-review_derivation_edit-0.1.md) conserve sa portée initiale ; les contrôles d’identité ont été renouvelés, sans transformer cette dérivation en preuve d’implémentation.
+
+## 2. Réalisations et ordre suivi
+
+Chaque unité a été traitée après vérification satisfaisante de la précédente. Les rapports unitaires initiaux gardent leurs identités et limites propres ; le présent rapport donne l’état intégré final et ses preuves renouvelées.
+
+| Ordre et allocation | Change et rapport | Résultat réalisé |
+| --- | --- | --- |
+| 1 — A-package | [prepare-release-package-docs](../openspec/changes/prepare-release-package-docs/verification.md) | Documents du package dérivés de la composition et du numéro fournis ; sources/rendus tracés et revérifiés lors de la consommation de l’archive. |
+| 2 — A-site_docs | [preview-vector-release-docs](../openspec/changes/preview-vector-release-docs/verification.md) | README/Usage Vector, adaptation SQL native et exemple main/Worker sur l’archive exacte ; preview explicitement non publié, sources uniques et liens vérifiés. |
+| 3 — A-updates | [prepare-reviewed-release-candidates](../openspec/changes/prepare-reviewed-release-candidates/verification.md) | Une préparation compose sélection, documents et qualification dans le même candidat ; les candidats existants sont référencés et le preview manquant laisse l’intégration inéligible. |
+| 4 — A-release | [bind-release-documentation](../openspec/changes/bind-release-documentation/verification.md) | Liaison à la préparation, au preview et aux sources/rendeurs revus ; qualification documentaire renouvelée sur l’archive définitive ; handoff complet seulement après les destinations vérifiées. |
+| 5 — A-site_shell | [publish-site-after-distribution](../openspec/changes/publish-site-after-distribution/verification.md) | Même garde sur push, manuel et stable voisin d’un preview ; ancien public conservé pendant l’attente ; promotion après publication complète et contrôle final des identités/fraîcheur. |
+
+Les capacités techniques isolées sqlite-vec et SQLite-Vector restent consommables et testées. Watch/Updates/Release prospectifs restent explicitement Vector. Aucun moteur simultané, canal supplémentaire, registre de releases ou écriture directe sur main n’a été ajouté. La démo conserve son runtime publié 0.2.0 ; son adaptation Vector reste dans [PR #77](https://github.com/at-rama/sqlite-vector-wasm/pull/77).
+
+## 3. Vérifications et corrections
+
+Les cinq rapports unitaires concluent `passed`, avec 100 % dans les deux directions de couverture sémantique. Ces pourcentages sont des jugements documentés sur les obligations complètes de chaque unité, pas des scores calculés à partir du nombre de tests. Le dernier rapport examine les six exigences/23 scénarios effectifs, dont les 11 scénarios du déploiement modifié.
+
+Sur le candidat global propre, `sh tools/check-repository.sh`, la suite complète `sh tools/test-repository.sh` et OpenSpec strict passent, ce dernier à 17/17. Les contextes CLI des cinq changes ont été relus : chacun est `spec-driven`, 4/4 tâches, `all_done`, avec racine `.42p`. La suite Site ciblée avec ses checks passe 62/62. `verify` a été exécuté comme workflow agentique officiel, et non comme une commande CLI inventée.
+
+Les [jobs Repository finaux sur le code exécuté](https://github.com/at-rama/sqlite-vector-wasm/actions/runs/39328793243) confirment `check` et `tests` réussis. Leur gate Verification précède le dernier rapport passant ; son échec à cet instant ne constitue pas un échec de la suite. Les contrôles transversaux ont ainsi renouvelé les preuves affectées par le consommateur Site et les fixtures partagées, sans changer les contrats ni réutiliser silencieusement une réussite ancienne.
+
+Corrections effectuées et revérifiées : isolation du profil documentaire dans la fixture d’images, renouvellement de l’exemple pendant les éditions temporaires de documents, retry borné du nettoyage Git temporaire après deux erreurs ENOTEMPTY, et refus d’emprunter le handoff d’une ancienne tentative réussie pour une tentative Release échouée. Les échecs restent dans l’historique. Le premier contrôle du dernier change a aussi correctement refusé le marqueur de vérification encore ouvert ; sa [trace](https://github.com/at-rama/sqlite-vector-wasm/blob/0dbb88b937542d6d5f5021da6ff1497d2236c7ad/.42p/openspec/changes/publish-site-after-distribution/verification.md) est conservée, puis la vérification a été répétée après correction administrative.
+
+## 4. Preuves d’intégration réelles
+
+- [Acceptance](https://github.com/at-rama/sqlite-vector-wasm/actions/runs/39328793298) : les deux compositions isolées passent. Cela conserve la capacité vec tout en qualifiant le chemin Vector ; ce n’est pas une seconde offre produit.
+- [Release sans publishers](https://github.com/at-rama/sqlite-vector-wasm/actions/runs/39328793248) : neuf étapes, 22 cas navigateur, exemple natif main/Worker et résolution des liens réussis sur le head exécuté. Archive de 1 164 980 octets, SHA-256 `9ac1ec39c45ef6d71bbd1b90b07da32c8f373be3f6e283f429a2181961b9f203`. L’état de publication 0.2.4 est une fixture explicite ; les jobs de publication sont ignorés.
+- [Updates en répétition](https://github.com/at-rama/sqlite-vector-wasm/actions/runs/39328793448) : état publié réellement observé latest 0.2.1, candidat temporaire local `78f67706b86c7e1f69ca357b6032c6ca3abaea5c`, qualification et exemple exact-archive réussis. Son archive est distincte : 1 164 982 octets, SHA-256 `ce55ce38d89501afb56bfff67b8ca9244f34052f50d57111dfab8b5a014a2535`. Aucun adaptateur de création distante de candidat n’est utilisé.
+- [Site](https://github.com/at-rama/sqlite-vector-wasm/actions/runs/39328793220) : build, deploy et observe réussissent. Le preview identifie exactement `67d5feb9245666e3f046718fc828d47dfae3efd7` et consomme l’artefact Release `12224170572`, dont l’archive est vérifiée. Le stable provient séparément de main `741b26d`, avec la sélection publiée 0.2.0 vérifiée sur GitHub/npm. Les destinations sont observées à 1280/390 pixels ; les identités avant/après, sources rendues, navigations et runtime préservé sont enregistrés.
+
+Les quatre ZIPs décisifs ont été téléchargés, leurs SHA-256 comparés aux métadonnées GitHub et leurs JSON inspectés. Le [rapport A-site_shell](../openspec/changes/publish-site-after-distribution/verification.md) donne les identifiants, digests, fichiers et liens primaires. Les preuves publiques sont limitées par leur rétention ; l’URL partagée du preview peut être remplacée et n’est pas à elle seule une identité de preuve.
+
+## 5. Cohérence, écarts et limites
+
+La chaîne relie désormais préparation commune, revue identifiée, calcul définitif, qualification renouvelée, publication complète et promotion documentaire. Une erreur ou une identité inconnue interrompt l’éligibilité ; Site ne répare ni ne republie une distribution. L’ancienne documentation reste déployable à partir des preuves Git/Pages/publication existantes, sinon Pages demeure inchangé. Les mises à jour documentaires d’une version effectivement publiée restent possibles, sans rafraîchir implicitement la démo.
+
+Aucun écart d’implémentation bloquant ne demeure dans le périmètre examiné. Les succès futurs de publication et les mauvais handoffs ont été exercés avec des services contrôlés ; aucune fusion humaine de candidat, création réelle de nouvelle PR Updates ou publication GitHub/npm n’est prétendue. Les prérequis opérationnels de ces services restent nécessaires. Les qualifications réelles portent ici sur SQLite 3.54.0 × SQLite-Vector 1.1.2 ; elles ne qualifient pas implicitement une future sélection 3.54.1.
+
+Les observations passent par le navigateur et les archives externes, mais partagent les checkers, le harness et l’auteur agentique du dépôt. Il ne s’agit pas d’une certification indépendante ou d’une garantie pour tout navigateur, réseau ou ordonnancement. L’exécuteur local a été indisponible pendant une partie du dernier change : les mutations distantes ont continué exclusivement par le connecteur GitHub avec contrôle CAS et relecture. Les contrôles locaux finaux ont ensuite été réellement exécutés après son rétablissement.
+
+## 6. État Git et décision d’institution
+
+Les principaux commits d’implémentation sont `6b80ab0` (package), `a102cc2` (docs), `b1c28ce` (Updates), `afe2e0c` (Release corrigé), puis `25de361`/`560f874`/`67d5feb` (Site et corrections). Les rapports et marqueurs ont leurs propres commits ; le candidat administratif vérifié est identifié en ouverture. Tous ces travaux sont sur la branche existante de PR #76. Aucun change n’est archivé, aucune spec n’est synchronisée et aucune branche ou PR supplémentaire n’a été créée pendant cette implémentation.
+
+**Recommandation : instituer les cinq changes comme un ensemble cohérent.** Leurs rapports et les preuves d’intégration permettent cette décision sans investigation technique supplémentaire dans le périmètre testé. L’institution, la sélection de la première vraie paire Vector et la publication restent des décisions humaines distinctes.
+
+## 7. Suite opératoire minimale
+
+Après décision explicite d’institution : archiver ensemble les cinq changes selon les skills du dépôt, avec la synchronisation prévue par l’archivage ; renouveler strict, contrôles canoniques et gates ; fusionner humainement PR #76. L’archivage n’a pas été anticipé pour rendre le gate vert.
+
+Ensuite, lancer Updates avec la paire exacte choisie, examiner sa PR et son preview identifié, puis décider de son intégration. Release recalcule et qualifie le numéro et l’archive définitifs ; Site promeut les documents seulement après publication complète vérifiée. L’intégration de la PR technique #76 seule ne publie pas de nouvelle distribution et ne doit pas exposer les documents Vector comme déjà disponibles. Une mise à jour explicite de la démo #77 vient après une véritable publication stable Vector.

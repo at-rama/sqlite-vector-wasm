@@ -2,12 +2,12 @@
 schema_version: 1
 change: publish-site-after-distribution
 allocation_unit: A-site_shell
-checked_commit: 7f82f3733815a3a73d4ffede77e23f8b0d22fe46
-verdict: failed
+checked_commit: 0dbb88b937542d6d5f5021da6ff1497d2236c7ad
+verdict: passed
 coverage:
   allocation_to_change: 100
   change_to_allocation: 100
-openspec_verify: failed
+openspec_verify: passed
 repository_checks: passed
 applicable_tests: passed
 ---
@@ -15,7 +15,7 @@ applicable_tests: passed
 
 ## Institutional view
 
-**Verification failed at the completion marker, not at an observed runtime assertion.** The clean checked commit has three of four tasks complete; task 4.1 still requires recording this invocation. Both coverage directions, the repository checks and applicable executable checks pass. The official completeness control therefore prevents a passing aggregate verdict until the marker is completed and Verification is repeated. Actual browser/build/Pages evidence is from `67d5feb9245666e3f046718fc828d47dfae3efd7`; the checked commit changes only task 3's marker. That execution is explicitly reused after checking byte identity, not relabeled as execution on this administrative commit. Future Vector publication and human integration are controlled fixtures, not live publication observations.
+**Passed for A-site_shell.** Both semantic coverage directions and all three Verification controls pass on the clean checked commit `0dbb88b937542d6d5f5021da6ff1497d2236c7ad`; all four tasks are complete. Actual browser/build/Pages evidence is from `67d5feb9245666e3f046718fc828d47dfae3efd7`. The checked commit differs only in this Change's task markers and first verification report; every implementation, documentation, lock and tooling byte is identical. That execution is explicitly reused, not relabeled as execution on the administrative commit. Canonical checks, the entire registered suite, all five CLI contexts and strict validation were renewed locally on the clean checked commit. Future Vector publication and human integration remain controlled fixtures, not live publication observations. The [first invocation record](https://github.com/at-rama/sqlite-vector-wasm/blob/0dbb88b937542d6d5f5021da6ff1497d2236c7ad/.42p/openspec/changes/publish-site-after-distribution/verification.md) preserves the earlier failure caused solely by the unfinished verification marker; its correction and this repeat resolve that finding.
 
 **Command provenance.** The [reconciled Allocation](https://github.com/at-rama/sqlite-vector-wasm/blob/41c7d36e2f67118d507deb0005eda887bfa12334/.42p/engineering/2026-10-04_sqlite-vec-wasm_allocation_edit-0.1.md), A-site_shell, derives its complete command from Site C-site/C-readme/C-demo-release/C-demo-checks/Q-realization and Distribution C-release-review. Those complete passages were reread forward and backward against the [effective mapping](coverage.md), the synchronized site-shell baseline and this delta: both semantic directions remain 100%. This examination does not independently reaudit the original historical conversations or treat the four related Captures as independent corroboration. Their institution and historical provenance remain governed by AGENTS.md.
 
@@ -29,7 +29,7 @@ applicable_tests: passed
 
 **Dependencies and limits.** Browser observations use Chrome 153.0.8010.12 and the repository's pinned harness/VitePress tooling. Implementation, test definitions and this examination share agentic authorship; finite observations and injected services are not independent proof of every future service response. Actual browser loading/SQL and read-only destination bytes exercise external boundaries. Artifact availability is retention-bound; missing/expired or inconsistent required handoffs fail closed. These checks complement, rather than replace, product acceptance and the documentation/demo units. The local executor was unavailable during initial implementation; remote edits used the GitHub connector with CAS and exact readback. It recovered for final local check/test/strict validation and artifact inspection.
 
-**Institution decision.** The supported realization is available for review, but this invocation is failed while task 4.1 remains incomplete. No archive, synchronization, fusion or distribution publication is authorized by these findings.
+**Institution decision.** This scoped realization and invocation are satisfactory under the stated evidence boundaries. All effective obligations have an examined disposition; no applicable control remains unverified. Human institution remains a separate decision. No archive, synchronization, fusion or distribution publication is authorized by these findings.
 
 ## Detailed record
 
@@ -46,15 +46,15 @@ Actual implementation snapshot: `67d5feb9245666e3f046718fc828d47dfae3efd7`, tree
 
 ### Official OpenSpec verify
 
-Selected generated skill: openspec-verify-change 1.14.0, unchanged. Local `list --json` resolves `.42p`; `status` returns spec-driven and the existing change root; `instructions apply` returns all four readable artifacts and four tracked tasks. Its project context was applied without copying it into product prose. No Store or generated-skill update was used.
+Selected generated skill: openspec-verify-change, generatedBy 1.14.0, unchanged. Local `list --json` resolves `.42p`; `status` returns spec-driven and the existing change root; `instructions apply` returns all four readable artifacts and four tracked tasks. Its project context was applied without copying it into product prose. No Store or generated-skill update was used.
 
 | Dimension | Finding |
 | --- | --- |
-| Completeness | 3/4 tasks; CRITICAL: task 4.1 is still unchecked. One modified requirement is implemented; no removal/rename entries. |
+| Completeness | 4/4 tasks; one modified requirement implemented; all six effective requirements accounted for; no removal/rename entries. |
 | Correctness | All 11 delta scenarios mapped to code and suitable execution/semantic evidence; all 23 effective scenarios retained in the unit review. |
 | Coherence | Previous eligible source, existing preview/publication handoffs, no new registry/main write, unchanged demo identity and final freshness design followed; repository module/test patterns retained. |
 
-CRITICAL finding: complete the task 4.1 administrative marker after recording this invocation, then repeat Verification on a clean committed candidate. No other unresolved warning or suggestion was found in the examined unit. Aggregate verdict remains failed; task completion is not substituted for realization evidence.
+The previous critical completeness finding is resolved: task 4.1 records the invocation, the administrative correction was committed, and status/apply were repeated on the clean checked candidate. No critical issue, unresolved warning, suggestion or skipped applicable check remains in the examined unit. Official verification passes; its archive-readiness advice does not authorize archive in this mission. Task completion is not substituted for realization evidence.
 
 ### Scenario dispositions and reverse grounding
 
@@ -66,4 +66,4 @@ For the modified deployment requirement: internal preview and identity/navigatio
 
 On the implementation snapshot, CI `sh tools/check-repository.sh` and the complete `sh tools/test-repository.sh` pass; locked OpenSpec strict validation passes 17/17. Both isolated engine compositions pass in [Acceptance](https://github.com/at-rama/sqlite-vector-wasm/actions/runs/39328793298). Site's build/deploy/observe all pass. Local canonical check, `node --test tools/site/tests/*.test.mjs tools/site/checks/*.test.mjs` (62/62), and strict validation were renewed after the executor recovered. The task-only difference is checked explicitly before reuse.
 
-Earlier failed executions remain failures: Site 39327709446 exposed a controller profile leaking into the temporary relative-image fixture; its scoped override is now cleared/restored around that fixture. A later exact-attempt regression prevents a failed Release retry from borrowing an older successful handoff. Two repository test attempts failed in temporary Git-directory cleanup with ENOTEMPTY; bounded removal retries were added without altering product assertions. The final complete suite passes with both corrections. Neither failed execution supplies acceptance evidence. The repository Verification gate currently lacks a passing report for this unit; the Archive gate intentionally remains failed because archive is excluded from this mission.
+Earlier failed executions remain failures: Site 39327709446 exposed a controller profile leaking into the temporary relative-image fixture; its scoped override is now cleared/restored around that fixture. A later exact-attempt regression prevents a failed Release retry from borrowing an older successful handoff. Two repository test attempts failed in temporary Git-directory cleanup with ENOTEMPTY; bounded removal retries were added without altering product assertions. The final complete suite passes with both corrections. Neither failed execution supplies acceptance evidence. The earlier aggregate Verification failures included the missing/nonpassing report for this unit; the final passing report is submitted to that gate after this invocation. The Archive gate intentionally remains failed because archive is excluded from this mission.
