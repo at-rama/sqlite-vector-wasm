@@ -2,9 +2,9 @@
   "schemaVersion": 2,
   "sqlite": "3.54.1",
   "sqliteVector": "1.1.2",
-  "releaseComment": "Update SQLite directly from 3.54.0 to 3.54.1, fixing a possible heap-buffer overflow in 32-bit builds and other issues reported in 3.54.0.\n\nBREAKING CHANGE: SQLite-Vector 1.1.2 replaces sqlite-vec as the vector engine. Existing sqlite-vec SQL queries are incompatible and must be rewritten using SQLite-Vector APIs. Review the updated Usage guide before upgrading.",
+  "releaseComment": "Update SQLite from 3.54.0 to 3.54.1, fixing a possible heap-buffer overflow in 32-bit builds and other issues reported in 3.54.0.\n\nBREAKING CHANGE: SQLite-Vector 1.1.2 replaces sqlite-vec as the vector engine. Existing sqlite-vec SQL queries are incompatible and must be rewritten using SQLite-Vector APIs. Review the updated Usage guide before upgrading.",
   "preparation": {
-    "runId": 39462086640,
-    "url": "https://github.com/at-rama/sqlite-vector-wasm/actions/runs/39462086640"
+    "runId": 39487723813,
+    "url": "https://github.com/at-rama/sqlite-vector-wasm/actions/runs/39487723813"
   }
 }
