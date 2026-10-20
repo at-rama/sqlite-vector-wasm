@@ -71,6 +71,10 @@ class LockTests(unittest.TestCase):
 
 
 
+def sqlite_metadata():
+    return 'PRODUCT,3.53.4,2026/sqlite-src-3530400.zip,100,' + 'a' * 64
+
+
 def release_page(url):
     v = url.rsplit('/', 1)[1].removesuffix('.html').replace('_', '.')
     return f'<title>SQLite Release {v} On 2026-01-01</title>'
@@ -212,7 +216,7 @@ def vector_metadata(url):
 
 class VectorResolutionTests(unittest.TestCase):
     def resolve(self, releases=None, fetch=vector_metadata, **kwargs):
-        return inputs.resolve_vector_pair(('PRODUCT,3.53.4,2026/sqlite-src-3530400.zip,100,' + 'a' * 64), releases if releases is not None else [vector_release()],
+        return inputs.resolve_vector_pair(sqlite_metadata(), releases if releases is not None else [vector_release()],
             fetch=fetch, archive_digest=lambda url: 'd' * 64, **kwargs)
 
     def test_fixed_schema_and_independent_selection(self):
@@ -285,7 +289,7 @@ class VectorResolutionTests(unittest.TestCase):
 
     def test_sqlite_digest_policy_is_unchanged(self):
         with self.assertRaises(inputs.InputError):
-            inputs.resolve_vector_pair(('PRODUCT,3.53.4,2026/sqlite-src-3530400.zip,100,' + 'a' * 64).replace('a'*64,''), [vector_release()], fetch=vector_metadata, archive_digest=lambda url:'d'*64)
+            inputs.resolve_vector_pair(sqlite_metadata().replace('a'*64,''), [vector_release()], fetch=vector_metadata, archive_digest=lambda url:'d'*64)
 
     def test_command_candidate_is_atomic_and_not_adopted(self):
         with tempfile.TemporaryDirectory() as d:
@@ -293,7 +297,7 @@ class VectorResolutionTests(unittest.TestCase):
             baseline.write_text(json.dumps(lock())); output=root/'candidate.json'; output.write_text('previous')
             args=argparse.Namespace(sqlite_version=None,vector_version='1.1.2',baseline_lock=None,output=str(output))
             def fetch(url):
-                if url==inputs.SQLITE_DOWNLOAD:return ('PRODUCT,3.53.4,2026/sqlite-src-3530400.zip,100,' + 'a' * 64)
+                if url==inputs.SQLITE_DOWNLOAD:return sqlite_metadata()
                 if '/releases/tags/' in url:return json.dumps(vector_release())
                 return vector_metadata(url)
             def archive(url,path):path.write_bytes(b'candidate bytes')
