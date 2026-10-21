@@ -1,6 +1,7 @@
 import {mainPlaceholder,buildStablePlaceholder} from './placeholder.mjs';
 import {mainDemo,buildStableDemo} from './current-demo.mjs';
 import {checkDemo} from './demo-check.mjs';
+import {prepareData} from './demo-data.mjs';
 import { example } from './example.mjs';
 import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, writeFile, rm, readFile, cp, symlink } from 'node:fs/promises';
@@ -210,7 +211,10 @@ export async function exerciseStablePlaceholder() {
     // Model the later authorized main return without promoting the candidate's documentation.
     const readAt=async(commit,path)=>readFile(join(repository,path),'utf8');
     const demo=await mainDemo(readAt,'d'.repeat(40));
-    for(const folder of ['demo-download','demo-input'])await cp(join(repository,'.work',folder),join(root,'.work',folder),{recursive:true});
+    // A clean CI checkout has neither runtime nor reference caches. Acquire
+    // checked original reference inputs explicitly; the isolated stable root
+    // independently acquires its own published archive and corpus.
+    await prepareData(repository,join(repository,'.work/demo-reference-inputs'));
     const returned=await buildStableDemo({root,demo,readAt});
     assert.match(await readFile(join(returned.source,'index.md'),'utf8'),/Only the independently selected stable documentation/);
     assert.equal(returned.demoSource.sourceCommit,'d'.repeat(40));
