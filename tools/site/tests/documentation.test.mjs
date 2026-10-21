@@ -48,13 +48,13 @@ test('documentation rendering rejects stale, missing or mismatched execution evi
   }
   // Editorial edits may rebuild the site but cannot requalify a changed Usage guide.
   await save(evidence);
-  await writeFile(join(root,'README.md'),'# Edited presentation\\n');
+  await writeFile(join(root,'README.md'),'# Edited presentation\n');
   await assert.rejects(checkedDocumentation(root),/Stale documentation example sources/);
   assert.equal((await checkedDocumentation(root,{allowDirtyDocumentation:true})).version,'0.3.0');
-  await writeFile(join(root,'docs/usage.md'),'# Changed usage\\n');
+  await writeFile(join(root,'docs/usage.md'),'# Changed usage\n');
   await assert.rejects(checkedDocumentation(root,{allowDirtyDocumentation:true}),/Stale qualified usage guide/);
-  await writeFile(join(root,'README.md'),'# Presentation\\n');
-  await writeFile(join(root,'docs/usage.md'),'# Usage\\n');
+  await writeFile(join(root,'README.md'),'# Presentation\n');
+  await writeFile(join(root,'docs/usage.md'),'# Usage\n');
   await assert.rejects(checkedDocumentation(root,{allowDirtyDocumentation:true}),/Editorial exercise requires a dirty documentation checkout/);
   const published=structuredClone(evidence);
   published.context.mode='published';published.context.publicationCommit='c'.repeat(40);published.selection.commit='c'.repeat(40);
