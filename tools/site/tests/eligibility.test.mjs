@@ -5,7 +5,7 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {documentHash as hash} from '../documentation.mjs';
 import {candidateProfile} from '../../updates/documentation.mjs';
-import {stableSource,siteSelection,assertStableCurrent,eligibleSource,publicationCompletion} from '../eligibility.mjs';
+import {stableSource,siteSelection,assertStableCurrent,eligibleSource,publicationCompletion,verifyPublished} from '../eligibility.mjs';
 const repository='at-rama/sqlite-vector-wasm',main='a'.repeat(40),prior='b'.repeat(40),head='c'.repeat(40);
 const response=data=>({status:200,data});
 const stable={sourceCommit:prior,selection:{mode:'published',version:'0.2.0'},publication:{version:'0.2.0'},demoSelection:{version:'0.2.0'}};
@@ -94,14 +94,13 @@ test('handoff must match integrated human PR, workflow, attempt, outcome and can
  const f=await candidate(t),directory=await mkdtemp(join(tmpdir(),'site-completion-'));t.after(()=>rm(directory,{recursive:true,force:true}));
  const run={id:9,head_sha:head,run_attempt:1,repository:{full_name:repository},path:'.github/workflows/release.yml',event:'pull_request',status:'completed',conclusion:'success'};
  const pr={merged:true,state:'closed',merged_by:{type:'User'},base:{ref:'main',repo:{full_name:repository}},head:{sha:head,repo:{full_name:repository}},merge_commit_sha:prior};
- const outcome={status:'complete',identity:{version:f.pub.version,tag:f.pub.tag}};
+ const outcome={status:'published-verification-pending',identity:{version:f.pub.version,tag:f.pub.tag},outcomes:['tag','draft','archive','provenance','attestation','npm','github','github-identity','npm-identity'].map(operation=>({operation,status:operation==='npm-identity'?'pending':'succeeded'}))};
  await writeFile(join(directory,'publication.json'),JSON.stringify(f.pub));
  const invoke=async()=>{await writeFile(join(directory,'outcome.json'),JSON.stringify(outcome));return publicationCompletion({repository,publication:f.pub,release:f.release,trigger:run,directory,
  get:async url=>response(url.includes('/pulls/')?pr:url.includes('/artifacts?')?{total_count:1,artifacts:[{name:'release-outcome-9-1',expired:false}]}:run),
- artifact:async()=>({directory,id:10,sha256:'e'.repeat(64)}),services:{verifyGitHub:async()=>{},verifyNpm:async()=>({status:'verified'})},
- inspect:async({evidence,outcome:value})=>{assert.deepEqual(evidence,f.pub);assert.equal(value.status,'complete');return {status:'complete',stableDocumentationEligible:true};}});};
+ artifact:async()=>({directory,id:10,sha256:'e'.repeat(64)}),services:{verifyGitHub:async()=>{}}});};
  assert.equal((await invoke()).runId,9);
- outcome.status='failed';await assert.rejects(invoke(),/No complete/);outcome.status='complete';
+ outcome.status='failed';await assert.rejects(invoke(),/Incomplete release publication handoff/);outcome.status='published-verification-pending';
  run.conclusion='failure';await assert.rejects(invoke(),/Failed publication/);run.conclusion='success';
  run.repository.full_name='other/repo';await assert.rejects(invoke(),/Unrelated/);run.repository.full_name=repository;
  pr.merge_commit_sha=head;await assert.rejects(invoke());pr.merge_commit_sha=prior;
@@ -129,8 +128,7 @@ test('a failed completion attempt cannot borrow an older successful handoff from
  const invoke=()=>publicationCompletion({repository,publication:f.pub,release:f.release,trigger:run,directory,
  get:async url=>response(url.includes('/pulls/')?pr:url.includes('/artifacts?')?{total_count:2,artifacts:[1,2].map(n=>({name:'release-outcome-9-'+n,expired:false}))}:url.includes('/attempts/1')?{...run,run_attempt:1,conclusion:'success'}:run),
  artifact:async({name})=>{await writeFile(join(directory,'publication.json'),JSON.stringify(f.pub));await writeFile(join(directory,'outcome.json'),JSON.stringify({status:name.endsWith('-1')?'complete':'failed',identity:{version:f.pub.version,tag:f.pub.tag}}));return {directory,id:10,sha256:'e'.repeat(64)};},
- services:{verifyGitHub:async()=>{},verifyNpm:async()=>({status:'verified'})},
- inspect:async()=>({status:'complete',stableDocumentationEligible:true})});
+ services:{verifyGitHub:async()=>{}}});
  await assert.rejects(invoke(),/No complete matching/);
 });
 
