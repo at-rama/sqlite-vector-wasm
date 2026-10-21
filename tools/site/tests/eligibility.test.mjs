@@ -9,7 +9,7 @@ import {stableSource,siteSelection,assertStableCurrent,eligibleSource,publicatio
 const repository='at-rama/sqlite-vector-wasm',main='a'.repeat(40),prior='b'.repeat(40),head='c'.repeat(40);
 const response=data=>({status:200,data});
 const stable={sourceCommit:prior,selection:{mode:'published',version:'0.2.0'},publication:{version:'0.2.0'},demoSelection:{version:'0.2.0'}};
-const readAt=async(commit,path)=>path==='tools/site/docs-example.json'?JSON.stringify(candidateProfile):JSON.stringify({schemaVersion:1});
+const readAt=async(commit,path)=>path==='tools/site/docs-example.json'?JSON.stringify(candidateProfile):path==='tools/site/demo-runtime.json'?null:JSON.stringify({schemaVersion:1});
 const event={number:76,pull_request:{number:76,state:'open',head:{sha:head,ref:'plan/release-docs-review',repo:{full_name:repository}}}};
 const common={repository,event,sha:main,actor:'maintainer',readAt,directory:'.work/site',get:async()=>response({sha:main})};
 const selected=async()=>structuredClone(stable);
@@ -144,7 +144,7 @@ test('a cleanup PR without release.json still selects an unpublished preview and
 
 
 test('only adopted main placeholder replaces the historical stable demo, independently of unpublished docs', async () => {
- const markdown = await readFile(new URL('../../../site/demo/index.md',import.meta.url),'utf8');
+ const markdown = '# Demo\n\nThe demonstration is being refactored for SQLite-Vector.\n\n[Read the usage documentation](../usage/).\n';
  const source = async (commit,path,...args) => path==='site/demo/index.md' ? (commit===main?markdown:'# Demo\n<script>old runtime</script>') : readAt(commit,path,...args);
  const result=await siteSelection({...common,readAt:source,eventName:'pull_request',selectStable:selected,resolveSource:async()=>{throw Error('pending');}});
  assert.equal(result.stable.sourceCommit,prior);assert.deepEqual(result.stable.selection,stable.selection);

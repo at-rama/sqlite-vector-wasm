@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { launchBrowser } from '../harness/browser.mjs';
 
-export async function checkBrowser(url, { screenshot, requireWideCode = false, demoFixture = false, preview = null, requireDocs = false, requireNpm = true, requirePlaceholder = false, historicalDemo = false } = {}) {
+export async function checkBrowser(url, { screenshot, requireWideCode = false, demoFixture = false, preview = null, requireDocs = false, requireNpm = true, requirePlaceholder = false, historicalDemo = false, runningDemo = false } = {}) {
   const base = new URL(url);
   assert.ok(base.pathname.endsWith('/'), 'Site URL must end in /');
   const browser = await launchBrowser();
@@ -13,7 +13,7 @@ export async function checkBrowser(url, { screenshot, requireWideCode = false, d
     if (requireDocs) assert.equal(docsResponse.status(), 200, 'Integrated documentation manifest is required');
     const docs = docsResponse.ok() ? await docsResponse.json() : null;
     if (docs) assert.deepEqual(docs.pages.map(page => page.source), ['README.md', 'docs/usage.md']);
-    const heading = label => label === 'Demo' && historicalDemo ? 'Emoji vector explorer' : label === 'Presentation' && docs ? docs.pages[0].headings[0] : label === 'Usage' && docs ? docs.pages[1].headings[0] : label;
+    const heading = label => label === 'Demo' && (historicalDemo || runningDemo) ? 'Emoji vector explorer' : label === 'Presentation' && docs ? docs.pages[0].headings[0] : label === 'Usage' && docs ? docs.pages[1].headings[0] : label;
     async function documentation(path) {
       const expected = docs?.pages.find(entry => entry.path === path);
       if (!expected) return;
@@ -127,7 +127,7 @@ export async function checkBrowser(url, { screenshot, requireWideCode = false, d
     }
     if (screenshot) await page.screenshot({ path: screenshot, fullPage: true });
     if (requireWideCode) assert.ok(wideCodeObserved, 'The fixture must exercise a wide code block');
-    if (!demoFixture && !historicalDemo) {
+    if (!demoFixture && !historicalDemo && !runningDemo) {
       assert.deepEqual(runtimeRequests, [], 'Placeholder must not load demo runtime or corpus');
       assert.deepEqual(workers, [], 'Placeholder must not initialize a Worker');
     }

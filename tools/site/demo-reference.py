@@ -1,4 +1,4 @@
-"""Independent scalar reference: no sqlite-vec or production preparation imports."""
+"""Independent scalar reference: no vector extension or production preparation imports."""
 import json, math, pathlib, struct, sys
 
 def read_vectors(path):

@@ -1,4 +1,5 @@
 import { build, install } from './build.mjs';
+import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { repository } from './build.mjs';
 import { previewIdentity, previewBase } from './options.mjs';
@@ -24,7 +25,17 @@ try {
     const { checkBrowser } = await import('./browser.mjs');
     const { serveSite } = await import('./server.mjs');
     const server = options.url ? null : await serveSite(join(repository, '.work/site/dist'), options.preview ? previewBase : undefined);
-    try { console.log(JSON.stringify(await checkBrowser(options.url ?? server.url, { ...options, requireDocs: true, requirePlaceholder: true }))); }
+    try {
+      const url = options.url ?? server.url;
+      const built = JSON.parse(await readFile(join(repository, '.work/site/build.json'), 'utf8'));
+      const runningDemo = Boolean(built.runtime);
+      console.log(JSON.stringify(await checkBrowser(url, { ...options, requireDocs: true, requirePlaceholder: !runningDemo, runningDemo })));
+      if (runningDemo) {
+        const result = await (await import('./demo-check.mjs')).checkDemo(url, {root:repository, expectedPreview:options.preview, runtimeInventory:built.runtime, screenshot:join(repository,'.work/site/demo-check-mobile.png')});
+        await writeFile(join(repository,'.work/site/demo-check.json'),JSON.stringify(result,null,2)+'\n');
+        console.log(JSON.stringify(result));
+      }
+    }
     finally { await server?.close(); }
   } else if (command === 'example') {
     let candidateBundle;

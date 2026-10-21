@@ -57,6 +57,7 @@ export async function assemble({ stableRoot, candidateRoot, output, context }) {
   await rm(output, { recursive: true, force: true });
   await mkdir(output, { recursive: true });
   try {
+    let previewDemo = null, stableDemoRuntime = null;
     const stablePresent = await hasSite(stableRoot);
     if (context.mode === 'stable' && !stablePresent) throw Error('Main deployment requires a stable site.');
     if (stablePresent) {
@@ -66,14 +67,23 @@ export async function assemble({ stableRoot, candidateRoot, output, context }) {
         assert.deepEqual(stable.record.placeholder, {sourceCommit:context.mainCommit,sha256:context.stablePlaceholder.sha256}, 'Stable placeholder build identity mismatch');
         assert.equal(stable.record.runtime, null);
       }
+      if (context.stableDemo) {
+        assert.deepEqual(stable.record.demoSource, context.stableDemo, 'Stable demo source identity mismatch');
+        assert.ok(stable.record.runtime, 'Stable demo runtime missing');
+        stableDemoRuntime = stable.record.runtime;
+      }
       await cp(stable.output, output, { recursive: true });
     }
     if (context.mode === 'preview') {
       const candidate = await validatedOutput(candidateRoot);
       if (JSON.stringify(candidate.record.preview) !== JSON.stringify(context.preview)) throw Error('Candidate build identity mismatch.');
+      if (candidate.record.runtime) {
+        const selection = JSON.parse(await readFile(join(candidate.output, 'demo-runtime.json'), 'utf8'));
+        if (selection.engine === 'sqliteVector') previewDemo = { selection, runtime: candidate.record.runtime };
+      }
       await cp(candidate.output, join(output, 'preview'), { recursive: true });
     }
-    const record = { ...context, stablePresent };
+    const record = { ...context, stablePresent, ...(previewDemo ? {previewDemo} : {}), ...(stableDemoRuntime ? {stableDemoRuntime} : {}) };
     await writeFile(join(output, 'site-publication.json'), JSON.stringify(record, null, 2) + '\n');
     return record;
   } catch (error) {
