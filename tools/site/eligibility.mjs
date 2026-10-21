@@ -4,10 +4,9 @@ import {join,resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {root} from '../package/package.mjs';
 import {sourceCommit,documentHash as hash} from './documentation.mjs';
-import {httpReader,pages,download,publicationIdentity,npmState,repositoryName} from '../release/state.mjs';
+import {httpReader,pages,download,publicationIdentity,repositoryName} from '../release/state.mjs';
 import {candidateDescriptorChanged,descriptor} from '../release/context.mjs';
 import {githubServices} from '../release/services.mjs';
-import {inspectPublicationCompletion,checkInitialCompletion} from '../release/run.mjs';
 import {runArtifact,uniqueRecord} from '../release/artifacts.mjs';
 import {mainPlaceholder} from './placeholder.mjs';
 import {mainDemo} from './current-demo.mjs';
@@ -20,15 +19,14 @@ async function json(get, url) { const r=await get(url);assert.equal(r.status,200
 
 async function verifyPublished({repository,release,publication,get}) {
  publicationIdentity(publication);const services=githubServices({repository,get});await services.verifyGitHub(release,publication);
- const npm=await npmState(get,{allowAbsent:false}),version=npm.versions[publication.version];assert.ok(version,"Announced npm version unavailable");
- const bytes=await download(version.dist.tarball,get);assert.equal(bytes.length,publication.archive.size);assert.equal(hash(bytes),publication.archive.sha256,"GitHub/npm archive mismatch");
  const records=release.assets.filter(a=>a.name==="publication.json"),archives=release.assets.filter(a=>a.name==="payload.tgz");assert.equal(records.length,1);assert.equal(archives.length,1);
+ const bytes=await download(archives[0].url,get);assert.equal(bytes.length,publication.archive.size);assert.equal(hash(bytes),publication.archive.sha256,"GitHub archive mismatch");
  const record=await download(records[0].url,get);
  return {mode:"published",engine:publication.upstreams.sqliteVector?"sqliteVector":"sqliteVec",version:publication.version,releaseId:release.id,commit:publication.commit,
  publicationUrl:records[0].browser_download_url,publicationSha256:hash(record),archiveUrl:archives[0].browser_download_url,archiveSha256:publication.archive.sha256};
 }
 
-async function publicationCompletion({repository,publication,release,get,trigger,directory,artifact=runArtifact,inspect=inspectPublicationCompletion,services=githubServices({repository,get})}) {
+async function publicationCompletion({repository,publication,release,get,trigger,directory,artifact=runArtifact,services=githubServices({repository,get})}) {
  const number=publication.invocation?.pullRequest;assert.ok(Number.isSafeInteger(number)&&number>0,"Missing integrated publication PR");
  const pr=await json(get,`${api(repository)}/pulls/${number}`);assert.ok(pr.merged&&pr.state==="closed"&&pr.merged_by?.type==="User");
  assert.equal(pr.base?.ref,"main");assert.equal(pr.base.repo?.full_name,repository);assert.equal(pr.head?.repo?.full_name,repository);assert.equal(pr.merge_commit_sha,publication.commit);
@@ -45,15 +43,15 @@ async function publicationCompletion({repository,publication,release,get,trigger
    const input=await artifact({repository,run:source,name:entry.name,get,directory}),outcome=await uniqueRecord(input,"outcome.json");
    const evidence=await uniqueRecord(input,"publication.json",e=>e.commit===publication.commit&&e.version===publication.version);assert.deepEqual(evidence,publication,"Publication handoff differs from published provenance");
    if(outcome.identity?.version!==publication.version||outcome.identity?.tag!==publication.tag)continue;
-   let completed;
-   if(outcome.status==="npm-pending"&&publication.initial&&publication.version==="0.1.0"){
-    assert.deepEqual(outcome.outcomes.map(o=>[o.operation,o.status]),["tag","draft","archive","provenance","attestation","github","github-identity"].map(n=>[n,"succeeded"]));
-    completed=await checkInitialCompletion({evidence:publication,get,verifyGitHub:e=>services.verifyGitHub(release,e)});
-   }else{
-    if(!["complete","published-verification-pending"].includes(outcome.status))continue;assert.equal(source.conclusion,"success","Failed publication workflow");
-    completed=await inspect({evidence:publication,outcome,verifyGitHub:e=>services.verifyGitHub(release,e),verifyNpm:services.verifyNpm});
-   }
-   assert.ok(completed.status==="complete"&&completed.stableDocumentationEligible,"Distribution publication remains incomplete");
+   assert.ok(["complete","published-verification-pending"].includes(outcome.status),"Incomplete release publication handoff");
+   assert.equal(source.conclusion,"success","Failed publication workflow");
+   const operations=["tag","draft","archive","provenance","attestation","npm","github","github-identity","npm-identity"];
+   assert.deepEqual(outcome.outcomes?.map(o=>o.operation),operations,"Incomplete publication operations");
+   for(const operation of outcome.outcomes)assert.equal(operation.status,
+    outcome.status==="published-verification-pending"&&operation.operation==="npm-identity"?"pending":"succeeded","Incomplete publication operation");
+   assert.ok(publication.documentation&&publication.invocation?.pullRequest,"Missing reviewed publication documentation");
+   if(outcome.status==="complete")assert.deepEqual(outcome.publication,publication,"Completion provenance mismatch");
+   await services.verifyGitHub(release,publication);
    matches.push({runId:run.id,attempt,artifactId:input.id,artifactSha256:input.sha256,status:"complete"});
   }
  }
