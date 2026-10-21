@@ -2,30 +2,48 @@
 
 ## Context
 
-Allocation: `A-site_demo` only, [snapshot at 41c7d36e2f67118d507deb0005eda887bfa12334](https://github.com/at-rama/sqlite-vector-wasm/blob/41c7d36e2f67118d507deb0005eda887bfa12334/.42p/engineering/2026-10-04_sqlite-vec-wasm_allocation_edit-0.1.md) (SHA-256 `bd990a1bea53e94184349837794489648d27e68b7327e76be9ddeea318df9217`). Its complete qualified Capture references apply, including unchanged boundaries. Global Capture → Allocation examination: [record](../../../engineering/2026-10-19_release-review_derivation_edit-0.1.md). This proposal changes no other unit and authorizes no Apply, merge or publication.
+Allocation: `A-site_demo` only, [current source snapshot](https://github.com/at-rama/sqlite-vector-wasm/blob/c1707c6712b686523fd9978f322c7741ac7c8690/.42p/engineering/2026-10-04_sqlite-vec-wasm_allocation_edit-0.1.md), SHA-256 `80e3d64c3e30e9340b192ca2c2867e46e91f076036319c1e0c89866f3b9b40cc`. Its complete qualified references apply, especially Site C-demo-release/C-demo-checks under S-demo-placeholder and S-composition-cleanup. [Coverage](coverage.md) traces the complete unit, including retained requirements. This reconciliation changes planning only; it performs no Apply, synchronization, archive, merge, publication or deployment.
 
-Observed implementation: `site/demo/demo-worker.mjs`, demo client/data logic, `tools/site/demo.mjs`, `tools/site/demo-runtime.json`, site/demo tests and checks. Current selection is published vec 0.2.0 and must remain truthful until a real stable Vector archive exists.
+At source snapshot `c1707c6712b686523fd9978f322c7741ac7c8690`, [the Demo page](https://github.com/at-rama/sqlite-vector-wasm/blob/c1707c6712b686523fd9978f322c7741ac7c8690/site/demo/index.md) is static. `site/demo/demo-worker.mjs`, `tools/site/demo.mjs` and `tools/site/demo-runtime.json` no longer exist. [Placeholder publication handling](https://github.com/at-rama/sqlite-vector-wasm/blob/c1707c6712b686523fd9978f322c7741ac7c8690/tools/site/placeholder.mjs) intentionally constructs that state without runtime assets. Corpus source pins, parsing and independent-reference utilities remain in `tools/site/`; their presence does not establish a working demo.
+
+The effective contract is the synchronized [site-demo baseline](https://github.com/at-rama/sqlite-vector-wasm/blob/c1707c6712b686523fd9978f322c7741ac7c8690/.42p/openspec/specs/site-demo/spec.md) (SHA-256 `41101f96cee3330696176e37c2bd36300439143c1332924f1eee9b6c95657ae8`) plus this delta. Its temporary exception is current; its full deferred runnable requirements are retained for the qualified return. Historical archives and old passes neither override that exception nor qualify new runtime bytes.
 
 ## Goals / Non-Goals
 
-Realize this unit's changed obligations while retaining its complete existing effective contract. Adapt native Vector SQL/version identity and independent binary/Hamming/Float32-cosine checks; keep the complete existing corpus and UI; explicitly refresh only from an actually published stable Vector archive. No change to general 42P, source locks, human authority, published history, product channel/version policy, runtime API or unrelated unit is proposed.
+Restore the complete deferred A-site_demo behavior through a single SQLite-Vector implementation. Preserve the temporary public state until a qualified return is integrated through the existing human-controlled lifecycle. Keep the current corpus/modes/UI obligations and independent browser/Pages checks, with native extension execution and no package API or engine rebuild.
+
+No parallel sqlite-vec capability, engine chooser, compatibility facade, configurable placeholder/runtime mode, new release channel, upstream patch, migration guide, persistent database or broader 42P/workflow redesign is introduced. README/Usage and product publication retain their current owners and guarantees.
 
 ## Decisions
 
-Use Vector native ordinary-table BLOB storage and native exact search operations suited to binary Hamming and Float32 cosine, preserving the independent reference oracle, six-neighbor/tie semantics and deferred Float32 loading. Choose concrete SQL from the exact released upstream already selected by the eventual published archive; no facade or custom distance implementation substitutes for extension execution. Prepare code/fixtures without relabeling the current demo. Actual integration/verification of the refreshed demo waits for an available qualified published stable Vector archive; absence is blocked, never synthetic success.
+### Rebuild from the current site, reuse history selectively
 
-The synchronized `site-demo` baseline at main `741b26df750b3c1f0f5a00c1dd1e579b4e7c6d9e` plus this delta forms the effective contract; omitted unchanged requirements are retained, not deferred. Implementation tasks preserve that complete surface and checks; prior historical passes are not future acceptance evidence.
+Treat the runnable client/Worker, exact runtime selection and integration checks as work to perform, not existing code needing a small SQL edit. Reuse the retained pinned corpus/parser/reference utilities after checking their applicability. Historical UI code may be ported where useful, but no abandoned engine SQL, selector or obsolete runtime pin returns to active support. A clean rewrite or selective port remains a realization choice under identical behavior; neither permits a smaller corpus or reduced checks.
 
-Public Markdown sources must remain readable on GitHub. Keep durable prose free of forecast-dependent literals where possible; any final-identity rendering is limited to reviewed mechanical fields. If a changed definitive identity would invalidate authored instructions or require substantive source edits, stop before publication and prepare a refreshed reviewable candidate rather than planning a post-publication documentation fix. No workflow writes directly to main.
+### Select published bytes explicitly
+
+Resolve the stable distribution corresponding to `latest` at explicit preparation/refresh; verify publication companions, package/composition identity and archive/runtime digests before use. Release 0.3.0 is an observed available publication, not a hardcoded future selection. Persist the selected identity so ordinary stable/preview or documentation rebuilds do not rediscover a newer runtime. Fail on unavailable, ineligible or inconsistent inputs; do not build an engine or substitute unpublished candidate assets. Preview qualification of demo code still uses published stable runtime bytes.
+
+### Preserve native operations and independent checks
+
+Use native SQLite-Vector ordinary-table vector storage and search operations for binary304/Hamming and original300/Float32 cosine. Check the exact released SQL, dimensions, initialization and metric behavior on the selected archive before wiring it into the UI. Both modes must use extension execution; a JavaScript search or SQL facade cannot substitute. Show observed SQLite/Vector identities and actual SQL/parameters/distances/timing. Retain six distinct neighbors excluding self, tie-boundary acceptance, initial cat selection, full text matching and deferred Float32 semantics from the effective contract.
+
+Keep the independently calculated reference outside the extension path and document shared corpus/conversion assumptions and Float32 tolerance. Existing parser/oracle code and fixtures must be examined and exercised again; their historical results are not current browser evidence.
+
+### Stage the return without weakening the temporary phase
+
+Keep the active public placeholder while implementing and qualifying the return locally and on an identified Pages preview through existing site mechanisms. The implementation may make bounded A-site_demo handoff changes in preparation, browser checks and stable publication handling so they can carry the qualified fixed demo selection; do not create a second deployment architecture or bypass shell/docs gates. A preview must never relabel candidate package bytes as a published demo runtime. Preserve existing documentation-version eligibility independently from the demo selection.
+
+Only the separately qualified return and authorized integration end the temporary exception. A metadata lookup, package publication, successful placeholder test, merge of planning artifacts or documentation rebuild alone does not reactivate the demo. Keep public output static when preparation/qualification/publication fails. Subsequent documentation-only deployments preserve the selected runtime identity; failures preserve the previous public deployment under existing publication guarantees. No recurring public switch between two demo implementations is added.
 
 ## Risks / Trade-offs
 
-Vector native binary storage/dimension/metric details must be checked on the selected published runtime; if the required behavior cannot be preserved without upstream changes, stop and escalate. Do not invent a 0.3.0 archive or claim current Pages Vector acceptance.
+Native metric/storage limits must be checked against the actual selected release before UI work is treated as complete. An inability to preserve the required dimensions, distances or native execution requires escalation, not a custom replacement or weakened requirement. Local success without an identified Pages observation leaves qualification incomplete. Corpus age, English labels and representation-dependent neighbors remain disclosed limitations; database volume is measured without inventing a threshold or semantic-relevance guarantee.
 
 ## Migration Plan
 
-Runtime dependency: actual stable Vector publication after the release-review chain, not merely implementation of those changes. No reverse dependency: candidate docs and first Vector product publication do not require demo refresh. Stage implementation/verification so each unit remains reviewable; the first five changes must be integrated coherently before a real candidate uses the new workflow. The demo has only the explicitly stated published-runtime dependency. Preserve previous public deployment on publication failure; do not roll back a published identity or fabricate a replacement artifact.
+Verify the current placeholder/integration boundary; select and check the published runtime and corpus; build and check both native representations, UI and disposal; then integrate local/preview qualification and record exact identities/results. Renew bidirectional coverage and execute post-Apply 42P Verification. Archive and human integration/deployment remain subsequent authorized lifecycle operations. This planning reconciliation performs none of those operations.
 
 ## Open Questions
 
-No unresolved design choice blocks this proposal. Concrete bounded code/file handoff details remain realization choices under the stated identity/failure rules. Any newly discovered authority conflict or necessary semantic revision stops Apply and reopens affected derivation. Required browser/Pages/publication observations belong to later realization and cannot be claimed here.
+No unresolved product-design choice is introduced by this reconciliation. Internal file organization, concrete native queries, the then-current eligible release and final database volume are bounded realization/measurement choices. If their investigation requires changing the effective behavior or authority, stop and escalate before continuing Apply.

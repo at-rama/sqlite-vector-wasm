@@ -2,7 +2,7 @@
 
 ### Requirement: Explicit published stable runtime
 
-The demo SHALL consume unchanged JS/WASM from an actually published stable distribution corresponding to `latest`, selected on initial preparation or explicit demo refresh. New product refreshes SHALL select an actually published SQLite-Vector stable composition; a historical sqlite-vec selection SHALL remain truthfully identified until an explicit qualified refresh. Ordinary site rebuilds SHALL retain that selection. Candidate documentation preview SHALL NOT permit an unpublished demo runtime. The demo SHALL NOT rebuild the engine or select experimental `next` publications.
+The demo SHALL consume unchanged JS/WASM from an actually published stable distribution corresponding to `latest`, selected on initial preparation or explicit demo refresh. The separately qualified return from the temporary placeholder SHALL explicitly select an actually published SQLite-Vector stable composition; historical sqlite-vec selections SHALL remain historical and SHALL NOT be reactivated. Ordinary site rebuilds SHALL retain that selection. Candidate documentation preview SHALL NOT permit an unpublished demo runtime. The demo SHALL NOT rebuild the engine or select experimental `next` publications.
 
 #### Scenario: Prepare or refresh the demo
 - **WHEN** initial demo preparation or an explicit runtime refresh occurs
@@ -16,9 +16,9 @@ The demo SHALL consume unchanged JS/WASM from an actually published stable distr
 - **WHEN** a selected archive or required companion is unavailable, inconsistent, corrupted or not an eligible stable publication
 - **THEN** preparation fails instead of rebuilding the engine, substituting another release or retaining stale generated output
 
-#### Scenario: Vector publication does not yet exist
-- **WHEN** native demo adaptation is prepared before an actual stable Vector distribution is published
-- **THEN** no fabricated archive or candidate runtime replaces the historical selection, and actual refreshed-runtime verification remains blocked until the eligible publication exists
+#### Scenario: No eligible verified publication
+- **WHEN** explicit preparation cannot establish an eligible published stable Vector archive and its matching verified companions/runtime bytes
+- **THEN** runnable-demo preparation fails without a fabricated archive, candidate runtime or old-engine fallback, and the temporary public placeholder remains intact
 
 ### Requirement: Visible runtime identity
 
@@ -83,3 +83,26 @@ Demo checks SHALL exercise the published WASM, automatic selected-engine availab
 #### Scenario: Verify native Vector behavior
 - **WHEN** the selected published Vector archive is exercised in both representations
 - **THEN** native Vector SQL inserts/query operations and observed engine identity agree with publication, and independent 304-bit Hamming and 300-component Float32 cosine oracles establish distances/membership without substituting custom search for extension execution
+
+### Requirement: Temporary static demo placeholder
+During the temporary refactoring phase adopted under S-demo-placeholder, the Démo destination SHALL show only a short notice that the demonstration is being refactored for SQLite-Vector and a working link to current Usage, without a delivery date or claim of working vector execution. Common navigation and mobile access SHALL remain usable. The placeholder SHALL NOT initialize, acquire, bundle or execute a demo runtime, Worker or emoji corpus, display simulated results or report runtime/version observations. Active Site preparation, build, deployment and checks SHALL NOT require the abandoned demo pin/assets, corpus preparation, a replacement published Vector archive or completion of PR #77. Existing shell/docs publication and check guarantees and product acceptance SHALL remain applicable.
+
+For this temporary phase only, this requirement supersedes the runnable portions of Explicit published stable runtime, Visible runtime identity, Complete attributed emoji corpus, Binary-first and deferred Float32 modes, Textual discovery and vector exploration, Actual-operation inspection, Transient browser session and usable states, and Scoped real-runtime demo checks. Those requirements remain deferred for the separate future demo return, with native SQLite-Vector adaptation, actual published stable bytes and full independent qualification; placeholder checks SHALL NOT count as their successful execution. Neither the future demo nor its publication dependency SHALL block cleanup completion. This exception introduces no second runtime, compatibility layer or configurable demo mode.
+
+The temporary exception SHALL end only for the separately qualified complete SQLite-Vector demo return and its authorized integration. Publication metadata, a stable package publication, placeholder checks or a documentation-only rebuild SHALL NOT reactivate the runnable demo or count as its qualification.
+
+#### Scenario: Open the temporary demo destination
+- **WHEN** a visitor opens Démo through common navigation on desktop or mobile
+- **THEN** the static SQLite-Vector refactoring notice and Usage link are usable, without runtime identity, search controls, simulated results, demo runtime/Worker/corpus loading or a promised delivery date
+
+#### Scenario: Construct and deploy without a replacement demo
+- **WHEN** stable or preview Site construction, deployment or an independent documentation rebuild occurs during the placeholder phase
+- **THEN** no old demo runtime/data preparation, archive acquisition or PR #77 completion is needed, the placeholder remains intact without reactivating old assets, and applicable shell/docs publication gates and checks remain enforced
+
+#### Scenario: Verify the placeholder and retain future qualification
+- **WHEN** local and identified Pages placeholder checks are recorded
+- **THEN** they verify the notice, Usage link, common navigation/mobile access and absence of demo runtime/Worker/corpus dependencies and requests; runtime/vector checks remain explicitly deferred rather than passed, and the future complete demo still requires its separate published-stable/native-Vector qualification before return
+
+#### Scenario: Qualify the complete return
+- **WHEN** the separately prepared SQLite-Vector demo is proposed to replace the temporary page
+- **THEN** the complete retained runtime/corpus/modes/UI/session contract is exercised with exact published stable bytes and fresh independent local/browser/identified Pages evidence before authorized integration ends the temporary exception; missing or failed qualification keeps the public placeholder and cannot block the already independent cleanup or product publication

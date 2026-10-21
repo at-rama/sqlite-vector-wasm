@@ -2,13 +2,15 @@
 
 ## Why
 
-The existing demo worker and identity checks use sqlite-vec native SQL, while the adopted public product target is Vector. Its published-only runtime rule requires an explicit later refresh, separate from candidate documentation preview.
+The current Demo destination is a static SQLite-Vector refactoring notice with a Usage link. Its old runnable demo and runtime selection have been removed. This Change prepares the separately qualified return of the complete emoji demonstration using actually published stable SQLite-Vector bytes, while preserving the temporary page until that return is qualified.
 
-Allocation: `A-site_demo` only, [snapshot at 41c7d36e2f67118d507deb0005eda887bfa12334](https://github.com/at-rama/sqlite-vector-wasm/blob/41c7d36e2f67118d507deb0005eda887bfa12334/.42p/engineering/2026-10-04_sqlite-vec-wasm_allocation_edit-0.1.md) (SHA-256 `bd990a1bea53e94184349837794489648d27e68b7327e76be9ddeea318df9217`). Its complete qualified Capture references apply, including unchanged boundaries. Global Capture → Allocation examination: [record](../../../engineering/2026-10-19_release-review_derivation_edit-0.1.md). This proposal changes no other unit and authorizes no Apply, merge or publication.
+Allocation: `A-site_demo` only, [current source snapshot](https://github.com/at-rama/sqlite-vector-wasm/blob/c1707c6712b686523fd9978f322c7741ac7c8690/.42p/engineering/2026-10-04_sqlite-vec-wasm_allocation_edit-0.1.md), SHA-256 `80e3d64c3e30e9340b192ca2c2867e46e91f076036319c1e0c89866f3b9b40cc`. Its complete qualified references apply, especially Site C-demo-release/C-demo-checks under S-demo-placeholder and S-composition-cleanup. [Coverage](coverage.md) traces the complete unit, including retained requirements. This reconciliation changes planning only; it performs no Apply, synchronization, archive, merge, publication or deployment.
 
 ## What Changes
 
-Adapt native Vector SQL/version identity and independent binary/Hamming/Float32-cosine checks; keep the complete existing corpus and UI; explicitly refresh only from an actually published stable Vector archive.
+- Reconcile the future return with the current placeholder phase; preserve its notice, Usage link, absence of runtime/data dependencies and independence from product release/cleanup until qualification and authorized integration.
+- Reconstruct the runnable site demo with native SQLite-Vector identity and SQL, the complete attributed corpus, binary-first and deferred Float32 modes, existing interactions, inspection and transient session behavior.
+- Explicitly select and verify a published stable archive, then obtain fresh independent vector, UI/loading and identified Pages evidence for that exact runtime and candidate.
 
 ## Capabilities
 
@@ -18,12 +20,12 @@ None.
 
 ### Modified Capabilities
 
-- `site-demo`: Adapt native Vector SQL/version identity and independent binary/Hamming/Float32-cosine checks; keep the complete existing corpus and UI; explicitly refresh only from an actually published stable Vector archive.
+- `site-demo`: make the temporary-to-running transition explicit and adapt the complete deferred demo contract to native SQLite-Vector, retaining every unchanged corpus, interaction, loading, session and evidence obligation.
 
 ## Impact
 
-`site/demo/demo-worker.mjs`, demo client/data logic, `tools/site/demo.mjs`, `tools/site/demo-runtime.json`, site/demo tests and checks. Current selection is published vec 0.2.0 and must remain truthful until a real stable Vector archive exists.
+Current inputs include `site/demo/index.md`, the Site preparation/build/publication/browser controls and retained `tools/site/demo-data.*` and `tools/site/demo-reference.*` utilities. A runnable demo client/Worker, runtime selection and their end-to-end checks must be restored or recreated; the removed old files are historical reuse candidates, not an active implementation or a second supported composition. Narrow integration changes must preserve A-site_shell/A-site_docs guarantees and the current canonical README/Usage sources.
 
-Dependencies: Runtime dependency: actual stable Vector publication after the release-review chain, not merely implementation of those changes. No reverse dependency: candidate docs and first Vector product publication do not require demo refresh.
+GitHub release metadata observed on 2026-10-21 identifies [dist/v0.3.0](https://github.com/at-rama/sqlite-vector-wasm/releases/tag/dist/v0.3.0) as a published stable release, with `payload.tgz` digest `9751879062c1e537810eb3d539c808b889420523cdad861a8b0c5be1059bec99`. This removes the former assertion that no stable Vector publication exists. Metadata discovery is not archive acquisition, npm-channel verification, runtime selection or demo acceptance: Apply must resolve the then-current eligible stable publication and verify exact companion/runtime identities. No version is frozen by this proposal.
 
-Existing synchronized requirements not modified by the delta remain binding within this unit; [coverage](coverage.md) records the complete effective contract and its grounding. All task checkboxes remain open.
+All implementation tasks remain open. Product publication, completed composition cleanup and independent documentation updates do not wait for this demo. The historical 2026-10-19 derivation remains available in Git history; the renewed examination is recorded in [derivation](derivation.md).
