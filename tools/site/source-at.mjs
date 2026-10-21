@@ -11,4 +11,3 @@ export async function sourceAt({repository,commit,path,get,localCommit,directory
  assert.equal(r.status,200,`Stable source unavailable: ${path}`);const f=r.data;assert.equal(f.type,"file");assert.equal(f.path,path);assert.equal(f.encoding,"base64");
  const b=Buffer.from(f.content,"base64");assert.equal(b.length,f.size);return b.toString("utf8");
 }
-
