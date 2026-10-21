@@ -4,17 +4,17 @@
     {
       "name": "SQLite-LICENSE.txt",
       "project": "sqlite",
-      "version": "3.54.0",
-      "origin": "https://sqlite.org/2026/sqlite-src-3540000.zip#sqlite-src-3540000/LICENSE.md",
+      "version": "3.54.1",
+      "origin": "https://sqlite.org/2026/sqlite-src-3540100.zip#sqlite-src-3540100/LICENSE.md",
       "sha256": "9f2f6a13fc880c9ae10cb3a67f028a5e76d028759dc41eee593165400bfd1661",
       "source": {
         "kind": "archive",
-        "archiveUrl": "https://sqlite.org/2026/sqlite-src-3540000.zip",
+        "archiveUrl": "https://sqlite.org/2026/sqlite-src-3540100.zip",
         "archiveDigest": {
           "algorithm": "sha3-256",
-          "value": "a5c29342ca185abcda332448fbb27c536661245be27e20199b46c49099b0e15e"
+          "value": "877c6f4996ce7adb368686bce21638de9e3d91534832ad3d9d119037d1bc22ad"
         },
-        "path": "sqlite-src-3540000/LICENSE.md",
+        "path": "sqlite-src-3540100/LICENSE.md",
         "sha256": "ee6af51062b30d532991face5164136ae6f84e265ecf8abe89dc69dac45ca1e7"
       },
       "normalization": "Trailing horizontal whitespace and blank EOF lines removed; notice wording preserved."
@@ -22,36 +22,20 @@
     {
       "name": "SQLite-WASM-NOTICE.txt",
       "project": "sqlite",
-      "version": "3.54.0",
-      "origin": "https://sqlite.org/2026/sqlite-src-3540000.zip#sqlite-src-3540000/ext/wasm/api/sqlite3-license-version-header.js",
+      "version": "3.54.1",
+      "origin": "https://sqlite.org/2026/sqlite-src-3540100.zip#sqlite-src-3540100/ext/wasm/api/sqlite3-license-version-header.js",
       "sha256": "5cd1320b663c1b10e635f19c8c397488d5b48b85460177b575ac5d1b4d7ce88a",
       "source": {
         "kind": "archive",
-        "archiveUrl": "https://sqlite.org/2026/sqlite-src-3540000.zip",
+        "archiveUrl": "https://sqlite.org/2026/sqlite-src-3540100.zip",
         "archiveDigest": {
           "algorithm": "sha3-256",
-          "value": "a5c29342ca185abcda332448fbb27c536661245be27e20199b46c49099b0e15e"
+          "value": "877c6f4996ce7adb368686bce21638de9e3d91534832ad3d9d119037d1bc22ad"
         },
-        "path": "sqlite-src-3540000/ext/wasm/api/sqlite3-license-version-header.js",
+        "path": "sqlite-src-3540100/ext/wasm/api/sqlite3-license-version-header.js",
         "sha256": "5cd1320b663c1b10e635f19c8c397488d5b48b85460177b575ac5d1b4d7ce88a"
       },
       "extraction": "Initial /* @preserve license block through first */; subsequent version/template code excluded."
-    },
-    {
-      "name": "sqlite-vec-MIT.txt",
-      "project": "sqliteVec",
-      "version": "0.1.9",
-      "origin": "https://github.com/asg017/sqlite-vec/blob/v0.1.9/LICENSE-MIT",
-      "sha256": "6ce72bbe12d975bd5286e5ab0a064c069693300c47bccbc57bec18485f1621ea",
-      "normalization": "Trailing horizontal whitespace and blank EOF lines removed; notice wording preserved."
-    },
-    {
-      "name": "sqlite-vec-APACHE.txt",
-      "project": "sqliteVec",
-      "version": "0.1.9",
-      "origin": "https://github.com/asg017/sqlite-vec/blob/v0.1.9/LICENSE-APACHE",
-      "sha256": "a38070a94d4afd9cd710e3ce67bd1de78097cfe1784c1f0109ac95d3c196bfdc",
-      "normalization": "Trailing horizontal whitespace and blank EOF lines removed; notice wording preserved."
     },
     {
       "name": "Emscripten-LICENSE.txt",

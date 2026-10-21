@@ -18,7 +18,6 @@ from urllib.parse import urljoin
 import zipfile
 
 SQLITE_DOWNLOAD = 'https://sqlite.org/download.html'
-VEC_API = 'https://api.github.com/repos/asg017/sqlite-vec/releases'
 VECTOR_API = 'https://api.github.com/repos/sqliteai/sqlite-vector'
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -34,8 +33,6 @@ def require(condition, message):
 
 def version(value, project):
     require(isinstance(value, str), f'{project}: version must be a string')
-    if project == 'sqliteVec' and value.startswith('v'):
-        value = value[1:]
     number = r'(0|[1-9][0-9]*)'
     pattern = (rf'3\.{number}\.{number}(?:\.{number})?' if project == 'sqlite'
                else rf'{number}\.{number}\.{number}(?:-(?:alpha|beta|rc)(?:\.{number})?)?')
@@ -57,8 +54,8 @@ def release_url(value):
 def validate_lock(lock):
     require(isinstance(lock, dict), 'Invalid source lock')
     schema = lock.get('schemaVersion')
-    require(type(schema) is int and schema in (1, 2), 'Unsupported source-lock schemaVersion')
-    engine = 'sqliteVec' if schema == 1 else 'sqliteVector'
+    require(type(schema) is int and schema == 2, 'Unsupported source-lock schemaVersion')
+    engine = 'sqliteVector'
     require(set(lock) == {'schemaVersion', 'sqlite', engine}, 'Invalid source-lock fields')
     for project in ('sqlite', engine):
         pin = lock[project]
@@ -77,10 +74,6 @@ def validate_lock(lock):
             require(re.fullmatch(r'https://sqlite\.org/\d{4}/sqlite-src-' + sqlite_code(v) + r'\.zip', pin['archiveUrl']), 'SQLite archive/version mismatch or unofficial origin')
             require(pin['releaseUrl'] == release_url(v), 'SQLite release/version mismatch')
             require(pin['digestUrl'] == SQLITE_DOWNLOAD, 'SQLite digest must originate from official download metadata')
-        elif project == 'sqliteVec':
-            require(pin['archiveUrl'] == f'https://github.com/asg017/sqlite-vec/releases/download/v{v}/sqlite-vec-{v}-amalgamation.tar.gz', 'sqlite-vec archive/version mismatch or unofficial origin')
-            require(pin['releaseUrl'] == f'https://github.com/asg017/sqlite-vec/releases/tag/v{v}', 'sqlite-vec release/version mismatch')
-            require(re.fullmatch(re.escape(VEC_API) + r'/\d+', pin['digestUrl']), 'sqlite-vec digest must originate from official release metadata')
         else:
             require(type(pin['releaseId']) is int and pin['releaseId'] > 0, 'Vector: invalid release identity')
             require(pin['tag'] == v, 'Vector: tag/version mismatch')
@@ -105,23 +98,8 @@ def read_json(path):
     return json.loads(Path(path).read_text(), object_pairs_hook=unique_object)
 
 
-def published_vec(release):
-    require(isinstance(release, dict), 'Malformed sqlite-vec release record')
-    require(type(release.get('draft')) is bool and type(release.get('prerelease')) is bool, 'Malformed sqlite-vec release classification')
-    if release['draft'] or release.get('published_at') is None:
-        return False
-    try:
-        v = version(release.get('tag_name'), 'sqliteVec')
-    except InputError:
-        return False
-    published = release['published_at']
-    require(isinstance(published, str) and re.fullmatch(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z', published), 'Malformed sqlite-vec publication timestamp')
-    require(release['prerelease'] == ('-' in v), 'Contradictory sqlite-vec release classification')
-    return True
 
 
-def stable_vec(release):
-    return published_vec(release) and not release['prerelease']
 
 
 def sqlite_rows(text):
@@ -167,41 +145,8 @@ def select_sqlite(text, explicit, baseline, fetch):
     return baseline.copy()
 
 
-def select_vec(releases, explicit, baseline):
-    require(isinstance(releases, list) and all(isinstance(r, dict) for r in releases), 'Invalid sqlite-vec release metadata')
-    if explicit is None:
-        stable = [r for r in releases if stable_vec(r)]
-        require(stable, 'No official stable sqlite-vec release found')
-        selected = max(stable, key=lambda r: tuple(map(int, version(r['tag_name'], 'sqliteVec').split('.'))))
-        chosen = version(selected['tag_name'], 'sqliteVec')
-        matches = [r for r in releases if r.get('tag_name') == 'v' + chosen]
-    else:
-        chosen = version(explicit, 'sqliteVec')
-        matches = [r for r in releases if r.get('tag_name') == 'v' + chosen]
-    require(len(matches) == 1 and published_vec(matches[0]), f'sqlite-vec {chosen} is missing, ambiguous or unpublished')
-    selected = matches[0]
-    require(isinstance(selected.get('assets'), list) and all(isinstance(a, dict) for a in selected['assets']), 'Malformed sqlite-vec asset metadata')
-    name = f'sqlite-vec-{chosen}-amalgamation.tar.gz'
-    assets = [a for a in selected.get('assets', []) if a.get('name') == name]
-    require(len(assets) == 1 and assets[0].get('state') == 'uploaded', f'Missing or ambiguous official amalgamation for {chosen}')
-    asset = assets[0]
-    raw = asset.get('digest')
-    require(raw is None or (isinstance(raw, str) and re.fullmatch(r'sha256:[0-9a-f]{64}', raw)), 'Malformed official sqlite-vec digest')
-    candidate = {'version': chosen, 'archiveUrl': asset.get('browser_download_url'),
-                 'digest': {'algorithm': 'sha256', 'value': raw[7:] if raw else ''},
-                 'releaseUrl': selected.get('html_url'), 'digestUrl': selected.get('url')}
-    candidate = preserve_pin(candidate, baseline)
-    require(candidate['digest']['value'], f'No official published digest for sqlite-vec {chosen}')
-    return candidate
 
 
-def resolve_pair(sqlite_text, releases, sqlite_version=None, vec_version=None, baseline=None, fetch=None):
-    if baseline is not None:
-        validate_lock(baseline)
-    result = {'schemaVersion': 1,
-              'sqlite': select_sqlite(sqlite_text, sqlite_version, baseline['sqlite'] if baseline else None, fetch),
-              'sqliteVec': select_vec(releases, vec_version, baseline.get('sqliteVec') if baseline else None)}
-    return validate_lock(result)
 
 
 def published_vector(release):
@@ -308,39 +253,6 @@ class MetadataFetch:
         return text
 
 
-def resolve_command(args):
-    # Validate explicit inputs and baseline before network activity.
-    if args.sqlite_version is not None:
-        version(args.sqlite_version, 'sqlite')
-    if args.sqlite_vec_version is not None:
-        version(args.sqlite_vec_version, 'sqliteVec')
-    baseline_path = args.baseline_lock
-    if baseline_path is None and (ROOT / 'inputs/sources.lock.json').is_file():
-        baseline_path = ROOT / 'inputs/sources.lock.json'
-    baseline = validate_lock(read_json(baseline_path)) if baseline_path else None
-    parent = ROOT / '.work/inputs'
-    parent.mkdir(parents=True, exist_ok=True)
-    evidence = Path(tempfile.mkdtemp(prefix='resolve-', dir=parent))
-    fetch = MetadataFetch(evidence)
-    sqlite_text = fetch(SQLITE_DOWNLOAD)
-    if args.sqlite_vec_version is not None:
-        v = version(args.sqlite_vec_version, 'sqliteVec')
-        releases = [json.loads(fetch(VEC_API + '/tags/v' + v), object_pairs_hook=unique_object)]
-    else:
-        releases = []
-        page = 1
-        while True:
-            batch = json.loads(fetch(VEC_API + f'?per_page=100&page={page}'), object_pairs_hook=unique_object)
-            require(isinstance(batch, list), 'Invalid sqlite-vec releases response')
-            releases.extend(batch)
-            if len(batch) < 100:
-                break
-            page += 1
-    result = resolve_pair(sqlite_text, releases, args.sqlite_version,
-                          args.sqlite_vec_version, baseline, fetch)
-    write_lock(args.output, result)
-    (evidence / 'selection.json').write_text(json.dumps(result, indent=2) + '\n')
-    print(json.dumps({'lockPath': str(Path(args.output).resolve()), 'evidencePath': str(evidence)}))
 
 
 def resolve_vector_command(args):
@@ -350,7 +262,7 @@ def resolve_vector_command(args):
         version(args.vector_version, 'sqliteVector')
     baseline_path = args.baseline_lock
     if baseline_path is None:
-        for name in ('sqlite-vector.sources.lock.json', 'sources.lock.json'):
+        for name in ('sqlite-vector.sources.lock.json',):
             if (ROOT / 'inputs' / name).is_file():
                 baseline_path = ROOT / 'inputs' / name
                 break
@@ -442,11 +354,6 @@ def source_root(destination, project, pin):
         for name in ('configure', 'Makefile.in', 'src/sqlite.h.in', 'ext/wasm/GNUmakefile'):
             require((source / name).is_file(), f'SQLite full-source archive missing {name}')
         require(os.access(source / 'configure', os.X_OK), 'SQLite configure lost its executable mode')
-    else:
-        candidates = [p.parent for p in destination.rglob('sqlite-vec.c') if (p.parent / 'sqlite-vec.h').is_file()]
-        require(len(candidates) == 1, 'sqlite-vec archive must supply one amalgamation C/header pair')
-        require(not any(p.name in ('sqlite3.c', 'sqlite3.h', '.git') for p in destination.rglob('*')), 'sqlite-vec archive includes a repository or vendored SQLite')
-        source = candidates[0]
     return source
 
 
@@ -502,8 +409,8 @@ def acquire_lock(lock_bytes, parent, fetch=fetch_file, extract=extract_file):
     try:
         handoff = {'workspace': str(workspace),
                    'lockDigest': {'algorithm': 'sha256', 'value': hashlib.sha256(lock_bytes).hexdigest()}}
-        engine = 'sqliteVec' if lock['schemaVersion'] == 1 else 'sqliteVector'
-        for project, filename, kind in [('sqlite', 'sqlite.zip', 'zip'), (engine, 'sqlite-vec.tar.gz' if engine == 'sqliteVec' else 'sqlite-vector.tar.gz', 'tar')]:
+        engine = 'sqliteVector'
+        for project, filename, kind in [('sqlite', 'sqlite.zip', 'zip'), (engine, 'sqlite-vector.tar.gz', 'tar')]:
             pin = lock[project]
             archive = workspace / filename
             fetch(pin['archiveUrl'], archive)
@@ -552,24 +459,17 @@ def main():
     sub = parser.add_subparsers(dest='command', required=True)
     check = sub.add_parser('validate', help='Validate a source lock offline')
     check.add_argument('lock')
-    resolve = sub.add_parser('resolve', help='Resolve independently latest stable or exact published releases, including sqlite-vec prereleases')
-    resolve.add_argument('--sqlite-version')
-    resolve.add_argument('--sqlite-vec-version')
-    resolve.add_argument('--baseline-lock', help='Retain established pins and reject metadata drift')
-    resolve.add_argument('--output', required=True, help='Explicit candidate lock path; parent must exist')
-    vector = sub.add_parser('resolve-vector', help='Prepare a released SQLite-Vector source candidate; retain sqlite-vec via resolve')
+    vector = sub.add_parser('resolve-vector', help='Prepare an official released SQLite-Vector source candidate')
     vector.add_argument('--sqlite-version')
     vector.add_argument('--vector-version')
     vector.add_argument('--baseline-lock', help='Retain established component pins and reject metadata drift')
     vector.add_argument('--output', required=True)
     acquire = sub.add_parser('acquire', help='Acquire fresh sources from recorded pins, verify, then emit a pair handoff')
-    acquire.add_argument('--lock', default='inputs/sources.lock.json')
+    acquire.add_argument('--lock', default='inputs/sqlite-vector.sources.lock.json')
     args = parser.parse_args()
     try:
         if args.command == 'validate':
             validate_lock(read_json(args.lock))
-        elif args.command == 'resolve':
-            resolve_command(args)
         elif args.command == 'resolve-vector':
             resolve_vector_command(args)
         elif args.command == 'acquire':

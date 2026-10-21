@@ -32,14 +32,14 @@ test('exact accepted archive remains independently inspectable after original bu
 
 test('release refuses a packaged README that differs from the source revision', async t => {
   const f = await releaseFixture(t);
-  await writeFile(join(f.repository, 'docs/sqlite-vector/README.md'), '# SQLite WASM with SQLite-Vector\n\nchanged after packaging\n');
+  await writeFile(join(f.repository, 'README.md'), '# sqlite-vector-wasm\n\nchanged after packaging\n');
   await assert.rejects(acceptedPayload({bundle:f.bundle,commit:f.context.commit,
     repository:f.repository,identity:f.packaged.package}), /Published README.md differs from selected source revision/);
 });
 
 test('release refuses a packaged usage guide that differs from the source revision', async t => {
   const f = await releaseFixture(t);
-  await writeFile(join(f.repository, 'docs/sqlite-vector/usage.md'), '# Using SQLite-Vector\n\nchanged after packaging\n');
+  await writeFile(join(f.repository, 'docs/usage.md'), '# Using sqlite-vector-wasm\n\nchanged after packaging\n');
   await assert.rejects(acceptedPayload({bundle:f.bundle,commit:f.context.commit,
     repository:f.repository,identity:f.packaged.package}), /Published docs\/usage.md differs from selected source revision/);
 });
@@ -149,15 +149,10 @@ test('state validates published HEAD composition, revision and both destination 
 });
 
 
-test('release verifies the selected common guide and rejects its changed bytes',async t=>{
- const f=await releaseFixture(t);
- await writeFile(join(f.repository,'docs/common/browser.md'),'# changed common guide\n');
- await assert.rejects(acceptedPayload({bundle:f.bundle,commit:f.context.commit,repository:f.repository,identity:f.packaged.package}),/Published docs\/browser.md differs from selected source revision/);
-});
-
-test('legacy Site sources remain independent from selected package document validation',async t=>{
- const f=await releaseFixture(t);
- await writeFile(join(f.repository,'README.md'),'# transitional Site source\n');
- await writeFile(join(f.repository,'docs/usage.md'),'# transitional Site usage\n');
- assert.equal((await acceptedPayload({bundle:f.bundle,commit:f.context.commit,repository:f.repository,identity:f.packaged.package})).archive.sha256,f.packaged.archive.sha256);
+test('release binds canonical README and Usage to their packaged source snapshot',async t=>{
+ for(const path of ['README.md','docs/usage.md']) {
+  const f=await releaseFixture(t);
+  await writeFile(join(f.repository,path),(await readFile(join(f.repository,path),'utf8'))+'\nUnreviewed change.\n');
+  await assert.rejects(acceptedPayload({bundle:f.bundle,commit:f.context.commit,repository:f.repository,identity:f.packaged.package}),/differs from selected source revision/);
+ }
 });

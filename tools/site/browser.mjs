@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { launchBrowser } from '../harness/browser.mjs';
 
-export async function checkBrowser(url, { screenshot, requireWideCode = false, demoFixture = false, preview = null, requireDocs = false, requireNpm = true } = {}) {
+export async function checkBrowser(url, { screenshot, requireWideCode = false, demoFixture = false, preview = null, requireDocs = false, requireNpm = true, requirePlaceholder = false, historicalDemo = false } = {}) {
   const base = new URL(url);
   assert.ok(base.pathname.endsWith('/'), 'Site URL must end in /');
   const browser = await launchBrowser();
@@ -13,9 +13,7 @@ export async function checkBrowser(url, { screenshot, requireWideCode = false, d
     if (requireDocs) assert.equal(docsResponse.status(), 200, 'Integrated documentation manifest is required');
     const docs = docsResponse.ok() ? await docsResponse.json() : null;
     if (docs) assert.deepEqual(docs.pages.map(page => page.source), ['README.md', 'docs/usage.md']);
-    const demoResponse = await page.request.get(new URL('demo-runtime.json', base).href);
-    const actualDemo = demoResponse.ok() && Boolean((await demoResponse.json()).version);
-    const heading = label => label === 'Demo' && actualDemo ? 'Emoji vector explorer' : label === 'Presentation' && docs ? docs.pages[0].headings[0] : label === 'Usage' && docs ? docs.pages[1].headings[0] : label;
+    const heading = label => label === 'Demo' && historicalDemo ? 'Emoji vector explorer' : label === 'Presentation' && docs ? docs.pages[0].headings[0] : label === 'Usage' && docs ? docs.pages[1].headings[0] : label;
     async function documentation(path) {
       const expected = docs?.pages.find(entry => entry.path === path);
       if (!expected) return;
@@ -42,6 +40,9 @@ export async function checkBrowser(url, { screenshot, requireWideCode = false, d
         if (destination.hash) assert.ok((await response.text()).includes(`id="${decodeURIComponent(destination.hash.slice(1))}"`), `Missing emitted anchor ${destination.href}`);
       }
     }
+    const runtimeRequests = [], workers = [];
+    page.on('request', request => { if (/demo-(?:runtime|data)\/|\.wasm(?:$|[?])/i.test(request.url())) runtimeRequests.push(request.url()); });
+    page.on('worker', worker => workers.push(worker.url()));
     page.on('pageerror', error => errors.push(error.message));
     page.on('response', response => {
       if (response.status() >= 400 && new URL(response.url()).origin === base.origin) errors.push(`${response.status()} ${response.url()}`);
@@ -72,6 +73,16 @@ export async function checkBrowser(url, { screenshot, requireWideCode = false, d
         assert.equal(response.status(), 200, target);
         await page.waitForFunction(() => Boolean(document.querySelector('#app')?.__vue_app__));
         await page.getByRole('heading', { name: new RegExp('^' + heading(title).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')) }).waitFor();
+        if (requirePlaceholder && path === 'demo/') {
+          const content = page.locator('.vp-doc');
+          assert.match(await content.innerText(), /The demonstration is being refactored for SQLite-Vector\./);
+          const usage = content.getByRole('link', { name: 'Read the usage documentation', exact: true });
+          assert.equal(await usage.evaluate(a => a.href), new URL('usage/', base).href);
+          assert.equal(await content.locator('button, input, select, textarea, canvas').count(), 0);
+          await usage.click();
+          await page.getByRole('heading', { name: new RegExp('^' + heading('Usage')) }).waitFor();
+          await page.goto(target, { waitUntil: 'networkidle' });
+        }
         if (demoFixture && path === 'demo/') {
           await page.locator('#runtime-fixture').filter({ hasText: demoFixture === true ? 'fixture-runtime-1' : demoFixture }).waitFor();
         }
@@ -116,9 +127,13 @@ export async function checkBrowser(url, { screenshot, requireWideCode = false, d
     }
     if (screenshot) await page.screenshot({ path: screenshot, fullPage: true });
     if (requireWideCode) assert.ok(wideCodeObserved, 'The fixture must exercise a wide code block');
+    if (!demoFixture && !historicalDemo) {
+      assert.deepEqual(runtimeRequests, [], 'Placeholder must not load demo runtime or corpus');
+      assert.deepEqual(workers, [], 'Placeholder must not initialize a Worker');
+    }
     assert.deepEqual(errors, [], 'Browser resource or JavaScript errors');
     return { url: base.href, preview, browser: browser.version(), viewports: [1280, 390],
-      documentation: docs?.pages.map(({ source, sha256 }) => ({ source, sha256 })) ?? null, npmNavigationChecked: requireNpm, destinations: 3, directVisits: 6, clientTransitions: 6 };
+      documentation: docs?.pages.map(({ source, sha256 }) => ({ source, sha256 })) ?? null, npmNavigationChecked: requireNpm, placeholderChecked: requirePlaceholder, demoRuntimeRequests: runtimeRequests.length, demoWorkers: workers.length, destinations: 3, directVisits: 6, clientTransitions: 6 };
   } finally {
     await browser.close();
   }

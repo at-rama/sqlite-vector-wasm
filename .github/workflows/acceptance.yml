@@ -16,13 +16,6 @@ on:
         description: Already selected version (no publication)
         default: 0.0.0-test
 
-      source_lock:
-        description: Recorded single-engine composition to qualify
-        type: choice
-        options:
-          - inputs/sources.lock.json
-          - inputs/sqlite-vector.sources.lock.json
-        default: inputs/sources.lock.json
 
 permissions:
   contents: read
@@ -36,7 +29,6 @@ jobs:
     runs-on: ubuntu-24.04
     outputs:
       required: ${{ steps.scope.outputs.required }}
-      matrix: ${{ steps.matrix.outputs.matrix }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -50,13 +42,6 @@ jobs:
           BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
           HEAD_SHA: ${{ github.sha }}
         run: python3 tools/acceptance/scope.py >> "$GITHUB_OUTPUT"
-      - name: Select isolated compositions
-        id: matrix
-        env:
-          CI_ACTION: matrix
-          EVENT_NAME: ${{ github.event_name }}
-          SOURCE_LOCK: ${{ inputs.source_lock || 'inputs/sources.lock.json' }}
-        run: python3 tools/acceptance/ci.py >> "$GITHUB_OUTPUT"
       - name: Report site-only non-applicability
         if: steps.scope.outputs.required == 'false'
         run: echo 'Package acceptance not applicable. No package qualification was performed.' >> "$GITHUB_STEP_SUMMARY"
@@ -64,9 +49,6 @@ jobs:
   composition:
     needs: scope
     if: needs.scope.outputs.required == 'true'
-    strategy:
-      fail-fast: false
-      matrix: ${{ fromJSON(needs.scope.outputs.matrix) }}
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
@@ -86,13 +68,13 @@ jobs:
         env:
           PACKAGE_NAME: ${{ inputs.package_name || 'sqlite-vector-wasm-acceptance-fixture' }}
           PACKAGE_VERSION: ${{ inputs.package_version || '0.0.0-test' }}
-          SOURCE_LOCK: ${{ matrix.lock }}
+          SOURCE_LOCK: inputs/sqlite-vector.sources.lock.json
         run: bash tools/acceptance.sh --lock "$SOURCE_LOCK" --name "$PACKAGE_NAME" --version "$PACKAGE_VERSION"
       - name: Preserve available acceptance evidence and exact payload
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: acceptance-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.engine }}
+          name: acceptance-${{ github.run_id }}-${{ github.run_attempt }}-sqliteVector
           path: .work/acceptance/run-*/
           include-hidden-files: true
           if-no-files-found: error
@@ -107,7 +89,7 @@ jobs:
         with:
           persist-credentials: false
           ref: ${{ github.event_name == 'workflow_dispatch' && inputs.revision || github.sha }}
-      - name: Require every composition and evidence artifact
+      - name: Require the Vector composition and evidence artifact
         env:
           CI_ACTION: complete
           SCOPE_RESULT: ${{ needs.scope.result }}

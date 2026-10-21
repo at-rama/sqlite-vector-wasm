@@ -1,3 +1,5 @@
+import {mainPlaceholder,buildStablePlaceholder} from './placeholder.mjs';
+import { example } from './example.mjs';
 import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, writeFile, rm, readFile, cp, symlink } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
@@ -14,7 +16,7 @@ export async function exercise() {
   const temporary = await mkdtemp(join(repository, '.work/site-exercise-'));
   const results = [];
   async function observe(name, prepared, options) {
-    const result = await build({ prepared, preview: options?.preview, docs: options?.docs ?? !prepared });
+    const result = await build({ prepared, preview: options?.preview, docs: options?.docs ?? !prepared, allowDirtyDocumentation: options?.allowDirtyDocumentation ?? false });
     const server = await serveSite(result.output, result.base);
     try { results.push({ name, ...await checkBrowser(server.url, options), runtime: result.runtime }); }
     finally { await server.close(); }
@@ -22,6 +24,7 @@ export async function exercise() {
   }
   try {
     results.push(...await exerciseRelativeImages());
+    results.push(...await exerciseStablePlaceholder());
     const docs = join(temporary, 'docs');
     await mkdir(join(docs, 'usage'), { recursive: true });
     await mkdir(join(docs, 'demo'), { recursive: true });
@@ -116,19 +119,20 @@ This is an integration fixture, not the emoji demo.
     try {
       const realBefore = await observe('real-documentation-with-demo', demo, { docs: true, demoFixture: 'fixture-runtime-2' });
       await writeFile(readmePath, readme + '\nDocumentation edit exercise marker.\n');
-      const realAfter = await observe('real-documentation-update', demo, { docs: true, demoFixture: 'fixture-runtime-2' });
+      if (process.env.SITE_CANDIDATE_BUNDLE || process.env.SITE_DOCUMENTATION_SELECTION) await example(repository);
+      const realAfter = await observe('real-documentation-update', demo, { docs: true, demoFixture: 'fixture-runtime-2', allowDirtyDocumentation: true });
       assert.deepEqual(realAfter.runtime, realBefore.runtime);
       assert.match(await readFile(join(realAfter.source, 'index.md'), 'utf8'), /Documentation edit exercise marker/);
-      await observe('real-documentation-preview', demo, { docs: true, preview, demoFixture: 'fixture-runtime-2',
+      await observe('real-documentation-preview', demo, { docs: true, preview, demoFixture: 'fixture-runtime-2', allowDirtyDocumentation: true,
         screenshot: join(repository, '.work/site/docs-mobile.png') });
-    } finally { await writeFile(readmePath, readme); }
+    } finally { await writeFile(readmePath, readme); if (process.env.SITE_CANDIDATE_BUNDLE || process.env.SITE_DOCUMENTATION_SELECTION) await example(repository); }
 
     await writeFile(join(demo, 'public/demo-runtime/fixture.mjs'), 'corrupt fixture');
     await assert.rejects(build({ prepared: demo }), /checksum mismatch/);
     await assert.rejects(readFile(join(repository, '.work/site/dist/index.html')), { code: 'ENOENT' });
     results.push({ name: 'corrupted-runtime', result: 'rejected; stale output removed' });
 
-    await observe('shell-only', undefined, { screenshot: join(repository, '.work/site/mobile.png') });
+    await observe('shell-only', undefined, { requirePlaceholder: true, screenshot: join(repository, '.work/site/mobile.png') });
     await writeFile(join(repository, '.work/site/exercise.json'), JSON.stringify(results, null, 2) + '\n');
     console.log(JSON.stringify(results, null, 2));
   } finally {
@@ -140,6 +144,10 @@ This is an integration fixture, not the emoji demo.
 // Compile and load copied images, rather than accepting prepared URL strings.
 export async function exerciseRelativeImages() {
   const root = await mkdtemp(join(repository, '.work/site-images-'));
+  // This image fixture has its own Markdown and deliberately no product profile.
+  // Do not let the controller's selected publication authorize fixture content.
+  const selectedDocumentation = process.env.SITE_DOCUMENTATION_SELECTION;
+  delete process.env.SITE_DOCUMENTATION_SELECTION;
   const results = [];
   const image = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"><rect id="shape" width="20" height="20" fill="blue"/></svg>';
   try {
@@ -167,5 +175,42 @@ export async function exerciseRelativeImages() {
     await assert.rejects(readFile(join(root, '.work/site/dist/index.html')), { code: 'ENOENT' });
     results.push({ name: 'missing-relative-image', result: 'rejected; stale output removed' });
     return results;
-  } finally { await rm(root, { recursive: true, force: true }); }
+  } finally {
+    if (selectedDocumentation === undefined) delete process.env.SITE_DOCUMENTATION_SELECTION;
+    else process.env.SITE_DOCUMENTATION_SELECTION = selectedDocumentation;
+    await rm(root, { recursive: true, force: true });
+  }
+}
+
+
+// A published-documentation fixture stays independent from the current candidate.
+export async function exerciseStablePlaceholder() {
+  const root=await mkdtemp(join(repository,'.work/stable-placeholder-fixture-'));
+  const selected=process.env.SITE_DOCUMENTATION_SELECTION;
+  delete process.env.SITE_DOCUMENTATION_SELECTION;
+  try {
+    await cp(join(repository,'site'),join(root,'site'),{recursive:true});
+    await mkdir(join(root,'docs'));await mkdir(join(root,'tools/site'),{recursive:true});await mkdir(join(root,'.work/site'),{recursive:true});
+    await symlink(join(repository,'.git'),join(root,'.git'));
+    await symlink(join(repository,'.work/site/node_modules'),join(root,'.work/site/node_modules'));
+    await writeFile(join(root,'README.md'),'# Published fixture\n\nOnly the independently selected stable documentation.\n');
+    await writeFile(join(root,'docs/usage.md'),'# Published Usage\n\nPublished usage fixture, no candidate content.\n');
+    await writeFile(join(root,'tools/site/docs-example.json'),JSON.stringify({version:'0.2.0',commit:'b'.repeat(40)}));
+    const markdown=await readFile(join(repository,'site/demo/index.md'),'utf8');
+    const placeholder=await mainPlaceholder(async()=>markdown,'a'.repeat(40));
+    const result=await buildStablePlaceholder({root,placeholder});
+    const source=await readFile(join(result.source,'index.md'),'utf8');
+    assert.match(source,/Only the independently selected stable documentation/);
+    assert.doesNotMatch(source,/Unpublished release candidate|SQLite-Vector 1.1.2/);
+    assert.equal(result.runtime,null);assert.deepEqual(result.placeholder,{sourceCommit:'a'.repeat(40),sha256:placeholder.sha256});
+    const server=await serveSite(result.output,result.base);let observed;
+    try{observed=await checkBrowser(server.url,{requireDocs:true,requirePlaceholder:true});}finally{await server.close();}
+    await assert.rejects(buildStablePlaceholder({root,placeholder:{...placeholder,markdown:markdown+'<script>throw 1</script>'}}),/Invalid static placeholder handoff/);
+    await assert.rejects(readFile(join(root,'.work/site/dist/index.html')),{code:'ENOENT'});
+    return [{name:'published-docs-with-main-placeholder',...observed,sourceCommit:placeholder.sourceCommit,placeholderSha256:placeholder.sha256},
+      {name:'invalid-placeholder-handoff',result:'rejected; stale output removed'}];
+  } finally {
+    if(selected===undefined)delete process.env.SITE_DOCUMENTATION_SELECTION;else process.env.SITE_DOCUMENTATION_SELECTION=selected;
+    await rm(root,{recursive:true,force:true});
+  }
 }

@@ -1,8 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFile, writeFile } from 'node:fs/promises';
 import { checkBrowser } from './browser.mjs';
-import { checkDemo } from './demo-check.mjs';
-import { prepareData } from './demo-data.mjs';
 import { repository } from './build.mjs';
 import { join, dirname } from 'node:path';
 import { serveSite } from './server.mjs';
@@ -23,22 +21,10 @@ try {
   const results = [];
   // A preview's stable root is independently built from main, whose navigation
   // may predate this candidate; the candidate always checks the new npm link.
-  if (record.stablePresent) results.push(await checkBrowser(base.href, { requireDocs: !record.preview, requireNpm: !record.preview }));
+  if (record.stablePresent) results.push(await checkBrowser(base.href, { requireDocs: !record.preview, requireNpm: !record.preview, historicalDemo: Boolean(!record.stablePlaceholder && record.stableDocumentation?.demoSelection), requirePlaceholder: Boolean(record.stablePlaceholder) || !record.stableDocumentation?.demoSelection }));
   else assert.equal((await fetch(base)).status, 404, 'Bootstrap must not invent a stable root');
-  if (record.preview) results.push(await checkBrowser(new URL('preview/', base).href, { preview: record.preview, requireDocs: true }));
+  if (record.preview) results.push(await checkBrowser(new URL('preview/', base).href, { preview: record.preview, requireDocs: true, requirePlaceholder: true }));
   else assert.equal((await fetch(new URL('preview/', base))).status, 404, 'Main artifact must remove preview');
-  // Candidate demo selection remains independent of the separately built stable root.
-  const buildRecord = JSON.parse(await readFile(join(dirname(recordPath), '../site/build.json'), 'utf8'));
-  if (buildRecord.runtime && Object.keys(buildRecord.runtime).some(p => p.endsWith('/sqlite3.wasm'))) {
-    await prepareData(repository, join(repository, '.work/demo-reference-data'));
-    const demoBase = record.preview ? new URL('preview/', base).href : base.href;
-    const expectedSelection = JSON.parse(await readFile(join(repository, 'tools/site/demo-runtime.json'), 'utf8'));
-    const actual = await (await fetch(new URL('demo-runtime.json', demoBase))).json();
-    for (const [key, value] of Object.entries(expectedSelection)) assert.deepEqual(actual[key], value);
-    results.push(await checkDemo(demoBase, { root: repository, expectedPreview: record.preview,
-      expectedSelection: actual, runtimeInventory: buildRecord.runtime,
-      screenshot: resultPath.replace(/\.json$/, '-demo-mobile.png') }));
-  }
   await sameDeployment();
   await writeFile(resultPath, JSON.stringify({ publication: record, results }, null, 2) + '\n');
   console.log(JSON.stringify({ publication: record, results }));

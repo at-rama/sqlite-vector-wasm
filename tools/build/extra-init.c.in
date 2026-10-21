@@ -1,8 +1,0 @@
-/* Separate static integration input; no upstream source is edited. */
-#define SQLITE_CORE 1
-#include @SQLITE_VEC_SOURCE@
-
-int sqlite3_wasm_extra_init(const char *unused){
-  (void)unused;
-  return sqlite3_auto_extension((void (*)(void))sqlite3_vec_init);
-}

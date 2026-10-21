@@ -14,23 +14,15 @@ sh tools/site.sh build
 
 Installation copies the tracked private manifest/lockfile to `.work/site/` and runs `npm ci`. Construction starts with a clean `.work/site/src/` and emits `.work/site/dist/`; `.work/site/build.json` records the runtime asset inventory, or `null` when no demo is integrated. Generated content, dependencies and runtime files are not committed. Do not run concurrent installs/builds in one checkout.
 
-Presentation is generated from the README and Usage from `docs/usage.md` on every build. Demo is prepared from its separate pinned corpus and published-runtime selection. No second documentation copy is maintained.
+Presentation is generated from the README and Usage from `docs/usage.md` on every build. Démo is temporarily a static notice that the demonstration is being refactored for SQLite-Vector, with a Usage link. It loads no demo Worker, JS/WASM runtime or corpus, and requires no replacement engine publication.
 
-## Integrating documentation and the demo
+## Integrating documentation and the placeholder
 
-Authored shell sources live in `site/`. `tools/site/docs.mjs` renders README and `docs/usage.md` with the locked VitePress Markdown renderer into temporary `index.md` and `usage/index.md`. Rendered HTML is marked `v-pre` so Vue cannot interpret literal documentation content. Do not maintain a second copy of their content. The demo work supplies `demo/index.md`, any Vue components and its prepared public assets. Initialize browser-only code locally in the demo, using `onMounted` or `ClientOnly`, rather than in the global theme.
+Authored shell sources live in `site/`. `tools/site/docs.mjs` renders README and `docs/usage.md` through the locked VitePress Markdown renderer; `v-pre` preserves literal content. No second authored documentation copy is maintained. The Démo route and shared mobile navigation remain present.
 
-The shell accepts an ordinary prepared directory overlaid onto its temporary source tree:
+The shell still accepts ordinary prepared documentation outside `.work/site/` through `sh tools/site.sh build --prepared DIRECTORY`. Symlinks/nonregular inputs are rejected. The ordinary placeholder build supplies no runtime or corpus overlay and performs no old-runtime acquisition. The generic shell checksum transport remains available to independent synthetic integration checks and a future explicitly qualified demo; it does not select or acquire a runtime. The future complete demo and its published-stable runtime qualification are separate work.
 
-```sh
-sh tools/site.sh build --prepared .work/site-input
-```
-
-Prepare that directory before invoking the command, outside `.work/site/`. Its paths are relative to the site root, such as `usage/index.md` or `public/demo-runtime/`. Either documentation or demo inputs can be supplied without the other. Symlinks and nonregular input files are rejected. Normal builds always prepare the two real documentation sources after this overlay, preserving supplied demo content and runtime files. Shell fixture tests explicitly use synthetic documentation instead.
-
-An integrated demo supplies its opaque `demo-runtime.json`, unchanged runtime files under `public/demo-runtime/`, and a standard SHA-256 sidecar `demo-runtime.sha256` covering the selection file and every runtime file. The sidecar uses lowercase digest, two spaces, then the site-relative filename, one entry per line. This transport check does not define the demo's selection/acquisition JSON schema. Missing, altered, duplicate or unlisted assets fail construction and clear previous generated output. The selection is copied to the public `demo-runtime.json`; runtime files bypass Vite rebundling, and emitted digests are compared with the supplied inventory.
-
-The demo work owns resolving the latest stable on an explicit refresh and preparing the corresponding published archive. A documentation update keeps that selection and those bytes; it may reacquire the exact pinned archive but must not query a floating latest version. The shell does no release discovery or runtime download. An absent demo needs neither runtime assets nor a release selection.
+During this phase, the stable documentation can remain bound to its previous eligible published source while Démo uses the static placeholder adopted on `main`. Its source commit and document hash are recorded separately. A PR-only placeholder cannot replace the stable surface. The current builder supplies no demo assets for this static page; the independently selected Presentation/Usage sources and their published-example checks remain unchanged. No new Vector publication is needed for the placeholder.
 
 ## Browser and preservation checks
 
@@ -44,9 +36,9 @@ bash tools/harness.sh exec sh tools/site.sh check
 bash tools/harness.sh exec sh tools/site.sh exercise
 ```
 
-`check` serves the built output at the real project prefix on loopback, without COOP/COEP headers. Chrome checks all three destinations directly and through client-side transitions at 1280px and 390px, the responsive menu and GitHub link, asset errors and page overflow. `exercise` builds docs-only, demo-only and documentation-update fixtures, checks wide-code scrolling, compares fixed selection/runtime digests despite a distinct newer candidate, and rejects a corrupted asset. It finishes by rebuilding the real repository site. Results and a mobile screenshot remain in `.work/site/`.
+`check` serves the built output at the project prefix on loopback without COOP/COEP. Chrome checks direct and client-side navigation at 1280px and 390px, mobile menus, GitHub/npm and documentation links, overflow, asset errors and absence of demo runtime/corpus requests or Workers. `exercise` checks prepared documentation, placeholder preservation across stable/preview/documentation rebuilds, complete artifact assembly and generic supplied-asset integrity failures. Relative-image and missing-link checks remain. Results and screenshots stay under `.work/site/`.
 
-The fixtures use a synthetic JavaScript module, not a published engine, emoji corpus or vector oracle. The exercise additionally checks real README/Usage content, code, links, anchors and mobile layout at stable/preview prefixes and preserves synthetic demo digests across an actual README edit. External image destinations are retained; third-party image availability is not an internal-link check. These checks do not establish demo correctness or distribution acceptance.
+Placeholder checks do not count as vector execution, published-runtime qualification or distribution acceptance. Future demo reinstatement still requires its complete independent runtime checks.
 
 ## GitHub Pages
 
@@ -114,47 +106,58 @@ For redeployment, manually run Site on `main`; it retains that checkout's select
 
 README and Usage links to each other use the canonical stable site URLs, so GitHub and installed-package readers reach the public pages. During construction, own-site URLs and relative links to these two documents stay under the current stable/preview prefix. Repository-only relative files point to the exact build commit on GitHub. Relative images become source-relative copied assets. Missing local files or anchors fail construction with the authored source and destination; external URLs and literal code are preserved. `site-docs.json` records source hashes and expected rendered text, headings, code, images and links for the browser checks. Documentation rendering itself acquires no runtime; an integrated site build separately prepares the demo's pinned assets.
 
-The browser example has its own explicit dependency record, `tools/site/docs-example.json`, initially published version 0.2.0. It is separate from demo selection. To check the renderer fixtures and execute the actual guide initialization and Float32 SQL snippets:
+The browser example uses its own explicit profile, `tools/site/docs-example.json`, independently of demo selection. A candidate profile requires the exact-head qualified archive bundle; a published profile names a digest-bound existing publication. To check renderer fixtures and execute the guide’s actual initialization/Float32 snippets with an available candidate bundle:
 
 ```sh
 node --test tools/site/checks/*.test.mjs
-bash tools/harness.sh exec sh tools/site.sh example
+bash tools/harness.sh exec sh tools/site.sh example --candidate-bundle /absolute/path/to/acceptance/run-directory
 ```
 
-`example` downloads the pinned publication record and archive, verifies their SHA-256 values and identities, and installs that local archive in a temporary consumer using offline npm with lifecycle scripts disabled. It executes the asset-copy commands extracted from Usage, checks the eleven copied runtime names and hashes, and serves `public/` on loopback. Chrome executes the guide's initialization and Float32 SQL in both the page and a dedicated module Worker, checks the two expected neighbors/distances and SQLite/sqlite-vec versions, then rechecks runtime hashes. `.work/docs-example/result.json` records the selected archive, guide/snippet/copy-command hashes, copied inventory and observed results. A download, integrity, copy or execution failure fails the command. This scoped example establishes no OPFS, complete Worker/API or emoji-demo acceptance.
+`example` verifies the qualified candidate handoffs/archive or downloads and verifies an explicit published selection, then installs the exact local archive in a temporary consumer using offline npm with lifecycle scripts disabled. It executes the asset-copy commands extracted from Usage, checks the eleven copied runtime names and hashes, and serves `public/` on loopback. Chrome executes the guide's initialization and Float32 SQL in both the page and a dedicated module Worker, checks the two expected neighbors/distances and SQLite and selected-engine versions, then rechecks runtime hashes. `.work/docs-example/result.json` records the selected archive, guide/snippet/copy-command hashes, copied inventory and observed results. A download, integrity, copy or execution failure fails the command. This scoped example establishes no OPFS, complete Worker/API or emoji-demo acceptance.
 
-Refreshing the documented version is an explicit source revision: verify the chosen published release, update the dependency record and README/Usage version/install instructions together, then rerun renderer, browser and example checks. A newer release alone does not change it. The Site workflow retains example results separately from deployed-documentation observations.
+The rendered header and install command follow the explicitly checked identity without rewriting authored instructions after publication. A completed publication supplies an explicit published selection through `SITE_DOCUMENTATION_SELECTION`; a newer unrelated release does not silently change it. Candidate rendering checks the source/commit/lock identities and rejects stale or missing execution evidence. Historical example replays are separate records and cannot authorize the current preview. The Site workflow retains example results separately from deployed-documentation observations.
 
 
 Copied documentation images enter the VitePress compiler with source-root public asset URLs. Vite applies the selected stable/preview prefix once; the browser manifest records that final destination. The compiler/browser exercise includes relative inline/reference SVGs, a filename with an encoded space, query/fragment preservation and source-relative Usage images under both bases. It decodes the emitted images, compares the copied SVG bytes and rejects a missing source image without retaining stale output.
 
-## Emoji demo preparation and runtime selection
+## Deferred demo refactoring
 
-Demo has its own tracked selection at `tools/site/demo-runtime.json`; the Usage example keeps its independent `docs-example.json`. A normal site build reacquires only the exact selected published archive, verifies publication/archive/member hashes and serves unchanged runtime companions under the current stable/preview prefix. It never compiles the engine or resolves a floating version.
+The placeholder does not prepare a runtime or corpus. Reusable pinned corpus/reference material remains in `tools/site/demo-data.*` and `tools/site/demo-reference.*` for the future refactoring; it is not part of active Site construction or qualification. Reinstatement requires a separately qualified published-stable SQLite-Vector demonstration.
 
-To explicitly refresh the demo to the published stable npm `latest` (never `next`), review the selection diff and then rebuild:
+## Publication-ordered documentation
 
-```sh
-node tools/site/demo.mjs refresh
-node tools/site/demo.mjs prepare
-sh tools/site.sh build
-```
+The shared preview still identifies the exact PR branch and commit. Its stable
+root is built from a separately checked-out eligible public source, rather than
+assuming current main is already published. Candidate previews consume the
+original Updates-qualified archive; unpublished tooling PRs consume an exact-head
+publisher-free Release exercise. This selection does not depend on active OpenSpec
+files and does not authorize distribution publication.
 
-`prepare` can also take an output directory under `.work/`, outside `.work/site/`, for the shell's `--prepared` overlay. It clears failed prepared output. Normal builds call the same preparation automatically. Main and candidate builds consume their own records, preserving the existing independent deployment path.
+For a merged Vector candidate, Site verifies the descriptor, source lock,
+preparation, integrated human PR, exact Release workflow attempt and digest-checked
+publication handoff. Complete matching GitHub and npm destinations, final-archive
+documentation checks and the published provenance are required. An exercise,
+failed or partial publication, an unrelated completion or unknown eligibility
+cannot promote candidate documentation. A read-only visibility recheck can
+complete an already published identity; Site never republishes it.
 
-The complete emoji2vec corpus is pinned by revision and file hashes in `tools/site/demo-data.json`. Inputs are acquired under `.work/demo-input/`; generated catalogue, 304-bit sign vectors, original 300-component little-endian Float32 vectors, manifest and verbatim MIT notice enter `.work/demo-prepared/public/demo-data/`. The manifest records the source identity and transformation. There is no training step or maintained upstream fork. emoji2vec/UCL and the Unicode/iemoji.com description provenance remain credited. Updating this corpus is a separate explicit source-record change. Corrupted cached bytes fail integrity checks; remove that cache entry to reacquire the pinned source.
+Pushes, manual main redeployments and stable roots for other PR previews use the
+same selection. While publication is pending, the previous source is resolved
+from the existing Pages publication record and Git ancestry, then its declared
+publication and actual archives are reverified. If no eligible source can be
+established, deployment stops and existing Pages stays unchanged. Ordinary
+documentation-only changes for an already published selected version remain
+deployable. No new version ledger, main-branch write or engine build is involved.
 
-On Demo mount a dedicated module Worker imports the published loader, opens `:memory:` and inserts catalogue/binary rows in a transaction. Demo starts with 🐱, resolved by Unicode identity rather than corpus position. Textual SQL searches word beginnings across all English descriptions/keywords, not just the displayed first description: `mus` finds `music`/`musical`, and `cat` does not match the interior of `indicator`. All query terms must match, in any order; punctuation separates words and an empty query exposes the complete catalogue. No FTS5 index is needed. Typing opens the matching grid; an initially closed Browse all emojis control keeps the initial selection prominent while leaving the complete catalogue reachable. The grid shows twelve entries at a time with Show more, beside the selected emoji and its results on wide screens and above them on narrow screens. Text search finds a starting emoji; `vec0` searches its existing vector for seven candidates, removes self and shows six. Float32 uses a separate cosine table, acquired/inserted only at first selection and retained for that page session. Failed optional loading can be retried while binary remains usable. Leaving Demo explicitly closes the connection before Worker termination; another visit starts afresh. No OPFS, authentication or persistent browser database is involved, and other pages do not initialize SQLite or acquire demo data.
+The existing github-pages concurrency group covers selection through observation.
+Immediately before deployment, main/PR freshness and stable publication
+eligibility are checked again. A changed selection rejects a delayed artifact.
+The complete artifact records observed main separately from the stable content
+source and preserves that source's explicit demo selection. A documentation
+promotion never selects a newer demo runtime.
 
-The inspection panel reports actual SQL and parameter summaries, distances, Worker query time, end-to-end request time and loading/insertion observations. SQLite bytes mean `page_count * page_size`, not total process/WASM memory. Measurements depend on the environment and cache state; there is no latency or semantic-relevance acceptance threshold.
-
-Run the independent demo/browser exercise with the qualified harness:
-
-```sh
-node --test tools/site/tests/demo-*.test.mjs
-bash tools/harness.sh exec sh tools/site.sh demo
-```
-
-It compiles both stable and preview bases, checks the initial 🐱 and four additional real-corpus queries per representation against an independent Python scalar reference over the pinned originals, tests word-prefix results against fixed memberships across all descriptions, a real Hamming boundary tie, initial/retry/re-entry selection, and checks loading/retry/copy/navigation/disposal, narrow layout and actual keyboard navigation/selection/mode/copy/disclosure controls. Initial desktop/mobile screenshots retain the closed technical panels; runtime versions and corpus/license links remain outside raw diagnostics. Hamming is exact; cosine uses absolute tolerance `2e-6` for a 300-component Float32 reduction against the double-precision reference. Any equally close boundary neighbor is accepted, while missing a strictly closer item fails. The reference shares the upstream source and repository authorship, but imports no production preparation or sqlite-vec query logic. It proves neither upstream semantic quality nor complete package acceptance.
-
-`.work/site/demo-results.json` and mobile screenshots identify the local runtime/corpus, actual timings, request paths and outcomes. The Site workflow runs this exercise, keeps these artifacts and repeats real searches when observing the identified Pages candidate. Hosted observation compares every served runtime inventory digest and the selected release/corpus identity; it remains distinct from local results. Do not run concurrent site builds/exercises in one checkout.
+A Distribution release completion triggers Site through workflow_run only after
+this workflow is integrated on main. Qualification-only completions without a
+product publication handoff are ignored. This trigger's event and artifacts are
+inputs to validation, not authority by themselves. Forks and Dependabot retain
+validation without Pages deployment permissions.

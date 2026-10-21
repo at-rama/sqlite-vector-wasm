@@ -7,29 +7,7 @@ import { createRequire } from 'node:module';
 import { root, hash, identity, argumentsFor, validateBuild, noticeInputs, assemble, inspectArchive, execute } from '../package.mjs';
 import { runtimeNames } from '../../build/config.mjs';
 
-async function fixture(t) {
-  const repository = await mkdtemp(join(tmpdir(), 'package-fixture-'));
-  t.after(() => rm(repository, { recursive: true, force: true }));
-  for (const file of ['inputs/sources.lock.json', 'tools/harness.sh', 'tools/build/config.mjs',
-    'tools/build/extra-init.c.in', 'tools/build/vector-extra-init.c.in', 'inputs/sqlite-vector.sources.lock.json', 'docs/packaging.md', 'docs/common', 'docs/sqlite-vec', 'docs/sqlite-vector', 'tools/harness/package-lock.json', 'LICENSE', 'README.md', 'docs/usage.md', 'tools/package']) {
-    await mkdir(join(repository, file, '..'), { recursive: true });
-    await cp(join(root, file), join(repository, file), { recursive: true });
-  }
-  const runtimeDirectory = join(repository, 'runtime'); await mkdir(runtimeDirectory);
-  const runtimeFiles = [];
-  for (const name of runtimeNames) {
-    const bytes = Buffer.from(`runtime fixture ${name}\n`); await writeFile(join(runtimeDirectory, name), bytes);
-    runtimeFiles.push({ name, size: bytes.length, sha256: hash(bytes) });
-  }
-  const lockBytes = await readFile(join(repository, 'inputs/sources.lock.json')), lock = JSON.parse(lockBytes);
-  const inputs = { lockDigest: { algorithm: 'sha256', value: hash(lockBytes) } };
-  for (const key of ['sqlite', 'sqliteVec']) inputs[key] = { version: lock[key].version, digest: lock[key].digest };
-  const build = { tools: { emcc: 'emcc (Emscripten) 4.0.23', node: process.version, cc:'cc fixture', make:'make fixture', 'wasm-strip':'WABT fixture', 'wasm-opt':'Binaryen fixture', npm:'npm fixture' }, platform: 'fixture Linux x86_64',
-    amalgamation: ['make','sqlite3.c'], configure: ['env', 'CC=cc', './configure', '--enable-all'], wasm: ['make', 'b-esm', `sqlite3_wasm_extra_init.c=${repository}/bridge.c`] };
-  for (const [field, path] of [['harnessSha256', 'tools/harness.sh'], ['configSha256', 'tools/build/config.mjs'],
-    ['templateSha256', 'tools/build/extra-init.c.in'], ['dependencyLockSha256', 'tools/harness/package-lock.json']]) build[field] = hash(await readFile(join(repository, path)));
-  return { repository, handoff: { schemaVersion: 1, inputs, build, runtimeDirectory, runtimeFiles }, name: 'sqlite-vector-wasm-fixture', version: '0.0.0-test' };
-}
+import {fixture} from './fixture.mjs';
 
 // The offline suite uses actual local npm packing but does not qualify production SDK identity.
 test('complete handoff assembles one exact autonomous tarball and consumer subpaths', async t => {
@@ -43,10 +21,11 @@ test('complete handoff assembles one exact autonomous tarball and consumer subpa
   assert.equal(metadata.name, options.name); assert.equal(metadata.version, options.version);
   assert.equal(metadata.license, 'Apache-2.0');
   assert.equal(await readFile(join(result.runtimeDirectory, 'README.md'), 'utf8'),
-    await readFile(join(options.repository, 'docs/sqlite-vec/README.md'), 'utf8'));
+    await readFile(join(options.repository, 'README.md'), 'utf8'));
   assert.equal(await readFile(join(result.runtimeDirectory, 'docs/usage.md'), 'utf8'),
-    await readFile(join(options.repository, 'docs/sqlite-vec/usage.md'), 'utf8'));
+    await readFile(join(options.repository, 'docs/usage.md'), 'utf8'));
   assert.ok(result.files.some(file => file.name === 'docs/usage.md'));
+  assert.ok(!result.files.some(file => file.name === 'docs/browser.md'));
   assert.equal(metadata.scripts, undefined); assert.equal(metadata.dependencies, undefined);
   assert.equal(metadata.exports['.'], undefined); assert.equal(metadata.sideEffects, undefined);
   for (const name of runtimeNames) assert.equal(metadata.exports[`./${name}`], `./${name}`);
@@ -79,14 +58,14 @@ test('independent product versions preserve the same exact upstream composition'
     const runtime = JSON.parse(await readFile(join(result.runtimeDirectory, 'runtime.json')));
     assert.equal(metadata.name, 'sqlite-vector-wasm');
     assert.equal(metadata.version, version);
-    assert.deepEqual(runtime.inputs, Object.fromEntries(['sqlite', 'sqliteVec'].map(key =>
+    assert.deepEqual(runtime.inputs, Object.fromEntries(['sqlite', 'sqliteVector'].map(key =>
       [key, { version: options.handoff.inputs[key].version, digest: options.handoff.inputs[key].digest }])));
     assert.equal(metadata.version.includes(runtime.inputs.sqlite.version), false);
-    assert.equal(metadata.version.includes(runtime.inputs.sqliteVec.version), false);
+    assert.equal(metadata.version.includes(runtime.inputs.sqliteVector.version), false);
   }
   // A composed upstream string can be syntactically valid prerelease SemVer.
   // Product release policy excludes it; the generic packaging validator does not select that policy.
-  const composed = `${options.handoff.inputs.sqlite.version}-${options.handoff.inputs.sqliteVec.version}`;
+  const composed = `${options.handoff.inputs.sqlite.version}-${options.handoff.inputs.sqliteVector.version}`;
   assert.equal(identity(options.name, composed).version, composed);
 });
 
@@ -114,7 +93,7 @@ test('selected scoped distribution installs offline and resolves every runtime s
 test('invalid schema, source identities, configuration and inventory fail before packing', async t => {
   const f = await fixture(t);
   const cases = [h => h.schemaVersion=2, h => h.inputs.lockDigest.value='0'.repeat(64), h => h.inputs.sqlite.version='0.0.0',
-    h => h.inputs.sqliteVec.digest.value='0'.repeat(64), h => h.build.configSha256='0'.repeat(64),
+    h => h.inputs.sqliteVector.digest.value='0'.repeat(64), h => h.build.configSha256='0'.repeat(64),
     h => h.runtimeFiles.pop(), h => h.runtimeFiles.push(h.runtimeFiles[0]), h => h.runtimeFiles[0].name='../sqlite3.js',
     h => h.runtimeFiles[0].size=0, h => h.runtimeFiles[0].sha256='invalid', h => h.build.tools.emcc='4.0.22', h => delete h.build.amalgamation, h => delete h.build.tools.make];
   for (const mutate of cases) { const h=structuredClone(f.handoff); mutate(h); await assert.rejects(validateBuild(h,f.repository)); }
@@ -139,12 +118,12 @@ test('missing, empty, modified, symlink, directory and FIFO runtime files are re
 test('notice texts and exact version associations are mandatory', async t => {
   for (const kind of ['missing','changed','version','duplicate','association','wrong-project']) {
     const f=await fixture(t), path=join(f.repository,'tools/package/notices.json'), record=JSON.parse(await readFile(path));
-    if(kind==='missing')await rm(join(f.repository,'tools/package/notices/sqlite-vec-MIT.txt'));
-    if(kind==='changed')await writeFile(join(f.repository,'tools/package/notices/sqlite-vec-MIT.txt'),'altered');
+    if(kind==='missing')await rm(join(f.repository,'tools/package/notices/sqlite-vector-APACHE.txt'));
+    if(kind==='changed')await writeFile(join(f.repository,'tools/package/notices/sqlite-vector-APACHE.txt'),'altered');
     if(kind==='version')record.notices[0].version='0.0.0';
     if(kind==='duplicate')record.notices.push(record.notices[0]);
     if(kind==='association')record.notices.pop();
-    if(kind==='wrong-project'){record.notices[0].project='sqliteVec';record.notices[0].version=f.handoff.inputs.sqliteVec.version;}
+    if(kind==='wrong-project'){record.notices[0].project='sqliteVector';record.notices[0].version=f.handoff.inputs.sqliteVector.version;}
     await writeFile(path,JSON.stringify(record)); await assert.rejects(noticeInputs(f.handoff,f.repository));
   }
 });
@@ -193,16 +172,16 @@ test('refreshed notice provenance survives the actual archive while strict assoc
   const bytes = Buffer.from('Refreshed notice fixture\n');
   await writeFile(join(options.repository, 'tools/package/notices', notice.name), bytes);
   notice.sha256 = hash(bytes);
-  notice.source = { kind: 'archive', archiveUrl: JSON.parse(await readFile(join(options.repository, 'inputs/sources.lock.json'))).sqlite.archiveUrl,
+  notice.source = { kind: 'archive', archiveUrl: JSON.parse(await readFile(join(options.repository, 'inputs/sqlite-vector.sources.lock.json'))).sqlite.archiveUrl,
     archiveDigest: options.handoff.inputs.sqlite.digest, path: 'sqlite-src-3530400/LICENSE.md', sha256: hash(bytes) };
   notice.origin = notice.source.archiveUrl + '#' + notice.source.path;
   await writeFile(manifestPath, JSON.stringify(records, null, 2) + '\n');
   const result = await assemble(options);
   const extracted = join(options.repository, 'notice-inspection');
   await inspectArchive(result.archive.path, result.files, extracted);
-  assert.deepEqual(JSON.parse(await readFile(join(extracted, 'licenses/origins.json'))), {schemaVersion:1,notices:records.notices.filter(n=>!['sqliteVector','fp16'].includes(n.project))});
+  assert.deepEqual(JSON.parse(await readFile(join(extracted, 'licenses/origins.json'))), {schemaVersion:1,notices:records.notices});
   assert.equal(hash(await readFile(join(extracted, 'licenses/SQLite-LICENSE.txt'))), notice.sha256);
-  for (const mutation of [record => { record.version = '99.0.0'; }, record => { record.project = 'sqliteVec'; }]) {
+  for (const mutation of [record => { record.version = '99.0.0'; }, record => { record.project = 'sqliteVector'; }]) {
     const invalid = structuredClone(records); mutation(invalid.notices[0]);
     await writeFile(manifestPath, JSON.stringify(invalid));
     await assert.rejects(noticeInputs(options.handoff, options.repository), /Wrong notice association/);

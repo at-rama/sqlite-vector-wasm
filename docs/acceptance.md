@@ -16,21 +16,16 @@ version `0.0.0-test`. A caller preparing an exact release artifact can provide
 its already selected name and version without changing the acceptance procedure:
 
 ```sh
-bash tools/acceptance.sh --name @at-rama/sqlite-vector-wasm --version 0.1.0
+bash tools/acceptance.sh --lock inputs/sqlite-vector.sources.lock.json --name @at-rama/sqlite-vector-wasm --version 0.3.0
 ```
 
-Select the other recorded composition explicitly, retaining the same supplied
-package-identity convention:
+For a nonpublished test fixture using SQLite-Vector, retain a distinct fixture identity:
 
 ```sh
 bash tools/acceptance.sh --lock inputs/sqlite-vector.sources.lock.json --name sqlite-vector-wasm-acceptance-fixture --version 0.0.0-test
 ```
 
-Omitted `--lock` keeps sqlite-vec through `inputs/sources.lock.json`. Only these
-two recorded paths are accepted. Selection is distinct from the supplied product
-name/version, and does not choose a release version, channel or publication.
-Build/package/report identities must all match the selected lock and engine;
-an ambiguous, altered or other-engine handoff fails without fallback.
+Omitted `--lock` selects `inputs/sqlite-vector.sources.lock.json`. Legacy or mixed-engine inputs fail without conversion or fallback.
 
 This command installs and verifies fresh tools, installs locked test dependencies,
 runs the harness smoke, acquires/builds the recorded sources, packages the runtime
@@ -56,13 +51,11 @@ Euclidean distances `0`, `sqrt(2)`, `2`; the absolute tolerance is `1e-5` to all
 Float32 distance rounding. Binary bytes `00,01,03,07,0f` queried against `00` have
 independently computed XOR/popcount distances `0,1,2,3,4`, asserted exactly with
 no ordering ties. Wrong identifiers, distances, ordering and FTS expectations are
-checked as negative controls. sqlite-vec uses native vec0 Float32/bit tables;
-SQLite-Vector uses ordinary BLOB columns, `vector_init` for FLOAT32/L2 and
+checked as negative controls. SQLite-Vector uses ordinary BLOB columns, `vector_init` for FLOAT32/L2 and
 BIT/HAMMING, and exact `vector_full_scan`. Binary fixture bytes are stored directly;
 quantization, training, preload and approximate search are not prerequisites.
 Expectations come from host arithmetic, never from the extension or another engine.
-The retained sqlite-vec Worker1/promiser dimension column remains 2, with
-other-engine registration count 0 checked separately.
+Worker1/promiser observations use native Vector version rows and verify that no abandoned-engine functions are registered.
 
 Each default `opfs`, `opfs-wl` and `opfs-sahpool` VFS must preserve committed
 ordinary, Float32 and bit-vector data after explicit connection closure and
@@ -100,7 +93,7 @@ Generated material stays outside Git. Clean up the exact recorded invocation and
 tool directories only after downstream use and diagnostic retention are complete.
 
 The `Acceptance` workflow keeps its required `acceptance` job on every PR and push
-to `main`. Applicable automatic runs qualify both recorded compositions in separate
+to `main`. Applicable automatic runs qualify the recorded Vector composition in an isolated
 fresh jobs. A counterpart is not cancelled when one fails. The aggregate succeeds
 only when every required composition and its evidence upload succeed; failed,
 cancelled or unexpectedly skipped work cannot count as success. Each artifact name
@@ -114,8 +107,7 @@ runs perform no package production or browser qualification and upload no
 acceptance bundle; the site's own checks remain separate.
 
 Manual runs always execute complete acceptance for the one selected recorded lock,
-including for site-only revisions; their default remains sqlite-vec. Existing
-metadata-only downstream callers also retain that default. Selection does not run
+including for site-only revisions; their default is the recorded Vector lock. Selection does not run
 or publish another composition.
 Applicable PR checkouts, authoritative `main` commits and explicitly selected
 manual revisions are evaluated from fresh state. PR checkout identity

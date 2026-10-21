@@ -58,7 +58,7 @@ test('integrated Vector descriptor is fixed to recorded lock and exact human/run
  assert.equal(descriptor(d,lock).comment,'$(data)');
  const pr={number:1,merged:true,state:'closed',merged_by:{type:'User'},base:{ref:'main',repo:{full_name:'a/b'}},merge_commit_sha:commit,changed_files:1};
  const event={action:'closed',repository:{full_name:'a/b'},pull_request:pr};
- const invoke=({value=d,pins=lock,changes={},run={id:17,html_url:d.preparation.url,repository:{full_name:'a/b'}},files=[{filename:'inputs/release.json',status:'modified'}]}={})=>integratedContext({repository:'a/b',event,get:async url=>ok(url.includes('/actions/runs/')?run:url.includes('/files?')?files:{...pr,...changes}),readAt:async(revision,path)=>{assert.equal(revision,commit);assert.ok(['inputs/release.json','inputs/sqlite-vector.sources.lock.json'].includes(path));return JSON.stringify(path.endsWith('.lock.json')?pins:value);}});
+ const invoke=({value=d,pins=lock,changes={},run={id:17,html_url:d.preparation.url,repository:{full_name:'a/b'}},files=[{filename:'inputs/release.json',status:'modified'}]}={})=>integratedContext({repository:'a/b',event,review:async()=>({testedSeparately:true}),get:async url=>ok(url.includes('/actions/runs/')?run:url.includes('/files?')?files:{...pr,...changes}),readAt:async(revision,path)=>{assert.equal(revision,commit);assert.ok(['inputs/release.json','inputs/sqlite-vector.sources.lock.json'].includes(path));return JSON.stringify(path.endsWith('.lock.json')?pins:value);}});
  assert.deepEqual((await invoke()).selection,vector());
  for(const value of [{...d,sqliteVector:'1.1.3'},{...d,sqlite:'3.55.0'},{...d,sqliteVec:'0.1.9'},{...d,schemaVersion:1},{...d,preparation:{runId:18,url:d.preparation.url}},{...d,preparation:{runId:17,url:'https://github.com/c/d/actions/runs/17'}},{...d,preparation:{runId:0,url:d.preparation.url}}])await assert.rejects(invoke({value}));
  for(const run of [{id:18},{id:17,html_url:d.preparation.url,repository:{full_name:'c/d'}},{id:17,html_url:'https://github.com/a/b/actions/runs/18',repository:{full_name:'a/b'}}])await assert.rejects(invoke({run}));
@@ -86,22 +86,29 @@ test('Vector retained archive, explicit production selection, exact sources and 
  await writeFile(f.handoff.evidencePath,JSON.stringify({...f.evidence,engine:{key:'sqliteVec',upstream:'asg017/sqlite-vec',version:'0.1.9'}}));await assert.rejects(attempt(f.handoff),/evidence changed/);assert.deepEqual(attempts,[]);
 });
 
-test('Vector qualification rejects legacy product context/default bundle and selected-source drift',async t=>{
- const v=await releaseFixture(t,{version:'0.3.0'}),legacy=await releaseFixture(t,{version:'0.3.0',engine:'sqliteVec'});
- await assert.rejects(qualify({...legacy,run:clean,readSnapshot:async()=>state(),produce:async()=>assert.fail('legacy production forbidden')}),/requires SQLite-Vector/);
- await assert.rejects(qualify({...v,run:clean,readSnapshot:async()=>state(),produce:async()=>({bundle:legacy.bundle})}),/lock|engine|version|ENOENT/);
+test('Vector qualification rejects legacy product context and selected-source drift',async t=>{
+ const v=await releaseFixture(t,{version:'0.3.0'});
+ const context={...v.context,selection:{sqlite:v.context.selection.sqlite,sqliteVec:'0.1.9'}};
+ await assert.rejects(qualify({...v,context,run:clean,readSnapshot:async()=>state(),produce:async()=>assert.fail('legacy production forbidden')}),/requires SQLite-Vector/);
  for(const selection of [vector('1.1.3'),vector('1.1.2','3.54.0.1')])await assert.rejects(qualify({...v,context:{...v.context,selection},run:clean,readSnapshot:async()=>state(),produce:async()=>({bundle:v.bundle})}),/version/);
- const verify=()=>acceptedPayload({...v,identity:v.packaged.package,commit});
  const original=JSON.parse(await readFile(join(v.repository,'inputs/sqlite-vector.sources.lock.json')));
- const bad=structuredClone(original);bad.sqliteVector.digest.value='0'.repeat(64);await writeFile(join(v.repository,'inputs/sqlite-vector.sources.lock.json'),JSON.stringify(bad));await assert.rejects(verify(),/lock|identity/);
+ original.sqliteVector.digest.value='0'.repeat(64);await writeFile(join(v.repository,'inputs/sqlite-vector.sources.lock.json'),JSON.stringify(original));
+ await assert.rejects(acceptedPayload({...v,identity:v.packaged.package,commit}),/lock|identity/);
 });
+
+// Frozen synthetic history metadata: no current abandoned-engine build or qualification.
+function historicalEvidence(base){
+ const e=structuredClone(base);delete e.engine;
+ Object.assign(e,{version:'0.1.0',tag:'dist/v0.1.0',channel:'latest',initial:true,upstreams:{sqlite:base.upstreams.sqlite,sqliteVec:'0.1.9'}});
+ e.sourceLock={schemaVersion:1,sqlite:base.sourceLock.sqlite,sqliteVec:{version:'0.1.9',archiveUrl:'https://github.com/asg017/sqlite-vec/releases/download/v0.1.9/sqlite-vec-0.1.9-amalgamation.tar.gz',digest:{algorithm:'sha256',value:'b'.repeat(64)}}};
+ return e;
+}
 
 test('historical exact engine/origins remain readable, conflicting provenance fails',async t=>{
  const f=await qualified(t);publicationIdentity(f.evidence);
  for(const mutate of [e=>e.engine.key='sqliteVec',e=>delete e.engine,e=>e.sourceLock.sqliteVec=e.sourceLock.sqliteVector,e=>e.sourceLock.schemaVersion=1,e=>e.sourceLock.sqliteVector.archiveUrl=e.sourceLock.sqliteVector.archiveUrl.replace('sqliteai/sqlite-vector','asg017/sqlite-vec'),e=>e.sourceLock.sqlite.archiveUrl='https://evil.invalid/source',e=>e.upstreams.sqliteVector='1.1.3',e=>e.sourceLock.sqliteVector.commit='bad']){const e=structuredClone(f.evidence);mutate(e);assert.throws(()=>publicationIdentity(e));}
- const old=await releaseFixture(t,{engine:'sqliteVec'}),a=await acceptedPayload({...old,identity:old.packaged.package,commit});
- const evidence=provenance(old.context,calc(vec(),state(null)),a).evidence;assert.equal(evidence.engine,undefined);publicationIdentity(evidence);
- const bytes=await readFile(join(old.bundle,'payload.tgz'));let checks=0;
+ const evidence=historicalEvidence(f.evidence);assert.equal(evidence.engine,undefined);publicationIdentity(evidence);
+ const bytes=await readFile(join(f.bundle,'payload.tgz'));let checks=0;
  const result=await checkInitialCompletion({evidence,verifyGitHub:async()=>checks++,get:async url=>url.endsWith('/archive')?ok(bytes):ok({name:evidence.name,versions:{'0.1.0':{name:evidence.name,version:'0.1.0',dist:{tarball:'https://registry.npmjs.org/archive'}}},'dist-tags':{latest:'0.1.0'}})});assert.equal(result.status,'complete');assert.equal(checks,1);
 });
 
@@ -111,7 +118,7 @@ test('state reader preserves actual Vector HEAD, checks destination bytes and hi
  const get=async url=>url===api+'evidence'?ok(Buffer.from(JSON.stringify(f.evidence))):url.endsWith('/archive')?ok(bytes):url.includes('/tags?')?ok([{name:'dist/v0.3.0',commit:{sha:commit}}]):url.includes('/releases?')?ok([{tag_name:'dist/v0.3.0',draft:false,prerelease:false,assets:[{name:'publication.json',url:api+'evidence'},{name:'payload.tgz',url:api+'archive'}]}]):ok({name:f.evidence.name,versions:{'0.3.0':{name:f.evidence.name,version:'0.3.0',dist:{tarball:'https://registry.npmjs.org/archive'}}},'dist-tags':{latest:'0.3.0'}});
  assert.deepEqual((await readState({repository:'a/b',get})).heads.latest.upstreams,vector());
  await assert.rejects(readState({repository:'a/b',get:async url=>url.endsWith('/archive')?ok(Buffer.from('altered')):get(url)}));
- const old=await releaseFixture(t,{engine:'sqliteVec'}),a=await acceptedPayload({...old,identity:old.packaged.package,commit}),e=provenance(old.context,calc(vec(),state(null)),a).evidence;
+ const e=historicalEvidence(f.evidence);
  for(const mutate of [e=>e.sourceLock.sqliteVec.archiveUrl='https://github.com/sqliteai/sqlite-vector/source.tgz',e=>e.engine={key:'sqliteVector',upstream:'sqliteai/sqlite-vector',version:'1.1.2'},e=>e.sourceLock.sqliteVector=e.sourceLock.sqliteVec]){const changed=structuredClone(e);mutate(changed);assert.throws(()=>publicationIdentity(changed));}
 });
 

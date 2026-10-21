@@ -6,28 +6,7 @@ Assemble the canonical browser runtime from A-build into a consumer-ready distri
 
 ## Requirements
 
-### Requirement: Validated build input
-
-Packaging SHALL consume an explicit successful A-build handoff for either retained single-engine composition and verify its selected repository-recorded lock, exact engine/component identities, origins, versions/digests, actual build-input identities and complete runtime inventory against the repository state being packaged. Each consumed file SHALL match its declared size and SHA-256. Missing, altered, unsupported, stale or ambiguous input SHALL fail packaging without fallback, recompilation or earlier outputs.
-
-#### Scenario: Matching constructed runtime
-- **WHEN** the handoff identifies the recorded source pair and every expected runtime file matches its declared size and digest
-- **THEN** packaging consumes those exact files without acquiring a different engine or compiling another runtime
-
-#### Scenario: Invalid handoff or changed bytes
-- **WHEN** the handoff is incomplete, unsupported, inconsistent with recorded inputs, or declares missing, duplicate, unsafe, nonregular, empty or altered runtime files
-- **THEN** packaging fails without a successful package result or substitution of previous output
-
-#### Scenario: Either retained composition
-- **WHEN** packaging receives a valid recorded sqlite-vec or SQLite-Vector build handoff
-- **THEN** it consumes only that exact composition using the same CLI, without independently selecting or acquiring an engine
-
-#### Scenario: Conflicting composition or stale integration input
-- **WHEN** selected lock bytes, engine metadata, exact origins/versions/digests or used template/integration identities disagree
-- **THEN** packaging fails before assembly without substituting the default lock or accepting another engine
-
 ### Requirement: Complete conservative runtime assembly
-
 The distribution SHALL retain the complete pinned canonical browser runtime from the selected A-build composition, including all required loaders, Worker1/promiser variants, proxies and WASM assets. It SHALL preserve upstream names, bytes and relative layout, expose supplied bundler variants, include exactly one selected vector engine, and exclude demos, benchmarks, test applications, intermediate engines and optional experimental variants.
 
 #### Scenario: All retained loading surfaces
@@ -39,28 +18,11 @@ The distribution SHALL retain the complete pinned canonical browser runtime from
 - **THEN** the distribution contains only the defined runtime and its package metadata, notices and consumption documentation
 
 #### Scenario: Selected-engine archive
-- **WHEN** either recorded composition is assembled
+- **WHEN** the recorded Vector composition is assembled
 - **THEN** all eleven canonical runtime files retain their A-build bytes and filename subpaths, with no second engine or consumer wrapper
 
-### Requirement: Independent packaged asset resolution
-
-Final packaged loaders, workers, promisers and proxies SHALL resolve their companion assets under the pinned upstream's supported browser/hosting conditions from the documented package layout for either retained composition. Resolution SHALL work independently of temporary build/source directories. Supplied bundler variants SHALL remain accessible without promising compatibility with every bundler.
-
-#### Scenario: Relocated extracted distribution
-- **WHEN** the final archive is extracted separately and hosted at a non-root URL prefix using the documented upstream loading mechanisms
-- **THEN** each retained loader, Worker1/promiser variant and applicable OPFS proxy resolves its packaged companions without fetching files from the build tree
-
-#### Scenario: Missing companion
-- **WHEN** a required WASM, Worker or proxy companion is removed from an extracted test copy
-- **THEN** the affected requested capability does not initialize successfully and the packaging check reports failure
-
-#### Scenario: Both native SQL transports
-- **WHEN** each retained composition’s extracted archive is tested through conventional, ESM and bundler loading, direct C/OO1 connections, Workers, Worker1 and promiser
-- **THEN** exact engine identity and native deterministic queries work without consumer extension registration and every runtime request resolves packaged assets
-
 ### Requirement: Consumer-ready distribution envelope
-
-Packaging SHALL supply an npm-compatible archive usable for npm publication and GitHub Release download, with the same runtime payload for both channels and no consumer native/WASM compilation. It SHALL carry explicit supplied package identity and actual composition metadata without selecting A-release's version/revision/publication policy. Composition-dependent documentation SHALL follow the selected engine from explicit per-engine sources and common material, with stable consumer paths and honest verification/publication references.
+Packaging SHALL supply an npm-compatible archive usable for npm publication and GitHub Release download, with the same runtime payload for both channels and no consumer native/WASM compilation. It SHALL carry explicit supplied package identity and actual composition metadata without selecting A-release's version/revision/publication policy. Product documentation SHALL use the current root `README.md` and complete `docs/usage.md` shared with GitHub and the site, copied byte for byte to the same archive paths. Loading, Workers and storage guidance SHALL be integrated editorially into Usage, without separate common/engine guides or generated prose overlays. The supplied identity and selected upstreams SHALL remain traceable through package/runtime metadata and document records, without inventing registry publication or silently rewriting an authored example reference.
 
 #### Scenario: Consumer installation and download
 - **WHEN** the archive is installed locally as an npm package or extracted for static hosting
@@ -72,15 +34,19 @@ Packaging SHALL supply an npm-compatible archive usable for npm publication and 
 
 #### Scenario: Documentation follows composition
 - **WHEN** an archive is assembled from a selected-engine handoff
-- **THEN** its presentation, usage, descriptions and other composition-dependent documents come from that engine’s explicit directory plus declared shared sources, using stable archive paths without merging prose or shipping another engine’s guide as its own
+- **THEN** its README and Usage are byte-identical to the canonical files from the same source revision, describe native SQLite-Vector usage, and preserve their complete authored content instead of selecting shorter package-specific guides
 
 #### Scenario: Documentation source or link failure
-- **WHEN** a required selected/common document is missing, unsafe, duplicated or its authored source or final-archive links are broken
+- **WHEN** a required canonical document is missing, unsafe, duplicated or its authored source or final-archive links are broken
 - **THEN** packaging checks fail rather than falling back to another engine’s document
 
 #### Scenario: Honest example reference
 - **WHEN** a guide identifies the archive or published composition used to check its examples
 - **THEN** it retains the exact observed reference and does not claim publication of an unlisted fixture archive or silently follow latest
+
+#### Scenario: Preserve canonical content for candidate and final archives
+- **WHEN** a qualified candidate or definitive distribution archive is assembled
+- **THEN** package/runtime metadata and document records identify that exact package/composition, the README and Usage retain their source bytes and truthful example references, and no second engine guide or separate browser guide is shipped
 
 ### Requirement: Preserved behavior and glue boundary
 
@@ -98,29 +64,8 @@ Packaging SHALL preserve the selected A-build composition's browser APIs, native
 - **WHEN** working packaging would require an upstream patch, altered behavior or omission of a retained capability
 - **THEN** the incompatibility is escalated for an upstream authority revision rather than repaired by local reinterpretation
 
-### Requirement: Complete licensing material
-
-The distribution SHALL include the required licensing notices for its actual SQLite, selected engine, incorporated dependencies and generated runtime/glue, and retain embedded notices. Notice material SHALL have traceable recorded source/version-or-revision associations and validated digests. Repository-authored licensing material SHALL distinguish its own license from included upstream terms. Missing, unestablished, mismatched or altered required notices SHALL prevent a successful package result.
-
-#### Scenario: Upstream archive lacks license files
-- **WHEN** a verified source archive omits license texts required for binary redistribution
-- **THEN** the package includes version-associated, repository-recorded upstream notice material with traceable origins rather than relying on that archive's contents alone
-
-#### Scenario: Extracted license inventory
-- **WHEN** the final archive is extracted
-- **THEN** its required SQLite, selected engine, incorporated dependency and included generated-glue licensing material is present alongside repository-authored license information
-
-#### Scenario: Incorporated dependency attribution
-- **WHEN** the selected extension incorporates third-party code whose required notice is not supplied in its released source view
-- **THEN** version-associated immutable provenance and required notice material are established and recorded before successful packaging; an unresolved association fails
-
-#### Scenario: Notice selection and retained default helper
-- **WHEN** common and engine-specific notice records coexist in the repository or existing default notice-refresh callers validate their inputs
-- **THEN** packaging ships only the applicable verified records and a truthful NOTICE while the retained sqlite-vec helper calling convention remains usable without enabling automated Vector refresh
-
 ### Requirement: Traceable final package handoff
-
-Successful packaging SHALL identify final runtime paths/sizes/SHA-256, archive identity/digest, notice/document/metadata contents, exact selected lock/engine/upstream origins/versions/digests and actual build environment/options/integration identities. The shipped manifest SHALL remain portable after removal of original build/source directories. Packaging SHALL supply the exact final assets to A-acceptance and verified payload identities to A-release, retain required default-composition handoff conventions and assert neither full acceptance nor publication readiness.
+Successful packaging SHALL identify final runtime paths/sizes/SHA-256, archive identity/digest, notice/document/metadata contents, exact selected lock/engine/upstream origins/versions/digests and actual build environment/options/integration identities. The shipped manifest SHALL remain portable after removal of original build/source directories. Packaging SHALL supply the exact final assets to A-acceptance and verified payload identities to A-release, reject obsolete sqlite-vec/default-composition handoff conventions and assert neither full acceptance nor publication readiness.
 
 #### Scenario: Successful downstream handoff
 - **WHEN** assembly and final-archive content/integrity checks succeed
@@ -138,9 +83,12 @@ Successful packaging SHALL identify final runtime paths/sizes/SHA-256, archive i
 - **WHEN** the caller supplies a different package name or version
 - **THEN** a fresh archive and final-file identities reflect that supplied identity and remain available for renewed downstream checks rather than relabeling previously qualified bytes
 
-### Requirement: Generated outputs remain uncommitted
+#### Scenario: Trace canonical document copies
+- **WHEN** canonical authored documents are copied into an archive
+- **THEN** the handoff identifies equal source/final document hashes and the supplied package/composition identity; changed source bytes invalidate prior package evidence, while a changed package version still requires a fresh archive and applicable renewed checks
 
-Generated SQLite JavaScript/WASM, package assemblies, archives and execution reports SHALL remain temporary and uncommitted. Only repository-controlled packaging inputs, code, tests, documentation and notice records SHALL enter source control; either distribution composition SHALL remain constructible without unpublished files or necessary pre-existing package outputs. Sources of documentation and notices SHALL be explicit and reproducible from repository inputs.
+### Requirement: Generated outputs remain uncommitted
+Generated SQLite JavaScript/WASM, package assemblies, archives and execution reports SHALL remain temporary and uncommitted. Only repository-controlled packaging inputs, code, tests, documentation and notice records SHALL enter source control; the SQLite/SQLite-Vector distribution SHALL remain constructible without unpublished files or necessary pre-existing package outputs. Sources of documentation and notices SHALL be explicit and reproducible from repository inputs.
 
 #### Scenario: Clean checkout packaging
 - **WHEN** documented prerequisites and a fresh successful A-build handoff are available from a clean checkout
@@ -149,3 +97,56 @@ Generated SQLite JavaScript/WASM, package assemblies, archives and execution rep
 #### Scenario: Repository exclusion
 - **WHEN** packaging completes or fails
 - **THEN** its generated files remain in ignored or external temporary storage and are not committed as implementation inputs
+
+### Requirement: Vector-only validated build input
+Packaging SHALL consume an explicit successful A-build handoff for the SQLite/SQLite-Vector composition only and verify its selected repository-recorded lock, exact engine/component identities, origins, versions/digests, actual build-input identities and complete runtime inventory against the repository state being packaged. Each consumed file SHALL match its declared size and SHA-256. Missing, altered, unsupported, stale or ambiguous input SHALL fail packaging without fallback, recompilation or earlier outputs.
+
+#### Scenario: Matching constructed runtime
+- **WHEN** the handoff identifies the recorded source pair and every expected runtime file matches its declared size and digest
+- **THEN** packaging consumes those exact files without acquiring a different engine or compiling another runtime
+
+#### Scenario: Invalid handoff or changed bytes
+- **WHEN** the handoff is incomplete, unsupported, inconsistent with recorded inputs, or declares missing, duplicate, unsafe, nonregular, empty or altered runtime files
+- **THEN** packaging fails without a successful package result or substitution of previous output
+
+#### Scenario: Current composition only
+- **WHEN** packaging receives a valid recorded SQLite-Vector build handoff
+- **THEN** it consumes only that exact composition; sqlite-vec, mixed-engine or legacy-only handoffs fail without conversion or fallback
+
+#### Scenario: Conflicting composition or stale integration input
+- **WHEN** selected lock bytes, engine metadata, exact origins/versions/digests or used template/integration identities disagree
+- **THEN** packaging fails before assembly without substituting the default lock or accepting another engine
+
+### Requirement: Vector-only independent packaged asset resolution
+Final packaged loaders, workers, promisers and proxies SHALL resolve their companion assets under the pinned upstream's supported browser/hosting conditions from the documented package layout for SQLite-Vector. Resolution SHALL work independently of temporary build/source directories. Supplied bundler variants SHALL remain accessible without promising compatibility with every bundler.
+
+#### Scenario: Relocated extracted distribution
+- **WHEN** the final archive is extracted separately and hosted at a non-root URL prefix using the documented upstream loading mechanisms
+- **THEN** each retained loader, Worker1/promiser variant and applicable OPFS proxy resolves its packaged companions without fetching files from the build tree
+
+#### Scenario: Missing companion
+- **WHEN** a required WASM, Worker or proxy companion is removed from an extracted test copy
+- **THEN** the affected requested capability does not initialize successfully and the packaging check reports failure
+
+#### Scenario: Native SQL transports
+- **WHEN** the Vector composition’s extracted archive is tested through conventional, ESM and bundler loading, direct C/OO1 connections, Workers, Worker1 and promiser
+- **THEN** exact engine identity and native deterministic queries work without consumer extension registration and every runtime request resolves packaged assets
+
+### Requirement: Vector-only complete licensing material
+The distribution SHALL include the required licensing notices for its actual SQLite, selected engine, incorporated dependencies and generated runtime/glue, and retain embedded notices. Notice material SHALL have traceable recorded source/version-or-revision associations and validated digests. Repository-authored licensing material SHALL distinguish its own license from included upstream terms. Missing, unestablished, mismatched or altered required notices SHALL prevent a successful package result.
+
+#### Scenario: Upstream archive lacks license files
+- **WHEN** a verified source archive omits license texts required for binary redistribution
+- **THEN** the package includes version-associated, repository-recorded upstream notice material with traceable origins rather than relying on that archive's contents alone
+
+#### Scenario: Extracted license inventory
+- **WHEN** the final archive is extracted
+- **THEN** its required SQLite, selected engine, incorporated dependency and included generated-glue licensing material is present alongside repository-authored license information
+
+#### Scenario: Incorporated dependency attribution
+- **WHEN** the selected extension incorporates third-party code whose required notice is not supplied in its released source view
+- **THEN** version-associated immutable provenance and required notice material are established and recorded before successful packaging; an unresolved association fails
+
+#### Scenario: Applicable Vector notices only
+- **WHEN** the current Vector payload is packaged and its notice inputs are checked or refreshed
+- **THEN** it includes the verified SQLite, Vector, FP16 and toolchain/generated-glue notices actually required by its bytes; obsolete sqlite-vec-only notice inputs and helper conventions are removed without weakening provenance checks

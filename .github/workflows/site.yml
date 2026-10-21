@@ -12,15 +12,25 @@ on:
       - 'README.md'
       - 'docs/usage.md'
       - 'docs/site.md'
+      - 'inputs/release.json'
+      - 'inputs/sqlite-vector.sources.lock.json'
       - '.github/workflows/site.yml'
   push:
     branches: [main]
     paths: *site-inputs
   workflow_dispatch:
+  workflow_run:
+    workflows: [Distribution release]
+    types: [completed]
 
 permissions:
   contents: read
   pull-requests: read
+  actions: read
+
+# Builds execute selected source revisions. Deny cache tokens access even on
+# manual default-branch runs; disabling setup-node caching alone is insufficient.
+cache-mode: none
 
 # Covers main selection/build, assembly, freshness checks and publication.
 # GitHub may replace a pending run; neither ordering nor FIFO is assumed.
@@ -40,12 +50,21 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          # The event checkout is main for workflow_run/manual main runs, and
+          # GitHub's merge for PRs. Include its parents without fetching a PR ref.
+          fetch-depth: 2
           path: candidate
           persist-credentials: false
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: '24.19.0'
+      - name: Bind the exact candidate to the event checkout
+        run: node tools/site/checkout.mjs preview
+      - name: Resolve eligible documentation sources
+        id: selection
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node tools/site/eligibility.mjs select
       - name: Install locked site dependencies
         run: sh tools/site.sh install
       - name: Run offline shell tests
@@ -53,21 +72,32 @@ jobs:
           node --test tools/site/tests/*.test.mjs
           node --test tools/site/checks/*.test.mjs
       - name: Install browser system prerequisites
+        if: steps.selection.outputs.relevant == 'true'
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential python3 curl ca-certificates unzip xz-utils \
             libglib2.0-0t64 libnss3 libnspr4 libatk1.0-0t64 libatk-bridge2.0-0t64 \
             libdbus-1-3 libx11-6 libxcomposite1 libxdamage1 libxext6 libxfixes3 \
             libxrandr2 libgbm1 libdrm2 libasound2t64
+      - name: Set the selected preview documentation profile
+        if: github.event_name == 'pull_request'
+        run: node tools/site/eligibility.mjs environment
+      - name: Acquire exact qualified documentation input
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node tools/site/candidate-input.mjs
       - name: Check real builds and browser integration
+        if: steps.selection.outputs.relevant == 'true'
         env:
           HARNESS_STATE: ${{ runner.temp }}/site-harness
         run: |
           bash tools/harness.sh install
           bash tools/harness.sh deps
-          bash tools/harness.sh exec sh tools/site.sh exercise
-          bash tools/harness.sh exec sh tools/site.sh example
-          bash tools/harness.sh exec sh tools/site.sh demo
+          if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
+            bash tools/harness.sh exec sh tools/site.sh example
+            bash tools/harness.sh exec sh tools/site.sh exercise
+          fi
       - name: Build exact PR preview
         if: github.event_name == 'pull_request'
         env:
@@ -80,24 +110,49 @@ jobs:
       - name: Select eligible publication
         id: eligible
         if: >-
+          steps.selection.outputs.publish == 'true' && (
           (github.event_name == 'pull_request' &&
            github.event.pull_request.head.repo.full_name == github.repository &&
            github.actor != 'dependabot[bot]') ||
-          (github.ref == 'refs/heads/main' && github.event_name != 'pull_request')
+          (github.ref == 'refs/heads/main' && github.event_name != 'pull_request'))
         run: echo 'publish=true' >> "$GITHUB_OUTPUT"
-      - name: Checkout stable main independently
-        if: steps.eligible.outputs.publish == 'true' && github.event_name == 'pull_request'
+      - name: Checkout trusted main independently
+        if: steps.eligible.outputs.publish == 'true'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: main
+          fetch-depth: 0
           path: stable
           persist-credentials: false
+      - name: Bind eligible stable source to observed main history
+        if: steps.eligible.outputs.publish == 'true'
+        run: node tools/site/checkout.mjs stable
       - name: Build stable root using its own locked tooling
-        if: steps.eligible.outputs.publish == 'true' && github.event_name == 'pull_request'
+        if: steps.eligible.outputs.publish == 'true'
+        env:
+          HARNESS_STATE: ${{ runner.temp }}/site-harness
+          STABLE_PRESENT: ${{ steps.selection.outputs.stable_present }}
+          STABLE_PLACEHOLDER: ${{ steps.selection.outputs.stable_placeholder }}
+          STABLE_PROFILE: ${{ steps.selection.outputs.stable_profile }}
         run: |
-          present=$(node tools/site/publication.mjs has-site ../stable)
-          if [ "$present" = true ]; then
-            (cd ../stable && sh tools/site.sh install && sh tools/site.sh build)
+          if [ "$STABLE_PRESENT" = true ]; then
+            (
+              cd ../stable
+              unset SITE_CANDIDATE_BUNDLE SITE_DOCUMENTATION_SELECTION SITE_DOCUMENTATION_PREVIEW_INPUT
+              if [ -n "$STABLE_PROFILE" ]; then export SITE_DOCUMENTATION_SELECTION="$STABLE_PROFILE"; fi
+              sh tools/site.sh install
+              if [ -f tools/site/example.mjs ]; then
+                bash ../candidate/tools/harness.sh exec sh tools/site.sh example
+              fi
+              if [ "$STABLE_PLACEHOLDER" = true ]; then
+                node ../candidate/tools/site/placeholder.mjs "$PWD" ../candidate/.work/site/selection.json
+              else
+                sh tools/site.sh build
+              fi
+            )
+            if [ "$GITHUB_EVENT_NAME" != pull_request ]; then
+              cp ../stable/.work/site/build.json .work/site/build.json
+            fi
           fi
       - name: Assemble and check the complete Pages artifact
         id: assemble
@@ -106,8 +161,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           HARNESS_STATE: ${{ runner.temp }}/site-harness
         run: |
-          stable_root=.
-          if [ "$GITHUB_EVENT_NAME" = pull_request ]; then stable_root=../stable; fi
+          stable_root=../stable
           node tools/site/publication.mjs assemble "$stable_root" . .work/pages
           bash tools/harness.sh exec node tools/site/observe.mjs .work/pages .work/pages/site-publication.json .work/site/assembled.json
           node tools/site/publication.mjs guard .work/pages/site-publication.json
@@ -120,18 +174,17 @@ jobs:
         with:
           name: site-checks-${{ github.run_id }}
           path: |
+            candidate/.work/site/selection.json
+            candidate/.work/site/*-selection.json
             candidate/.work/site/build.json
             candidate/.work/site/exercise.json
             candidate/.work/site/mobile.png
             candidate/.work/site/preview-mobile.png
             candidate/.work/site/assembled.json
             candidate/.work/site/docs-mobile.png
-            candidate/.work/site/demo-results.json
-            candidate/.work/site/demo-stable-mobile.png
-            candidate/.work/site/demo-preview-mobile.png
             candidate/.work/site/*-initial-*.png
-            candidate/.work/site/assembled-demo-mobile.png
             candidate/.work/docs-example/result.json
+            candidate/.work/docs-input/handoff.json
             candidate/.work/pages/site-publication.json
           retention-days: 30
           overwrite: true
@@ -151,6 +204,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: read
+      actions: read
       pages: write
       id-token: write
     outputs:
@@ -159,9 +213,10 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      # Use this event's controller revision. In particular workflow_run must
+      # never execute a checkout selected by the triggering workflow or PR.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
@@ -186,11 +241,13 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 2
           persist-credentials: false
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: '24.19.0'
+      - name: Bind the exact candidate to the event checkout
+        run: node tools/site/checkout.mjs preview
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: site-checks-${{ github.run_id }}
@@ -214,9 +271,8 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: site-live-${{ github.run_id }}
+          overwrite: true
           path: |
             live-pages.json
-            live-pages-demo-mobile.png
-            live-pages-demo-initial-*.png
           retention-days: 30
           if-no-files-found: error

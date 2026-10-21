@@ -10,40 +10,10 @@ import {productionStages,browserCases} from '../../acceptance/contracts.mjs';
 import {nativeProbeSql} from '../../build/browser-probe.mjs';
 import {runtimeNames,targets,wasmOptions,hostOptions,configureOptions} from '../../build/config.mjs';
 
-async function fixture(t,key='sqliteVector') {
-  const repository=await mkdtemp(join(tmpdir(),'package-composition-'));
-  t.after(()=>rm(repository,{recursive:true,force:true}));
-  for(const file of ['inputs','tools/package','tools/harness.sh','tools/build/config.mjs','tools/build/extra-init.c.in','tools/build/vector-extra-init.c.in','tools/harness/package-lock.json','LICENSE','docs']) {
-    await mkdir(join(repository,file,'..'),{recursive:true});await cp(join(root,file),join(repository,file),{recursive:true});
-  }
-  const sourceLockPath=key==='sqliteVec'?'inputs/sources.lock.json':'inputs/sqlite-vector.sources.lock.json';
-  const lockBytes=await readFile(join(repository,sourceLockPath)), lock=JSON.parse(lockBytes);
-  const inputs={lockDigest:{algorithm:'sha256',value:hash(lockBytes)}};
-  for(const k of ['sqlite',key])inputs[k]={...lock[k],sourcePath:join(repository,'sources',k),archivePath:join(repository,k+'.zip')};
-  const engine={key,version:lock[key].version,upstream:key==='sqliteVec'?'asg017/sqlite-vec':'sqliteai/sqlite-vector'};
-  const buildDir=join(repository,'build');await mkdir(buildDir);
-  const bridge=join(buildDir,'extra-init.c'),templatePath=key==='sqliteVec'?'tools/build/extra-init.c.in':'tools/build/vector-extra-init.c.in';
-  const template=await readFile(join(repository,templatePath),'utf8');
-  const bridgeBytes=template.replace(key==='sqliteVec'?'@SQLITE_VEC_SOURCE@':'@SQLITE_VECTOR_HEADER@',JSON.stringify(join(inputs[key].sourcePath,key==='sqliteVec'?'sqlite-vec.c':'src/sqlite-vector.h')));
-  await writeFile(bridge,bridgeBytes);
-  const build={tools:Object.fromEntries(['cc','make','emcc','wasm-strip','wasm-opt','node','npm'].map(k=>[k,({emcc:'emcc 4.0.23',node:'v24.19.0',npm:'11.17.0','wasm-strip':'1.0.42','wasm-opt':'wasm-opt version 125'})[k] || 'offline fixture'])),platform:'fixture',configure:['env',...hostOptions,'./configure',...configureOptions],amalgamation:['make','sqlite3.c'],commonWasmOptions:[...targets,...wasmOptions],wasm:['make',...targets,...wasmOptions,'sqlite3_wasm_extra_init.c='+bridge]};
-  for(const [field,path] of [['harnessSha256','tools/harness.sh'],['configSha256','tools/build/config.mjs'],['templateSha256',templatePath],['dependencyLockSha256','tools/harness/package-lock.json']])build[field]=hash(await readFile(join(repository,path)));
-  if(key==='sqliteVector') {
-    const names=['sqlite-vector',...['cpu','avx2','avx512','neon','rvv','sse2'].map(n=>'distance-'+n)];
-    const objects=names.map(n=>join(buildDir,n+'.o'));
-    build.extensionCommands=names.map((n,i)=>['emcc','-Oz','-std=c99','-fPIC','-DSQLITE_CORE','-DSQLITE_WASM_EXTRA_INIT','-include','strings.h','-I'+inputs.sqlite.sourcePath,'-I'+join(inputs[key].sourcePath,'src'),'-I'+join(inputs[key].sourcePath,'libs'),'-c',join(inputs[key].sourcePath,'src',n+'.c'),'-o',objects[i]]);
-    const include=join(buildDir,'vector-inputs.mk'),bytes='# Separate immutable extension inputs; upstream recipes remain intact.\nMAKEFILE := GNUmakefile\nsqlite3-wasm.c.in += '+objects.join(' ')+'\n';
-    await writeFile(include,bytes);build.wasm.push('-f','GNUmakefile','-f',include);
-    build.integration={bridgeSha256:hash(Buffer.from(bridgeBytes)),makeIncludeSha256:hash(Buffer.from(bytes))};
-  }
-  const runtimeDirectory=join(repository,'runtime');await mkdir(runtimeDirectory);
-  const runtimeFiles=[];
-  for(const name of runtimeNames){const bytes=Buffer.from('synthetic '+name);await writeFile(join(runtimeDirectory,name),bytes);runtimeFiles.push({name,size:bytes.length,sha256:hash(bytes)});}
-  return {repository,handoff:{schemaVersion:1,inputs,sourceLockPath,engine,build,runtimeDirectory,runtimeFiles},name:'sqlite-vector-wasm-fixture',version:'0.0.0-'+(key==='sqliteVec'?'vec':'vector')};
-}
+import {fixture} from './fixture.mjs';
 
-test('both annotated compositions retain exact compact fields, selected documents/notices and portable commands',async t=>{
-  for(const key of ['sqliteVec','sqliteVector']){
+test('the Vector composition retain exact compact fields, selected documents/notices and portable commands',async t=>{
+  for(const key of ['sqliteVector']){
     const f=await fixture(t,key), result=await assemble(f);
     const get=async name=>JSON.parse(await readFile(join(result.runtimeDirectory,name)));
     const m=await get('runtime.json'),p=await get('package.json'),origins=await get('licenses/origins.json');
@@ -51,12 +21,17 @@ test('both annotated compositions retain exact compact fields, selected document
     for(const k of ['sqlite',key])assert.deepEqual(m.inputs[k],{version:f.handoff.inputs[k].version,digest:f.handoff.inputs[k].digest});
     assert.deepEqual(m.engine,f.handoff.engine);assert.equal(m.sourceLockPath,f.handoff.sourceLockPath);
     assert.ok(!JSON.stringify(m).includes(f.repository));
-    assert.ok(!p.scripts&&!p.dependencies);assert.match(p.description,key==='sqliteVec'?/sqlite-vec/:/SQLite-Vector/);
+    assert.ok(!p.scripts&&!p.dependencies);assert.match(p.description,/SQLite-Vector/);
     assert.equal(origins.notices.length,10);
-    assert.equal(origins.notices.some(n=>n.project===(key==='sqliteVec'?'sqliteVector':'sqliteVec')),false);
+    assert.equal(origins.notices.some(n=>n.project==='sqliteVec'),false);
     assert.equal(origins.notices.some(n=>n.project==='fp16'),key==='sqliteVector');
     const mapping=documentMapping(f.handoff.engine);assert.equal(new Set(mapping.map(x=>x[1])).size,mapping.length);
-    for(const [source,destination]of mapping)assert.equal(hash(await readFile(join(f.repository,source))),result.files.find(x=>x.name===destination).sha256);
+    for(const [source,destination]of mapping){
+      const record=result.documents.find(x=>x.source===source && x.destination===destination);
+      assert.equal(record.sourceSha256,hash(await readFile(join(f.repository,source))));
+      assert.equal(record.sha256,result.files.find(x=>x.name===destination).sha256);
+      assert.equal(record.sha256,record.sourceSha256);assert.deepEqual(record.identity,result.package);
+    }
     await rm(join(f.repository,'sources'),{recursive:true,force:true});await rm(join(f.repository,'build'),{recursive:true});
     for(const item of result.files)assert.equal(hash(await readFile(join(result.runtimeDirectory,item.name))),item.sha256);
   }
@@ -77,24 +52,23 @@ test('selected dependency notices require exact immutable association, header id
   const d=structuredClone(original);mutate(d);await writeFile(path,JSON.stringify(d));await assert.rejects(noticeInputs(f.handoff,f.repository));
  }
  await writeFile(path,JSON.stringify(original));await writeFile(join(f.repository,'tools/package/notices/FP16-MIT.txt'),'altered');await assert.rejects(noticeInputs(f.handoff,f.repository));
- const vec=await fixture(t,'sqliteVec'),lock=JSON.parse(await readFile(join(vec.repository,'inputs/sources.lock.json')));
- assert.equal((await noticeInputs({inputs:lock},vec.repository)).has('licenses/FP16-MIT.txt'),false);
+ await assert.rejects(noticeInputs({inputs:{sqliteVec:{version:'0.1.9'}}},f.repository));
 });
 
 test('documentation rejects missing, wrong-engine, linked and broken source/output references without fallback',async t=>{
  for(const kind of ['missing','wrong-engine','symlink','parent-symlink','broken','unsafe','anchor']){
-  const f=await fixture(t),path=join(f.repository,'docs/sqlite-vector/usage.md');
+  const f=await fixture(t),path=join(f.repository,'docs/usage.md');
   if(kind==='missing')await rm(path);
-  if(kind==='wrong-engine')await cp(join(f.repository,'docs/sqlite-vec/usage.md'),path);
-  if(kind==='symlink'){await rm(path);await symlink(join(f.repository,'docs/sqlite-vec/usage.md'),path);}
-  if(kind==='parent-symlink'){await rm(join(f.repository,'docs/sqlite-vector'),{recursive:true});await symlink(join(f.repository,'docs/sqlite-vec'),join(f.repository,'docs/sqlite-vector'));}
+  if(kind==='wrong-engine')await writeFile(path,'# sqlite-vec usage\n');
+  if(kind==='symlink'){await rm(path);await symlink(join(f.repository,'README.md'),path);}
+  if(kind==='parent-symlink'){await rm(join(f.repository,'docs'),{recursive:true});await symlink(join(f.repository,'tools'),join(f.repository,'docs'));}
   if(['broken','unsafe','anchor'].includes(kind))await writeFile(path,(await readFile(path,'utf8'))+'\n[bad]('+({broken:'missing.md',unsafe:'../../../../outside',anchor:'#absent'}[kind])+')\n');
-  await assert.rejects(documentInputs(f.handoff,f.repository));
+  await assert.rejects(documentInputs(f.handoff,f.repository,{name:f.name,version:f.version}));
  }
 });
 
-test('native Worker1/promiser assertions cover both engines, legacy caller and failure companions',()=>{
- for(const vector of ['0.1.9',{key:'sqliteVec',version:'0.1.9'},{key:'sqliteVector',version:'1.1.2'}]){
+test('native Worker1/promiser assertions cover Vector and obsolete-caller rejection and failure companions',()=>{
+ for(const vector of [{key:'sqliteVector',version:'1.1.2'}]){
   const sql=nativeProbeSql(vector),r={versions:[['3.54.0',sql.expectedVersion,0]],neighbors:[[1,0],[2,Math.SQRT2]]};
   assertNativeResult(r,'3.54.0',vector);
   for(const mutate of [r=>r.versions[0][0]='wrong',r=>r.versions[0][1]+='-pre',r=>r.versions[0][2]=1,r=>r.neighbors.pop(),r=>r.neighbors.reverse(),r=>r.neighbors[1][1]=1]){const bad=structuredClone(r);mutate(bad);assert.throws(()=>assertNativeResult(bad,'3.54.0',vector));}
@@ -104,8 +78,8 @@ test('native Worker1/promiser assertions cover both engines, legacy caller and f
 });
 
 
-test('both consumed archives remain independently verifiable after generated inputs are removed',async t=>{
- for(const key of ['sqliteVec','sqliteVector']) {
+test('consumed Vector archives remain independently verifiable after generated inputs are removed',async t=>{
+ for(const key of ['sqliteVector']) {
   const f=await fixture(t,key), packaged=await assemble(f);
   const changed=await assemble({...f,name:f.name+'-renamed',version:'0.0.1-repair'});
   assert.notEqual(changed.workspace,packaged.workspace);
@@ -126,6 +100,10 @@ test('both consumed archives remain independently verifiable after generated inp
   assert.equal((await validatePackagedBuild(retained,f.repository)).size,runtimeNames.length);
   const verify=()=>acceptedPayload({bundle,identity:packaged.package,commit,repository:f.repository});
   assert.equal((await verify()).archive.sha256,packaged.archive.sha256);
+  const badDocuments=structuredClone(packaged);badDocuments.documents[0].sourceSha256='0'.repeat(64);
+  await writeFile(join(bundle,'package.json'),JSON.stringify(badDocuments));
+  await assert.rejects(verify(),/Packaged document provenance mismatch/);
+  await writeFile(join(bundle,'package.json'),JSON.stringify(packaged));
   const wrongEngine=structuredClone(packaged);wrongEngine.engine.key='contradictory';
   await writeFile(join(bundle,'package.json'),JSON.stringify(wrongEngine));
   await assert.rejects(verify(),/Packaged engine identity/);
@@ -144,19 +122,30 @@ test('both consumed archives remain independently verifiable after generated inp
 });
 
 
-test('Worker1/promiser reports retain the exact default acceptance column while checking registration separately',()=>{
- for(const vector of ['0.1.9',{key:'sqliteVec',version:'0.1.9'}]) {
-  const observed={versions:[['3.54.0','v0.1.9',0]],sqlRows:[['3.54.0','v0.1.9',2]],neighbors:[[1,0],[2,Math.SQRT2]]};
-  const report=transportResult(observed,'3.54.0',vector);
-  // This is the unchanged downstream A-acceptance dimension assertion.
-  assert.equal(report.sqlRows[0][2],2);
-  assert.deepEqual(report.sqlRows,[['3.54.0','v0.1.9',2]]);
-  assert.equal(report.registrationRows[0][2],0);
-  const regressed=structuredClone(observed);regressed.sqlRows=regressed.versions;
-  assert.throws(()=>transportResult(regressed,'3.54.0',vector),/Default transport SQL result convention/);
-  const otherEngine=structuredClone(observed);otherEngine.versions[0][2]=1;
-  assert.throws(()=>transportResult(otherEngine,'3.54.0',vector),/Other engine must be absent/);
- }
+test('Worker1/promiser reports use native Vector rows and reject obsolete callers',()=>{
  const vector={key:'sqliteVector',version:'1.1.2'},versions=[['3.54.0','1.1.2',0]];
- assert.deepEqual(transportResult({versions,sqlRows:versions,neighbors:[[1,0],[2,Math.SQRT2]]},'3.54.0',vector).registrationRows,versions);
+ const observed={versions,sqlRows:versions,neighbors:[[1,0],[2,Math.SQRT2]]};
+ assert.deepEqual(transportResult(observed,'3.54.0',vector).registrationRows,versions);
+ for(const old of ['0.1.9',{key:'sqliteVec',version:'0.1.9'}]) assert.throws(()=>transportResult(observed,'3.54.0',old));
+ const bad=structuredClone(observed);bad.versions[0][2]=1;
+ assert.throws(()=>transportResult(bad,'3.54.0',vector));
+});
+
+test('every package identity carries the same complete canonical README and Usage bytes', async t=>{
+ const f=await fixture(t),first=await assemble({...f,name:'@at-rama/sqlite-vector-wasm',version:'0.3.0'});
+ const second=await assemble({...f,name:'@at-rama/sqlite-vector-wasm',version:'0.3.1'});
+ const local=await assemble(f);
+ assert.notEqual(first.archive.sha256,second.archive.sha256);assert.deepEqual(first.runtimeFiles,second.runtimeFiles);
+ for(const packaged of [first,second,local]) {
+  assert.deepEqual(packaged.documents.map(d=>d.source),['README.md','docs/usage.md']);
+  for(const source of ['README.md','docs/usage.md'])
+   assert.deepEqual(await readFile(join(packaged.runtimeDirectory,source)),await readFile(join(f.repository,source)));
+ }
+ // Review an editorial addition through the real packing path, without a second
+ // package template that could silently discard it.
+ for(const path of ['README.md','docs/usage.md'])
+  await writeFile(join(f.repository,path),(await readFile(join(f.repository,path),'utf8'))+'\nEditorial addition for consumers.\n');
+ const edited=await assemble(f);
+ for(const path of ['README.md','docs/usage.md'])
+  assert.match(await readFile(join(edited.runtimeDirectory,path),'utf8'),/Editorial addition for consumers/);
 });

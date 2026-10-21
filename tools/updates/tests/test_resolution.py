@@ -10,7 +10,7 @@ spec.loader.exec_module(f)
 
 class PreparationResolutionTest(unittest.TestCase):
     def resolve(self, version, releases=None, baseline=None, fetch=f.vector_metadata):
-        return f.inputs.resolve_vector_pair(f.metadata()[0], releases if releases is not None else [f.vector_release(version)],
+        return f.inputs.resolve_vector_pair(f.sqlite_metadata(), releases if releases is not None else [f.vector_release(version)],
             sqlite_version='3.53.4', vector_version=version, baseline=baseline, fetch=fetch,
             archive_digest=lambda _: 'd' * 64)
 

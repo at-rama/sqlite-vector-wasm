@@ -6,6 +6,7 @@ import { httpReader, readState } from '../release/state.mjs';
 import { invocation } from './context.mjs';
 import { prepareCandidate } from './run.mjs';
 import { candidateServices } from './services.mjs';
+import { candidateState } from '../watch/state.mjs';
 
 try {
   const [mode, ...extra] = process.argv.slice(2);
@@ -19,6 +20,7 @@ try {
   const context = invocation({ event, environment: env, rehearsal });
   const get = httpReader(env.GH_TOKEN);
   const result = await prepareCandidate({ context, readSnapshot: () => readState({ repository: context.repository, get }),
+    readCandidates: () => candidateState({ repository: context.repository, get }),
     services: rehearsal ? undefined : candidateServices({ repository: context.repository, token: env.GH_TOKEN, cwd: root }) });
   console.log(JSON.stringify(result));
 } catch (error) {

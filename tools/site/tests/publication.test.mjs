@@ -100,3 +100,18 @@ test('delayed runs reject advanced main, superseded PR heads and closed PRs with
   assert.deepEqual(published, [main, mainSha]);
   await assert.rejects(assertCurrent(context, async () => { throw Error('Unavailable'); }), /Unavailable/);
 });
+
+
+test('main placeholder build is bound separately while stable and preview document bytes stay independent',async t=>{
+ const f=await fixture(t),placeholder={sourceCommit:main,sha256:'d'.repeat(64),markdown:'validated static source'};
+ const input={...context,stablePlaceholder:placeholder};
+ await assert.rejects(assemble({...f,context:input}),/placeholder build identity mismatch/);
+ const path=join(f.stableRoot,'.work/site/build.json');
+ await writeFile(path,JSON.stringify({preview:null,runtime:null,placeholder:{sourceCommit:main,sha256:placeholder.sha256}}));
+ const record=await assemble({...f,context:input});assert.deepEqual(record.stablePlaceholder,placeholder);
+ assert.equal(await readFile(join(f.output,'index.html'),'utf8'),'stable');
+ assert.equal(await readFile(join(f.output,'preview/index.html'),'utf8'),'candidate');
+ await writeFile(path,JSON.stringify({preview:null,runtime:{},placeholder:{sourceCommit:head,sha256:placeholder.sha256}}));
+ await assert.rejects(assemble({...f,context:input}),/placeholder build identity mismatch/);
+ await assert.rejects(readFile(join(f.output,'index.html')),{code:'ENOENT'});
+});
