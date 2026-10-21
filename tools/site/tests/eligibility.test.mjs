@@ -62,7 +62,7 @@ async function candidate(t) {
  const prep={runId:17,url:'https://github.com/'+repository+'/actions/runs/17'};
  const pub={schemaVersion:1,name:'@at-rama/sqlite-vector-wasm',version:'0.3.0',tag:'dist/v0.3.0',channel:'latest',commit:prior,
  upstreams:{sqlite:lock.sqlite.version,sqliteVector:lock.sqliteVector.version},engine:{key:'sqliteVector',upstream:'sqliteai/sqlite-vector',version:lock.sqliteVector.version},
- sourceLock:lock,sourceLockSha256:hash(lockText),archive:{size:10,sha256:'d'.repeat(64)},build:{tools:{}},acceptance:{verdict:'passed'},invocation:{preparation:prep,pullRequest:4}};
+ sourceLock:lock,sourceLockSha256:hash(lockText),archive:{size:10,sha256:'d'.repeat(64)},build:{tools:{}},acceptance:{verdict:'passed'},invocation:{preparation:prep,pullRequest:4},documentation:{reviewed:{}}};
  const release={id:5,tag_name:pub.tag,draft:false,assets:[{name:'publication.json',url:'https://fixture/publication'}]};
  const source={'tools/site.sh':'shell','site/index.md':'# site','tools/site/docs-example.json':JSON.stringify(candidateProfile),
  'inputs/release.json':JSON.stringify({schemaVersion:2,...pub.upstreams,preparation:prep,releaseComment:''}),
@@ -95,6 +95,7 @@ test('handoff must match integrated human PR, workflow, attempt, outcome and can
  const run={id:9,head_sha:head,run_attempt:1,repository:{full_name:repository},path:'.github/workflows/release.yml',event:'pull_request',status:'completed',conclusion:'success'};
  const pr={merged:true,state:'closed',merged_by:{type:'User'},base:{ref:'main',repo:{full_name:repository}},head:{sha:head,repo:{full_name:repository}},merge_commit_sha:prior};
  const outcome={status:'published-verification-pending',identity:{version:f.pub.version,tag:f.pub.tag},outcomes:['tag','draft','archive','provenance','attestation','npm','github','github-identity','npm-identity'].map(operation=>({operation,status:operation==='npm-identity'?'pending':'succeeded'}))};
+ const completedOutcome=structuredClone(outcome);completedOutcome.status='complete';completedOutcome.outcomes.at(-1).status='succeeded';completedOutcome.publication=f.pub;
  await writeFile(join(directory,'publication.json'),JSON.stringify(f.pub));
  const invoke=async()=>{await writeFile(join(directory,'outcome.json'),JSON.stringify(outcome));return publicationCompletion({repository,publication:f.pub,release:f.release,trigger:run,directory,
  get:async url=>response(url.includes('/pulls/')?pr:url.includes('/artifacts?')?{total_count:1,artifacts:[{name:'release-outcome-9-1',expired:false}]}:run),
