@@ -122,7 +122,9 @@ This is an integration fixture, not the emoji demo.
     try {
       const realBefore = await observe('real-documentation-with-demo', demo, { docs: true, demoFixture: 'fixture-runtime-2' });
       await writeFile(readmePath, readme + '\nDocumentation edit exercise marker.\n');
-      if (process.env.SITE_CANDIDATE_BUNDLE || process.env.SITE_DOCUMENTATION_SELECTION) await example(repository);
+      // The edited README exercises site rendering, not product requalification.
+      // Retain the qualified example evidence; the build's dirty-documents mode
+      // permits only this explicitly synthetic editorial exercise.
       const realAfter = await observe('real-documentation-update', demo, { docs: true, demoFixture: 'fixture-runtime-2', allowDirtyDocumentation: true });
       assert.deepEqual(realAfter.runtime, realBefore.runtime);
       assert.match(await readFile(join(realAfter.source, 'index.md'), 'utf8'), /Documentation edit exercise marker/);
