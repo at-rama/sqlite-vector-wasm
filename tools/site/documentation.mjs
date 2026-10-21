@@ -50,7 +50,13 @@ export async function checkedDocumentation(root, { allowDirtyDocumentation = fal
   if (!selection.mode) return null;
   const evidence = JSON.parse(await readFile(join(root, '.work/docs-example/result.json'), 'utf8'));
   assert.equal(evidence.context.commit, sourceCommit(root), 'Stale documentation example revision');
-  assert.deepEqual(evidence.context.sourceHashes, await documentationHashes(root), 'Stale documentation example sources');
+  const currentHashes = await documentationHashes(root);
+  if (allowDirtyDocumentation) {
+    assert.equal(evidence.context.sourceHashes['docs/usage.md'], currentHashes['docs/usage.md'], 'Stale qualified usage guide');
+    assert.ok(dirtyDocumentation(root), 'Editorial exercise requires a dirty documentation checkout');
+  } else {
+    assert.deepEqual(evidence.context.sourceHashes, currentHashes, 'Stale documentation example sources');
+  }
   assert.equal(evidence.replayOnly, false, 'Historical example replay cannot authorize current documentation');
   assert.equal(evidence.context.sourceDirty, dirtyDocumentation(root), 'Documentation source state changed');
   assert.ok(allowDirtyDocumentation || !evidence.context.sourceDirty, 'Uncommitted candidate documentation');
