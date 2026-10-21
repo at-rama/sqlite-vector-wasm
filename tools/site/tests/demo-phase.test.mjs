@@ -45,7 +45,7 @@ test('failed trusted-source validation clears old generated stable output before
 test('stable demo CLI fails normally rather than deadlocking on circular top-level imports',async t=>{
  const root=await mkdtemp(join(tmpdir(),'demo-cli-'));t.after(()=>rm(root,{recursive:true,force:true}));
  const record=join(root,'selection.json');
- await writeFile(record,JSON.stringify({repository,mainCommit:main,stableDemo:{sourceCommit:main}}));
+ await writeFile(record,JSON.stringify({repository:'%',mainCommit:main,stableDemo:{sourceCommit:main}}));
  const result=spawnSync(process.execPath,[new URL('../current-demo.mjs',import.meta.url).pathname,root,record],{encoding:'utf8',timeout:10000,env:{...process.env,GH_TOKEN:''}});
  assert.equal(result.error,undefined);
  assert.equal(result.status,1,`Unexpected CLI status ${result.status}: ${result.stderr}`);
