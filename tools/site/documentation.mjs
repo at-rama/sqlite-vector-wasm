@@ -50,10 +50,20 @@ export async function checkedDocumentation(root, { allowDirtyDocumentation = fal
   if (!selection.mode) return null;
   const evidence = JSON.parse(await readFile(join(root, '.work/docs-example/result.json'), 'utf8'));
   assert.equal(evidence.context.commit, sourceCommit(root), 'Stale documentation example revision');
-  assert.deepEqual(evidence.context.sourceHashes, await documentationHashes(root), 'Stale documentation example sources');
+  const currentHashes = await documentationHashes(root);
+  if (allowDirtyDocumentation) {
+    assert.equal(evidence.context.sourceHashes['docs/usage.md'], currentHashes['docs/usage.md'], 'Stale qualified usage guide');
+    assert.ok(dirtyDocumentation(root), 'Editorial exercise requires a dirty documentation checkout');
+  } else {
+    assert.deepEqual(evidence.context.sourceHashes, currentHashes, 'Stale documentation example sources');
+  }
   assert.equal(evidence.replayOnly, false, 'Historical example replay cannot authorize current documentation');
-  assert.equal(evidence.context.sourceDirty, dirtyDocumentation(root), 'Documentation source state changed');
-  assert.ok(allowDirtyDocumentation || !evidence.context.sourceDirty, 'Uncommitted candidate documentation');
+  if (!allowDirtyDocumentation) {
+    assert.equal(evidence.context.sourceDirty, dirtyDocumentation(root), 'Documentation source state changed');
+    assert.ok(!evidence.context.sourceDirty, 'Uncommitted candidate documentation');
+  } else {
+    assert.equal(evidence.context.sourceDirty, false, 'Editorial exercise requires previously clean qualified evidence');
+  }
   assert.ok(evidence.unchangedRuntime && evidence.browser && evidence.result && evidence.workerResult, 'Missing real documentation example evidence');
   assert.match(evidence.context.archive.sha256, /^[a-f0-9]{64}$/);
   assert.ok(Number.isSafeInteger(evidence.context.archive.size) && evidence.context.archive.size > 0, 'Invalid example archive');
