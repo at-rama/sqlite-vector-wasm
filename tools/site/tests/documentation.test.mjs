@@ -46,6 +46,16 @@ test('documentation rendering rejects stale, missing or mismatched execution evi
   for(const mutate of [e=>e.context.commit='b'.repeat(40),e=>e.context.sourceHashes['README.md']='b'.repeat(64),e=>e.context.archive.sha256='b'.repeat(64),e=>e.context.version='0.3.1',e=>e.context.qualifiedCommit='b'.repeat(40),e=>e.replayOnly=true,e=>e.unchangedRuntime=false,e=>e.result.engineVersion='wrong']){
     const changed=structuredClone(evidence);mutate(changed);await save(changed);await assert.rejects(checkedDocumentation(root));
   }
+  // Editorial edits may rebuild the site but cannot requalify a changed Usage guide.
+  await save(evidence);
+  await writeFile(join(root,'README.md'),'# Edited presentation\\n');
+  await assert.rejects(checkedDocumentation(root),/Stale documentation example sources/);
+  assert.equal((await checkedDocumentation(root,{allowDirtyDocumentation:true})).version,'0.3.0');
+  await writeFile(join(root,'docs/usage.md'),'# Changed usage\\n');
+  await assert.rejects(checkedDocumentation(root,{allowDirtyDocumentation:true}),/Stale qualified usage guide/);
+  await writeFile(join(root,'README.md'),'# Presentation\\n');
+  await writeFile(join(root,'docs/usage.md'),'# Usage\\n');
+  await assert.rejects(checkedDocumentation(root,{allowDirtyDocumentation:true}),/Editorial exercise requires a dirty documentation checkout/);
   const published=structuredClone(evidence);
   published.context.mode='published';published.context.publicationCommit='c'.repeat(40);published.selection.commit='c'.repeat(40);
   const profile={...published.selection,mode:'published',engine:'sqliteVector'};
