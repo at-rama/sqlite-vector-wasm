@@ -130,7 +130,7 @@ test('a failed completion attempt cannot borrow an older successful handoff from
  get:async url=>response(url.includes('/pulls/')?pr:url.includes('/artifacts?')?{total_count:2,artifacts:[1,2].map(n=>({name:'release-outcome-9-'+n,expired:false}))}:url.includes('/attempts/1')?{...run,run_attempt:1,conclusion:'success'}:run),
  artifact:async({name})=>{await writeFile(join(directory,'publication.json'),JSON.stringify(f.pub));await writeFile(join(directory,'outcome.json'),JSON.stringify({status:name.endsWith('-1')?'complete':'failed',identity:{version:f.pub.version,tag:f.pub.tag}}));return {directory,id:10,sha256:'e'.repeat(64)};},
  services:{verifyGitHub:async()=>{}}});
- await assert.rejects(invoke(),/No complete matching/);
+ await assert.rejects(invoke(),/Incomplete release publication handoff/);
 });
 
 
