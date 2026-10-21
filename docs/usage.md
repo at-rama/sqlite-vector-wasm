@@ -1,6 +1,6 @@
 # Using sqlite-vector-wasm
 
-A short guide to SQLite's browser JavaScript/WASM APIs, with SQLite-Vector available in each new connection.
+Use SQLite's browser JavaScript/WASM APIs with SQLite-Vector built in. This guide takes you from serving the runtime assets to vector search, Workers and persistent storage.
 
 Install `@at-rama/sqlite-vector-wasm@0.3.0` and serve its complete runtime asset set.
 
@@ -27,9 +27,11 @@ In a browser module, initialize the in-memory database:
 import sqlite3InitModule from '/sqlite/sqlite3.mjs';
 const sqlite3 = await sqlite3InitModule();
 const db = new sqlite3.oo1.DB(':memory:');
-// Run the examples below, then close the connection:
+// Run the SQL examples below in this connection, then release it:
 // db.close();
 ```
+
+SQLite-Vector functions are registered automatically on each connection. Use the OO1 methods below for convenient SQL execution, or the upstream C bindings through `sqlite3.capi` and `sqlite3.wasm`. Use JavaScript `BigInt` when handling 64-bit integers outside the safe `Number` range; see [SQLite's JavaScript API reference](https://sqlite.org/wasm/doc/trunk/api-index.md) for conversions and binding details.
 
 ## Float32 nearest neighbors
 
@@ -43,7 +45,12 @@ const neighbors = db.selectArrays(
   "SELECT rowid, distance FROM vector_full_scan('items', 'embedding', '[1,0]', 2) ORDER BY distance"
 );
 console.log(neighbors);
+// [[1, 0], [2, approximately 1.414214]]
 ```
+
+`vector_init()` associates the table and column with a vector type, dimension and distance metric for the current connection. Initialize that association again when opening another connection to the same stored data; do not recreate the table or reinsert its rows just to query it. The column stores the vectors themselves as BLOBs. Keep the stored vectors and query vectors consistent in type and dimension.
+
+This example performs exact search without quantization. For quantized search and its preparation and refresh requirements, consult the [SQLite-Vector reference](https://github.com/sqliteai/sqlite-vector/tree/1.1.2). Quantization is an optional workflow, not a prerequisite for the examples here.
 
 ## Binary vectors and Hamming distance
 
@@ -57,6 +64,7 @@ const matches = db.selectArrays(
   "SELECT rowid, distance FROM vector_full_scan('bits', 'embedding', x'01', 1) ORDER BY distance"
 );
 console.log(matches);
+// [[1, 1]]
 ```
 
 ## Full-text search (FTS5)
@@ -67,13 +75,16 @@ FTS5 is part of the bundled SQLite configuration and can be used alongside vecto
 db.exec('CREATE VIRTUAL TABLE texts USING fts5(body)');
 db.exec("INSERT INTO texts(rowid, body) VALUES(1, 'browser vector search')");
 console.log(db.selectArrays("SELECT rowid FROM texts WHERE texts MATCH 'vector'"));
+// [[1]]
 ```
 
 ## Scripts and Workers
 
 For new applications, run the initialization and SQL examples above inside your own **dedicated module Worker**, importing `/sqlite/sqlite3.mjs` there and using SQLite's API directly. Exchange application messages with the page through `postMessage()`. This keeps synchronous database work off the UI thread. See [SQLite's JavaScript API documentation](https://sqlite.org/wasm/doc/trunk/api-index.md).
 
-For a classic script, load `/sqlite/sqlite3.js` and call `globalThis.sqlite3InitModule()`. In a classic Worker, first call `importScripts('/sqlite/sqlite3.js')`, then the same initializer.
+For a classic script, load `/sqlite/sqlite3.js` and await `globalThis.sqlite3InitModule()`. In a classic Worker, first call `importScripts('/sqlite/sqlite3.js')`, then await the same initializer. Use a module Worker for `.mjs` loaders and a classic Worker for `sqlite3.js`.
+
+The supplied `sqlite3-bundler-friendly.mjs` and corresponding Worker1/promiser variants remain available through explicit package subpaths. The package root is not a JavaScript loader. A bundler must preserve the upstream WASM and Worker asset URLs and copy their companion files; compatibility with every bundler is not guaranteed. Keep companions from the same distribution together rather than mixing runtime versions.
 
 ### Worker1 compatibility
 
@@ -97,7 +108,16 @@ Worker companions must resolve from the same asset directory; when a Worker entr
 
 ## Browser persistence
 
-In-memory `new sqlite3.oo1.DB(':memory:')` does not persist. For persistence, use one of the available upstream OPFS VFS modes from an appropriate Worker after the required initialization. OPFS needs a secure context; `opfs` and `opfs-wl` require applicable cross-origin isolation. `opfs-wl` also needs Web Locks and `Atomics.waitAsync()`. The explicitly initialized `opfs-sahpool` does not require those isolation headers. Main-thread OPFS is unsupported. Check the requested VFS availability rather than silently substituting transient storage.
+In-memory `new sqlite3.oo1.DB(':memory:')` does not persist. For persistence, choose an upstream OPFS VFS and open the database inside a Worker. OPFS requires a secure context, normally HTTPS; loopback HTTP is also treated as secure for local development. Check the requested VFS availability rather than silently substituting transient storage.
+
+The `opfs` and `opfs-wl` modes require cross-origin isolation. Serve the document with the following response headers and ensure its resources meet the embedding policy:
+
+```http
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Embedder-Policy: require-corp
+```
+
+`opfs` uses the supplied asynchronous proxy. `opfs-wl` additionally requires Web Locks and `Atomics.waitAsync()`. The `opfs-sahpool` mode must be installed explicitly through `await sqlite3.installOpfsSAHPoolVfs()`; it does not require cross-origin isolation. These OPFS modes are unavailable on the main thread. SQLite also supplies `kvvfs` for main-thread `localStorage`/`sessionStorage`, with different capacity and storage behavior.
 
 For example, **inside a Worker** with SQLite initialized and the required OPFS conditions met:
 
@@ -111,8 +131,10 @@ try {
 }
 ```
 
-See [SQLite's persistence prerequisites](https://sqlite.org/wasm/doc/trunk/persistence.md) for exact setup and API examples.
+See [SQLite's persistence prerequisites](https://sqlite.org/wasm/doc/trunk/persistence.md) for VFS selection, concurrency and initialization details. Browser quotas and private-browsing modes can restrict or disable persistence; check storage behavior in the actual deployment.
 
 ## Package provenance and licensing
 
-`runtime.json` records source versions, digests, assets and build settings. The distribution's `LICENSE` covers project-authored Apache-2.0 material; `NOTICE` and `licenses/` preserve the upstream licensing terms. See the [project README](https://at-rama.github.io/sqlite-vector-wasm/) for distribution and source-build documentation.
+`package.json` identifies the installed package version; `runtime.json` records its SQLite and SQLite-Vector versions, source digests, assets and build settings. To check the running extension, execute `SELECT vector_version()` and compare it with `runtime.json`.
+
+The distribution's `LICENSE` covers project-authored Apache-2.0 material; `NOTICE` and `licenses/`, including `licenses/origins.json`, preserve the upstream terms and attribution. See the [project README](../README.md) for distribution and source-build documentation.

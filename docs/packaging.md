@@ -19,7 +19,7 @@ bash tools/package.sh --build-handoff /tmp/sqlite-vector-wasm-build.json \
 
 The entry point verifies the source lock, build configuration identities,
 complete eleven-file inventory and each size/SHA-256. It copies those exact
-bytes into a fresh `.work/package/run-*/assembly/`, adds selected recorded notices and composition-specific/common documents,
+bytes into a fresh `.work/package/run-*/assembly/`, adds selected recorded notices and the canonical README/Usage sources,
 metadata inputs and the runtime manifest, and runs pinned
 `npm pack --ignore-scripts --json`. It then checks the actual archive contents
 and hashes and extracts an independent copy. Progress/diagnostics go to stderr;
@@ -112,25 +112,28 @@ identifies notices, documentation and metadata as well as runtime bytes.
 
 ## Documentation sources
 
-Package documents are copied byte for byte from this explicit map:
+The package, GitHub and the site share two authored sources:
 
 | Source | Archive |
 | --- | --- |
-| `docs/sqlite-vector/README.md` | `README.md` |
-| Matching engine directory's `usage.md` | `docs/usage.md` |
-| `docs/common/browser.md` | `docs/browser.md` |
+| `README.md` | `README.md` |
+| `docs/usage.md` | `docs/usage.md` |
 
-Every package description and selected guide follows the handoff. There are no
-prose overlays or generated examples. Required sources must be regular files;
-wrong-engine headings and broken repository/source/archive links fail checks.
-Shared browser instructions have one source. Absolute repository links retain
-their meaning after relocation; checks resolve this repository's `blob/main` links
-against the candidate source tree, without requiring an unpublished branch to be
-available on main. External upstream links are authored references, not a promise
-of network availability during offline assembly.
+Packaging copies these files byte for byte, without a shorter presentation,
+a generated banner or a separate browser guide. Browser loading, Workers and
+storage belong to Usage. Each document record binds its source and archive hashes
+to the supplied package identity and selected upstream versions. `package.json`
+and `runtime.json` identify the enclosed package and runtime; authored examples
+retain their stated publication references rather than acquiring a fictitious
+registry publication during local packing.
 
-Root `README.md` and `docs/usage.md` are the Site presentation and usage sources for the SQLite-Vector `0.3.0` target.
-its local fixture evidence must not be described as a registry release.
+Required sources must be regular files. Missing sources, substituted paths and
+broken source/archive links fail checks. Relative README/Usage links work in both
+the repository and the extracted archive. Absolute repository links retain their
+meaning; checks resolve this repository's `blob/main` links against the candidate
+source tree. External links remain authored references, not a promise of network
+availability during offline assembly. Site rendering adds its checked candidate
+or published context separately and does not replace the package's source files.
 
 ## Selected notices and FP16 provenance
 

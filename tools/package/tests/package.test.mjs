@@ -8,7 +8,6 @@ import { root, hash, identity, argumentsFor, validateBuild, noticeInputs, assemb
 import { runtimeNames } from '../../build/config.mjs';
 
 import {fixture} from './fixture.mjs';
-import {renderDocument} from '../package.mjs';
 
 // The offline suite uses actual local npm packing but does not qualify production SDK identity.
 test('complete handoff assembles one exact autonomous tarball and consumer subpaths', async t => {
@@ -22,10 +21,11 @@ test('complete handoff assembles one exact autonomous tarball and consumer subpa
   assert.equal(metadata.name, options.name); assert.equal(metadata.version, options.version);
   assert.equal(metadata.license, 'Apache-2.0');
   assert.equal(await readFile(join(result.runtimeDirectory, 'README.md'), 'utf8'),
-    renderDocument(await readFile(join(options.repository, 'docs/sqlite-vector/README.md')),options.handoff,{name:options.name,version:options.version}).toString());
+    await readFile(join(options.repository, 'README.md'), 'utf8'));
   assert.equal(await readFile(join(result.runtimeDirectory, 'docs/usage.md'), 'utf8'),
-    renderDocument(await readFile(join(options.repository, 'docs/sqlite-vector/usage.md')),options.handoff,{name:options.name,version:options.version}).toString());
+    await readFile(join(options.repository, 'docs/usage.md'), 'utf8'));
   assert.ok(result.files.some(file => file.name === 'docs/usage.md'));
+  assert.ok(!result.files.some(file => file.name === 'docs/browser.md'));
   assert.equal(metadata.scripts, undefined); assert.equal(metadata.dependencies, undefined);
   assert.equal(metadata.exports['.'], undefined); assert.equal(metadata.sideEffects, undefined);
   for (const name of runtimeNames) assert.equal(metadata.exports[`./${name}`], `./${name}`);

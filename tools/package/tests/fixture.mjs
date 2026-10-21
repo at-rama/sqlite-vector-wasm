@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {mkdtemp,mkdir,cp,readFile,writeFile,rm,symlink} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
-import {root,hash,validateBuild,validatePackagedBuild,assemble,noticeInputs,documentInputs,documentMapping,engineIdentity,renderDocument} from '../package.mjs';
+import {root,hash,validateBuild,validatePackagedBuild,assemble,noticeInputs,documentInputs,documentMapping,engineIdentity} from '../package.mjs';
 import {assertNativeResult,transportResult} from '../check.mjs';
 import {acceptedPayload} from '../../release/run.mjs';
 import {productionStages,browserCases} from '../../acceptance/contracts.mjs';
@@ -14,7 +14,7 @@ export async function fixture(t,key='sqliteVector') {
   assert.equal(key,'sqliteVector');
   const repository=await mkdtemp(join(tmpdir(),'package-composition-'));
   t.after(()=>rm(repository,{recursive:true,force:true}));
-  for(const file of ['inputs','tools/package','tools/harness.sh','tools/build/config.mjs','tools/build/vector-extra-init.c.in','tools/harness/package-lock.json','LICENSE','docs']) {
+  for(const file of ['inputs','tools/package','tools/harness.sh','tools/build/config.mjs','tools/build/vector-extra-init.c.in','tools/harness/package-lock.json','LICENSE','README.md','AGENTS.md','docs']) {
     await mkdir(join(repository,file,'..'),{recursive:true});await cp(join(root,file),join(repository,file),{recursive:true});
   }
   const sourceLockPath='inputs/sqlite-vector.sources.lock.json';

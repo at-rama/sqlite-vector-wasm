@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {mkdtemp,mkdir,cp,readFile,writeFile,rm,symlink} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
-import {root,hash,validateBuild,validatePackagedBuild,assemble,noticeInputs,documentInputs,documentMapping,engineIdentity,renderDocument} from '../package.mjs';
+import {root,hash,validateBuild,validatePackagedBuild,assemble,noticeInputs,documentInputs,documentMapping,engineIdentity} from '../package.mjs';
 import {assertNativeResult,transportResult} from '../check.mjs';
 import {acceptedPayload} from '../../release/run.mjs';
 import {productionStages,browserCases} from '../../acceptance/contracts.mjs';
@@ -30,8 +30,7 @@ test('the Vector composition retain exact compact fields, selected documents/not
       const record=result.documents.find(x=>x.source===source && x.destination===destination);
       assert.equal(record.sourceSha256,hash(await readFile(join(f.repository,source))));
       assert.equal(record.sha256,result.files.find(x=>x.name===destination).sha256);
-      if(!source.startsWith('docs/sqlite-vector/'))assert.equal(record.sha256,record.sourceSha256);
-      else {assert.notEqual(record.sha256,record.sourceSha256);assert.deepEqual(record.identity,result.package);}
+      assert.equal(record.sha256,record.sourceSha256);assert.deepEqual(record.identity,result.package);
     }
     await rm(join(f.repository,'sources'),{recursive:true,force:true});await rm(join(f.repository,'build'),{recursive:true});
     for(const item of result.files)assert.equal(hash(await readFile(join(result.runtimeDirectory,item.name))),item.sha256);
@@ -58,11 +57,11 @@ test('selected dependency notices require exact immutable association, header id
 
 test('documentation rejects missing, wrong-engine, linked and broken source/output references without fallback',async t=>{
  for(const kind of ['missing','wrong-engine','symlink','parent-symlink','broken','unsafe','anchor']){
-  const f=await fixture(t),path=join(f.repository,'docs/sqlite-vector/usage.md');
+  const f=await fixture(t),path=join(f.repository,'docs/usage.md');
   if(kind==='missing')await rm(path);
   if(kind==='wrong-engine')await writeFile(path,'# sqlite-vec usage\n');
-  if(kind==='symlink'){await rm(path);await symlink(join(f.repository,'docs/common/browser.md'),path);}
-  if(kind==='parent-symlink'){await rm(join(f.repository,'docs/sqlite-vector'),{recursive:true});await symlink(join(f.repository,'docs/common'),join(f.repository,'docs/sqlite-vector'));}
+  if(kind==='symlink'){await rm(path);await symlink(join(f.repository,'README.md'),path);}
+  if(kind==='parent-symlink'){await rm(join(f.repository,'docs'),{recursive:true});await symlink(join(f.repository,'tools'),join(f.repository,'docs'));}
   if(['broken','unsafe','anchor'].includes(kind))await writeFile(path,(await readFile(path,'utf8'))+'\n[bad]('+({broken:'missing.md',unsafe:'../../../../outside',anchor:'#absent'}[kind])+')\n');
   await assert.rejects(documentInputs(f.handoff,f.repository,{name:f.name,version:f.version}));
  }
@@ -132,21 +131,21 @@ test('Worker1/promiser reports use native Vector rows and reject obsolete caller
  assert.throws(()=>transportResult(bad,'3.54.0',vector));
 });
 
-test('Vector archive documents follow supplied identity and changed upstreams without invented publication', async t=>{
+test('every package identity carries the same complete canonical README and Usage bytes', async t=>{
  const f=await fixture(t),first=await assemble({...f,name:'@at-rama/sqlite-vector-wasm',version:'0.3.0'});
  const second=await assemble({...f,name:'@at-rama/sqlite-vector-wasm',version:'0.3.1'});
- const get=async(p,n)=>readFile(join(p.runtimeDirectory,n),'utf8');
- assert.match(await get(first,'README.md'),/Prepared archive: `@at-rama\/sqlite-vector-wasm@0\.3\.0`/);
- assert.match(await get(second,'README.md'),/@0\.3\.1`/);
+ const local=await assemble(f);
  assert.notEqual(first.archive.sha256,second.archive.sha256);assert.deepEqual(first.runtimeFiles,second.runtimeFiles);
- assert.match(await get(first,'docs/usage.md'),/vector_init.*vector_full_scan/s);
- assert.doesNotMatch(await get(first,'README.md'),/has no published npm release|0\.0\.0-vector/);
- const local=await assemble(f);assert.match(await get(local,'README.md'),/Unpublished local package/);
- const source=await readFile(join(f.repository,'docs/sqlite-vector/usage.md'));
- const next=structuredClone(f.handoff);next.inputs.sqlite.version='3.54.1';next.inputs.sqliteVector.version='1.1.3-alpha.1';next.engine.version=next.inputs.sqliteVector.version;
- const changed=renderDocument(source,next,{name:f.name,version:'0.4.0-alpha.1'}).toString();
- assert.match(changed,/SQLite \*\*3\.54\.1\*\* with SQLite-Vector \*\*1\.1\.3-alpha\.1\*\*/);
- assert.doesNotMatch(changed,/3\.54\.0|1\.1\.2/);
- await writeFile(join(f.repository,'docs/sqlite-vector/README.md'),'# SQLite WASM with SQLite-Vector\nThis composition has no published npm release.');
- await assert.rejects(assemble(f),/Stale fixture-only document/);
+ for(const packaged of [first,second,local]) {
+  assert.deepEqual(packaged.documents.map(d=>d.source),['README.md','docs/usage.md']);
+  for(const source of ['README.md','docs/usage.md'])
+   assert.deepEqual(await readFile(join(packaged.runtimeDirectory,source)),await readFile(join(f.repository,source)));
+ }
+ // Review an editorial addition through the real packing path, without a second
+ // package template that could silently discard it.
+ for(const path of ['README.md','docs/usage.md'])
+  await writeFile(join(f.repository,path),(await readFile(join(f.repository,path),'utf8'))+'\nEditorial addition for consumers.\n');
+ const edited=await assemble(f);
+ for(const path of ['README.md','docs/usage.md'])
+  assert.match(await readFile(join(edited.runtimeDirectory,path),'utf8'),/Editorial addition for consumers/);
 });
