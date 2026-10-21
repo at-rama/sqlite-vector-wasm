@@ -28,6 +28,13 @@ export function renderPublicDocument(text, context) {
   const line = text.indexOf('\n');
   assert.ok(line > 0, 'Missing documentation title');
   let rendered = text.slice(0, line + 1) + '\n' + status + text.slice(line + 1);
+  // The authored source may still name the preceding published release. Bind
+  // the rendered install instructions to this checked archive, not that literal.
+  const sourceVersion = text.match(/npm install @at-rama\/sqlite-vector-wasm@([0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?)/)?.[1];
+  if (sourceVersion) {
+    rendered = rendered.replaceAll(`@at-rama/sqlite-vector-wasm@${sourceVersion}`, `@at-rama/sqlite-vector-wasm@${context.version}`)
+      .replaceAll('`' + sourceVersion + '`', '`' + context.version + '`');
+  }
   if (context.mode === 'published') rendered = rendered.replaceAll('npm install ./payload.tgz', `npm install @at-rama/sqlite-vector-wasm@${context.version}`);
   else rendered = rendered.replaceAll(`npm install @at-rama/sqlite-vector-wasm@${context.version}`, 'npm install ./payload.tgz');
   return rendered;

@@ -19,7 +19,7 @@ async function vectorFixture(t,{version,name}) {
   const key='sqliteVector';
   const repository=await mkdtemp(join(tmpdir(),'package-composition-'));
   t.after(()=>rm(repository,{recursive:true,force:true}));
-  for(const file of ['inputs','tools/package','tools/harness.sh','tools/build/config.mjs','tools/build/vector-extra-init.c.in','tools/harness/package-lock.json','LICENSE','docs']) {
+  for(const file of ['inputs','tools/package','tools/harness.sh','tools/build/config.mjs','tools/build/vector-extra-init.c.in','tools/harness/package-lock.json','LICENSE','README.md','AGENTS.md','docs']) {
     await mkdir(join(repository,file,'..'),{recursive:true});await cp(join(root,file),join(repository,file),{recursive:true});
   }
   const sourceLockPath='inputs/sqlite-vector.sources.lock.json';

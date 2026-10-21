@@ -174,43 +174,28 @@ export function manifest(handoff) {
 }
 
 export const documentMapping = engine => [
-  ['docs/sqlite-vector/README.md', 'README.md'],
-  ['docs/sqlite-vector/usage.md', 'docs/usage.md'],
-  ['docs/common/browser.md','docs/browser.md'],
+  ['README.md', 'README.md'],
+  ['docs/usage.md', 'docs/usage.md'],
 ];
 
-export function renderDocument(source, handoff, suppliedIdentity) {
-  engineIdentity(handoff);
-  const { name, version } = identity(suppliedIdentity?.name, suppliedIdentity?.version);
-  const sqlite = handoff.inputs.sqlite.version, vector = handoff.inputs.sqliteVector.version;
-  require([sqlite, vector].every(v => typeof v === 'string' && /^[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?$/.test(v)), 'Invalid document composition');
-  const text = source.toString();
-  require(!/0\.0\.0-vector|has no published npm release/.test(text), 'Stale fixture-only document');
-  const position = text.indexOf('\n');
-  require(position > 0, 'Missing document title');
-  const status = name === '@at-rama/sqlite-vector-wasm' ? 'Prepared archive' : 'Unpublished local package';
-  const header = `\n\n${status}: \`${name}@${version}\`. SQLite **${sqlite}** with SQLite-Vector **${vector}**. Assembly identifies these enclosed bytes; registry availability is established separately by the matching publication record.`;
-  return Buffer.from(text.slice(0, position) + header + text.slice(position));
-}
-
 export async function preparedDocuments(handoff, repository = root, suppliedIdentity) {
+  engineIdentity(handoff);
+  const packageIdentity = identity(suppliedIdentity?.name, suppliedIdentity?.version);
   const result = new Map(), records = [];
   for (const [source,destination] of documentMapping(engineIdentity(handoff))) {
     require(!result.has(destination), 'Duplicate document destination');
     const path = join(repository,source);
     require(await realpath(path) === resolve(path), 'Unsafe document source');
     const sourceBytes = await regularBytes(path);
-    const rendered = source.startsWith('docs/sqlite-vector/') ? renderDocument(sourceBytes, handoff, suppliedIdentity) : sourceBytes;
-    result.set(destination, rendered);
-    records.push({ source, destination, sourceSha256: hash(sourceBytes), sha256: hash(rendered),
-      ...(source.startsWith('docs/sqlite-vector/') ? { identity: identity(suppliedIdentity.name, suppliedIdentity.version),
-        upstreams: { sqlite: handoff.inputs.sqlite.version, sqliteVector: handoff.inputs.sqliteVector.version } } : {}),
+    result.set(destination, sourceBytes);
+    records.push({ source, destination, sourceSha256: hash(sourceBytes), sha256: hash(sourceBytes),
+      identity: packageIdentity,
+      upstreams: { sqlite: handoff.inputs.sqlite.version, sqliteVector: handoff.inputs.sqliteVector.version },
     });
   }
   const engine = engineIdentity(handoff);
-  const title = 'SQLite-Vector';
-  require(result.get('README.md').toString().startsWith('# SQLite WASM with '+title+'\n')
-    && result.get('docs/usage.md').toString().startsWith('# Using '+title+'\n'), 'Wrong-engine documents');
+  require(result.get('README.md').toString().startsWith('# sqlite-vector-wasm\n')
+    && result.get('docs/usage.md').toString().startsWith('# Using sqlite-vector-wasm\n'), 'Wrong product documents');
   for (const [source,destination] of documentMapping(engine)) {
     const text = result.get(destination).toString();
     for (const match of text.matchAll(/\[[^\]]*\]\(([^)]+)\)/g)) {

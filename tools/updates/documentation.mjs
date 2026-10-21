@@ -5,8 +5,8 @@ import { regularBytes, hash, documentMapping } from '../package/package.mjs';
 import { command } from '../acceptance/run.mjs';
 import { documentationSources } from '../site/documentation.mjs';
 
-export const candidateDocumentPaths = [...documentationSources,
-  ...documentMapping({ key: 'sqliteVector' }).map(([source]) => source), 'tools/site/docs-example.json'];
+export const candidateDocumentPaths = [...new Set([...documentationSources,
+  ...documentMapping({ key: 'sqliteVector' }).map(([source]) => source), 'tools/site/docs-example.json'])];
 export const candidateProfile = { mode: 'candidate', engine: 'sqliteVector', sourceLockPath: 'inputs/sqlite-vector.sources.lock.json' };
 
 export async function documentSnapshot(repository) {

@@ -7,6 +7,17 @@ import { execFileSync } from 'node:child_process';
 import { documentationHashes, sourceCommit, checkedDocumentation, renderPublicDocument, documentHash } from '../documentation.mjs';
 import { selectDocumentationRun, acquireDocumentationBundle } from '../candidate-input.mjs';
 
+test('the shared authored guide renders the checked next version instead of its preceding release', () => {
+ const source='# Using sqlite-vector-wasm\n\nInstall `@at-rama/sqlite-vector-wasm@0.3.0`.\n\n```sh\nnpm install @at-rama/sqlite-vector-wasm@0.3.0\n```\n';
+ const context={mode:'candidate',version:'0.3.1',upstreams:{sqlite:'3.54.1',sqliteVector:'1.1.2'}};
+ const preview=renderPublicDocument(source,context);
+ assert.ok(preview.includes('npm install ./payload.tgz'));assert.ok(!preview.includes('npm install @at-rama'));
+ assert.ok(!preview.includes('0.3.0'));
+ const published=renderPublicDocument(source,{...context,mode:'published'});
+ assert.ok(published.includes('npm install @at-rama/sqlite-vector-wasm@0.3.1'));
+ assert.ok(!published.includes('0.3.0'));
+});
+
 test('candidate presentation never claims npm availability and published identity changes are mechanical', () => {
   const text='# Usage\n\nnpm install ./payload.tgz\n\nSELECT vector_version();\n';
   const input={mode:'candidate',version:'0.3.0',upstreams:{sqlite:'3.54.1',sqliteVector:'1.1.2'}};

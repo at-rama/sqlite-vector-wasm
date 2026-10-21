@@ -22,7 +22,7 @@ The distribution SHALL retain the complete pinned canonical browser runtime from
 - **THEN** all eleven canonical runtime files retain their A-build bytes and filename subpaths, with no second engine or consumer wrapper
 
 ### Requirement: Consumer-ready distribution envelope
-Packaging SHALL supply an npm-compatible archive usable for npm publication and GitHub Release download, with the same runtime payload for both channels and no consumer native/WASM compilation. It SHALL carry explicit supplied package identity and actual composition metadata without selecting A-release's version/revision/publication policy. Product documentation SHALL come from explicit SQLite-Vector sources and common material, with stable consumer paths and honest verification/publication references. Candidate/final documentation SHALL describe the enclosed supplied identity and selected upstreams, without fixed fixture-only claims or invented existing npm publication. Identity-dependent rendering SHALL be deterministic from the supplied package identity and build handoff, without a retained sqlite-vec document path.
+Packaging SHALL supply an npm-compatible archive usable for npm publication and GitHub Release download, with the same runtime payload for both channels and no consumer native/WASM compilation. It SHALL carry explicit supplied package identity and actual composition metadata without selecting A-release's version/revision/publication policy. Product documentation SHALL use the current root `README.md` and complete `docs/usage.md` shared with GitHub and the site, copied byte for byte to the same archive paths. Loading, Workers and storage guidance SHALL be integrated editorially into Usage, without separate common/engine guides or generated prose overlays. The supplied identity and selected upstreams SHALL remain traceable through package/runtime metadata and document records, without inventing registry publication or silently rewriting an authored example reference.
 
 #### Scenario: Consumer installation and download
 - **WHEN** the archive is installed locally as an npm package or extracted for static hosting
@@ -34,19 +34,19 @@ Packaging SHALL supply an npm-compatible archive usable for npm publication and 
 
 #### Scenario: Documentation follows composition
 - **WHEN** an archive is assembled from a selected-engine handoff
-- **THEN** its presentation, usage, descriptions and other composition-dependent documents come from that engine’s explicit directory plus declared shared sources, using stable archive paths without merging prose or shipping another engine’s guide as its own
+- **THEN** its README and Usage are byte-identical to the canonical files from the same source revision, describe native SQLite-Vector usage, and preserve their complete authored content instead of selecting shorter package-specific guides
 
 #### Scenario: Documentation source or link failure
-- **WHEN** a required selected/common document is missing, unsafe, duplicated or its authored source or final-archive links are broken
+- **WHEN** a required canonical document is missing, unsafe, duplicated or its authored source or final-archive links are broken
 - **THEN** packaging checks fail rather than falling back to another engine’s document
 
 #### Scenario: Honest example reference
 - **WHEN** a guide identifies the archive or published composition used to check its examples
 - **THEN** it retains the exact observed reference and does not claim publication of an unlisted fixture archive or silently follow latest
 
-#### Scenario: Render the enclosed candidate or final identity
+#### Scenario: Preserve canonical content for candidate and final archives
 - **WHEN** a qualified candidate or definitive distribution archive is assembled
-- **THEN** documents identify that exact package/composition; preparation references are explicitly unpublished, current native Vector SQL is explained without an additional old-engine migration guide, and neither another engine guide nor fixed fixture version is shipped as the released composition
+- **THEN** package/runtime metadata and document records identify that exact package/composition, the README and Usage retain their source bytes and truthful example references, and no second engine guide or separate browser guide is shipped
 
 ### Requirement: Preserved behavior and glue boundary
 
@@ -83,9 +83,9 @@ Successful packaging SHALL identify final runtime paths/sizes/SHA-256, archive i
 - **WHEN** the caller supplies a different package name or version
 - **THEN** a fresh archive and final-file identities reflect that supplied identity and remain available for renewed downstream checks rather than relabeling previously qualified bytes
 
-#### Scenario: Trace document rendering
-- **WHEN** selected authored documents are rendered into an archive
-- **THEN** the handoff identifies source document hashes, supplied identity and final document hashes, and a changed version requires fresh archive identities and applicable renewed checks
+#### Scenario: Trace canonical document copies
+- **WHEN** canonical authored documents are copied into an archive
+- **THEN** the handoff identifies equal source/final document hashes and the supplied package/composition identity; changed source bytes invalidate prior package evidence, while a changed package version still requires a fresh archive and applicable renewed checks
 
 ### Requirement: Generated outputs remain uncommitted
 Generated SQLite JavaScript/WASM, package assemblies, archives and execution reports SHALL remain temporary and uncommitted. Only repository-controlled packaging inputs, code, tests, documentation and notice records SHALL enter source control; the SQLite/SQLite-Vector distribution SHALL remain constructible without unpublished files or necessary pre-existing package outputs. Sources of documentation and notices SHALL be explicit and reproducible from repository inputs.
