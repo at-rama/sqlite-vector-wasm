@@ -5,6 +5,7 @@ import { pathToFileURL } from 'node:url';
 import { digest } from './prepare.mjs';
 import { build } from './build.mjs';
 import { prepareDemo } from './demo-runtime.mjs';
+import { sourceAt } from './source-at.mjs';
 
 const sourcePaths = ['site/demo/index.md', 'site/demo/EmojiDemo.vue', 'site/demo/demo-worker.mjs',
   'site/demo/discovery.mjs', 'tools/site/demo-runtime.json', 'tools/site/demo-data.json'];
@@ -59,7 +60,6 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
     const [root, path] = process.argv.slice(2);
     const record = JSON.parse(await readFile(path, 'utf8'));
     assert.equal(record.stableDemo?.sourceCommit, record.mainCommit);
-    const { sourceAt } = await import('./eligibility.mjs');
     const { httpReader } = await import('../release/state.mjs');
     const get = httpReader(process.env.GH_TOKEN);
     const readAt = (commit, path, optional = false) => sourceAt({ repository: record.repository, commit, path, optional, get, directory: resolve(root) });

@@ -125,7 +125,7 @@ async function main() {
     const mainCommit = selection.mainCommit;
     if (revision(stableRoot) !== (selection.stable?.sourceCommit ?? mainCommit)) throw Error('Stable checkout identity mismatch.');
     if (context.preview && revision(candidateRoot) !== context.preview.commit) throw Error('PR checkout identity mismatch.');
-    console.log(JSON.stringify(await assemble({ stableRoot, candidateRoot, output, context: { ...context, mainCommit, stableDocumentation: selection.stable, ...(selection.stablePlaceholder?{stablePlaceholder:selection.stablePlaceholder}:{}) } })));
+    console.log(JSON.stringify(await assemble({ stableRoot, candidateRoot, output, context: { ...context, mainCommit, stableDocumentation: selection.stable, ...(selection.stablePlaceholder?{stablePlaceholder:selection.stablePlaceholder}:{}), ...(selection.stableDemo?{stableDemo:selection.stableDemo}:{}) } })));
   } else if (command === 'guard' && args.length === 1) {
     const record = JSON.parse(await readFile(args[0], 'utf8'));
     await assertCurrent(record, async path => {

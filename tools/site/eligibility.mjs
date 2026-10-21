@@ -11,17 +11,12 @@ import {inspectPublicationCompletion,checkInitialCompletion} from '../release/ru
 import {runArtifact,uniqueRecord} from '../release/artifacts.mjs';
 import {mainPlaceholder} from './placeholder.mjs';
 import {mainDemo} from './current-demo.mjs';
+import {sourceAt} from './source-at.mjs';
 import {candidateProfile} from '../updates/documentation.mjs';
 function api(repository) { return `https://api.github.com/repos/${repository}`; }
 
 async function json(get, url) { const r=await get(url);assert.equal(r.status,200,`Site eligibility unavailable: ${url}`);return r.data; }
 
-async function sourceAt({repository,commit,path,get,localCommit,directory=root,optional=false}) {
- if(commit===localCommit){try{return await readFile(join(directory,path),"utf8");}catch(error){if(optional&&error.code==="ENOENT")return null;throw error;}}
- const r=await get(`${api(repository)}/contents/${path}?ref=${commit}`);if(optional&&r.status===404)return null;
- assert.equal(r.status,200,`Stable source unavailable: ${path}`);const f=r.data;assert.equal(f.type,"file");assert.equal(f.path,path);assert.equal(f.encoding,"base64");
- const b=Buffer.from(f.content,"base64");assert.equal(b.length,f.size);return b.toString("utf8");
-}
 
 async function verifyPublished({repository,release,publication,get}) {
  publicationIdentity(publication);const services=githubServices({repository,get});await services.verifyGitHub(release,publication);
