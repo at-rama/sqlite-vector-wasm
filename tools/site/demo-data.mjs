@@ -56,8 +56,8 @@ export function parseCorpus(bytes, descriptionText, { count, dimensions }) {
   for (const emoji of descriptions.keys()) assert.ok(seen.has(emoji), `Unmatched description identity: ${emoji}`);
   return { catalogue, floats, bits };
 }
-export async function prepareData(root, destination, get = fetch) {
-  const selection = JSON.parse(await readFile(join(root, 'tools/site/demo-data.json'), 'utf8'));
+export async function prepareData(root, destination, get = fetch, selected) {
+  const selection = selected ?? JSON.parse(await readFile(join(root, 'tools/site/demo-data.json'), 'utf8'));
   const inputs = join(root, '.work/demo-input');
   await mkdir(inputs, { recursive: true }); await mkdir(destination, { recursive: true });
   const source = {};

@@ -1,4 +1,7 @@
 import {mainPlaceholder,buildStablePlaceholder} from './placeholder.mjs';
+import {mainDemo,buildStableDemo} from './current-demo.mjs';
+import {checkDemo} from './demo-check.mjs';
+import {prepareData} from './demo-data.mjs';
 import { example } from './example.mjs';
 import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, writeFile, rm, readFile, cp, symlink } from 'node:fs/promises';
@@ -132,7 +135,7 @@ This is an integration fixture, not the emoji demo.
     await assert.rejects(readFile(join(repository, '.work/site/dist/index.html')), { code: 'ENOENT' });
     results.push({ name: 'corrupted-runtime', result: 'rejected; stale output removed' });
 
-    await observe('shell-only', undefined, { requirePlaceholder: true, screenshot: join(repository, '.work/site/mobile.png') });
+    await observe('shell-and-demo', undefined, { runningDemo: true, screenshot: join(repository, '.work/site/mobile.png') });
     await writeFile(join(repository, '.work/site/exercise.json'), JSON.stringify(results, null, 2) + '\n');
     console.log(JSON.stringify(results, null, 2));
   } finally {
@@ -196,7 +199,7 @@ export async function exerciseStablePlaceholder() {
     await writeFile(join(root,'README.md'),'# Published fixture\n\nOnly the independently selected stable documentation.\n');
     await writeFile(join(root,'docs/usage.md'),'# Published Usage\n\nPublished usage fixture, no candidate content.\n');
     await writeFile(join(root,'tools/site/docs-example.json'),JSON.stringify({version:'0.2.0',commit:'b'.repeat(40)}));
-    const markdown=await readFile(join(repository,'site/demo/index.md'),'utf8');
+    const markdown='# Demo\n\nThe demonstration is being refactored for SQLite-Vector.\n\n[Read the usage documentation](../usage/).\n';
     const placeholder=await mainPlaceholder(async()=>markdown,'a'.repeat(40));
     const result=await buildStablePlaceholder({root,placeholder});
     const source=await readFile(join(result.source,'index.md'),'utf8');
@@ -205,9 +208,22 @@ export async function exerciseStablePlaceholder() {
     assert.equal(result.runtime,null);assert.deepEqual(result.placeholder,{sourceCommit:'a'.repeat(40),sha256:placeholder.sha256});
     const server=await serveSite(result.output,result.base);let observed;
     try{observed=await checkBrowser(server.url,{requireDocs:true,requirePlaceholder:true});}finally{await server.close();}
+    // Model the later authorized main return without promoting the candidate's documentation.
+    const readAt=async(commit,path)=>readFile(join(repository,path),'utf8');
+    const demo=await mainDemo(readAt,'d'.repeat(40));
+    // A clean CI checkout has neither runtime nor reference caches. Acquire
+    // checked original reference inputs explicitly; the isolated stable root
+    // independently acquires its own published archive and corpus.
+    await prepareData(repository,join(repository,'.work/demo-reference-inputs'));
+    const returned=await buildStableDemo({root,demo,readAt});
+    assert.match(await readFile(join(returned.source,'index.md'),'utf8'),/Only the independently selected stable documentation/);
+    assert.equal(returned.demoSource.sourceCommit,'d'.repeat(40));
+    const returnedServer=await serveSite(returned.output,returned.base);let returnedObserved;
+    try{await checkBrowser(returnedServer.url,{requireDocs:true,runningDemo:true});returnedObserved=await checkDemo(returnedServer.url,{root:repository,runtimeInventory:returned.runtime});}finally{await returnedServer.close();}
     await assert.rejects(buildStablePlaceholder({root,placeholder:{...placeholder,markdown:markdown+'<script>throw 1</script>'}}),/Invalid static placeholder handoff/);
     await assert.rejects(readFile(join(root,'.work/site/dist/index.html')),{code:'ENOENT'});
     return [{name:'published-docs-with-main-placeholder',...observed,sourceCommit:placeholder.sourceCommit,placeholderSha256:placeholder.sha256},
+      {name:'published-docs-with-separate-main-demo',browser:returnedObserved.browser,queries:returnedObserved.reports,sourceCommit:demo.sourceCommit,runtime:returned.runtime},
       {name:'invalid-placeholder-handoff',result:'rejected; stale output removed'}];
   } finally {
     if(selected===undefined)delete process.env.SITE_DOCUMENTATION_SELECTION;else process.env.SITE_DOCUMENTATION_SELECTION=selected;

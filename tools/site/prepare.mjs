@@ -51,6 +51,15 @@ export async function prepare(root, prepared, { preview, docs = true, allowDirty
   }
   // No previous generated site can survive a failed preparation/build.
   for (const path of [source, output, join(work, 'build.json')]) await rm(path, { recursive: true, force: true });
+  if (!prepared) {
+    let selection;
+    try { selection = await readFile(join(root, 'tools/site/demo-runtime.json'), 'utf8'); }
+    catch (error) { if (error.code !== 'ENOENT') throw error; }
+    if (selection) {
+      prepared = join(root, '.work/demo-prepared');
+      await (await import('./demo-runtime.mjs')).prepareDemo(root, prepared);
+    }
+  }
   await files(join(root, 'site'));
   await cp(join(root, 'site'), source, { recursive: true });
   if (prepared) {

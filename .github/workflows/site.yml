@@ -132,6 +132,8 @@ jobs:
         env:
           HARNESS_STATE: ${{ runner.temp }}/site-harness
           STABLE_PRESENT: ${{ steps.selection.outputs.stable_present }}
+          STABLE_DEMO: ${{ steps.selection.outputs.stable_demo }}
+          GH_TOKEN: ${{ github.token }}
           STABLE_PLACEHOLDER: ${{ steps.selection.outputs.stable_placeholder }}
           STABLE_PROFILE: ${{ steps.selection.outputs.stable_profile }}
         run: |
@@ -146,6 +148,8 @@ jobs:
               fi
               if [ "$STABLE_PLACEHOLDER" = true ]; then
                 node ../candidate/tools/site/placeholder.mjs "$PWD" ../candidate/.work/site/selection.json
+              elif [ "$STABLE_DEMO" = true ]; then
+                node ../candidate/tools/site/current-demo.mjs "$PWD" ../candidate/.work/site/selection.json
               else
                 sh tools/site.sh build
               fi
@@ -180,6 +184,8 @@ jobs:
             candidate/.work/site/exercise.json
             candidate/.work/site/mobile.png
             candidate/.work/site/preview-mobile.png
+            candidate/.work/site/demo-*.json
+            candidate/.work/site/demo-*.png
             candidate/.work/site/assembled.json
             candidate/.work/site/docs-mobile.png
             candidate/.work/site/*-initial-*.png

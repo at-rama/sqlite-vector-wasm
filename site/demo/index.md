@@ -1,5 +1,15 @@
-# Demo
+---
+layout: page
+---
 
-The demonstration is being refactored for SQLite-Vector.
+<script setup>
+import EmojiDemo from './EmojiDemo.vue';
+</script>
 
-[Read the usage documentation](../usage/).
+<div class="vp-doc" style="max-width: 1000px; margin: 0 auto; padding: 32px 24px">
+
+# Emoji vector explorer {#demo}
+
+<EmojiDemo />
+
+</div>
