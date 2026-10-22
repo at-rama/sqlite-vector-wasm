@@ -172,3 +172,16 @@ test('explicit unpublished documentation without a descriptor is pending, not an
  const f=await candidate(t);delete f.source['inputs/release.json'];
  await assert.rejects(f.invoke(),e=>e.publicationPending===true&&/awaits a matching publication descriptor/.test(e.message));
 });
+
+test('bounded initial receiptless publication stays pending until the same manual npm bytes are inspectable',async t=>{
+ const f=await candidate(t);f.pub.version='0.1.0';f.pub.tag='dist/v0.1.0';f.pub.initial=true;f.pub.publicationMode='initial-manual-npm';delete f.pub.documentation;
+ const bytes=Buffer.from('initial payload');f.pub.archive={size:bytes.length,sha256:hash(bytes)};
+ const pr={merged:true,state:'closed',merged_by:{type:'User'},base:{ref:'main',repo:{full_name:repository}},head:{sha:head,repo:{full_name:repository}},merge_commit_sha:prior};
+ const npm={name:f.pub.name,versions:{'0.1.0':{name:f.pub.name,version:'0.1.0',dist:{tarball:'https://registry.npmjs.org/archive'}}},'dist-tags':{latest:'0.1.0'}};
+ const services={verifyGitHub:async()=>{},verifyNpm:async()=>assert.fail('Initial completion has its existing bounded semantics')};
+ const get=async url=>response(url.includes('/pulls/')?pr:url.endsWith('/archive')?bytes:npm);
+ assert.equal((await publicationCompletion({repository,publication:f.pub,release:f.release,get,services})).completion,'bounded-initial-read-only');
+ const missing=async url=>url.includes('/pulls/')?response(pr):{status:404,data:{error:'Not found'}};
+ await assert.rejects(publicationCompletion({repository,publication:f.pub,release:f.release,get:missing,services}),/remains pending/);
+ f.pub.deliveryReceipt='delivery.json';await assert.rejects(publicationCompletion({repository,publication:f.pub,release:f.release,get,services}),/Conflicting/);
+});

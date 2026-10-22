@@ -73,5 +73,5 @@ Shell checks SHALL cover construction/navigation, mobile presentation, stable/pr
 - **THEN** stable promotion is rejected without legacy fallback or a public URL substituting for proof
 
 #### Scenario: Historical publication and bounded inspection
-- **WHEN** a pre-receipt publication is needed by an existing historical source
-- **THEN** existing read-only destination/identity inspection remains distinguishable, requires matching actual publication and archive, and neither fabricates a new receipt nor reads expiring CI artifacts
+- **WHEN** a pre-receipt publication or the existing bounded initial-manual-npm handoff is inspected
+- **THEN** existing read-only destination/identity inspection, including the bounded initial check, remains distinguishable, requires matching actual publication and archive, and neither fabricates a new receipt nor reads expiring CI artifacts

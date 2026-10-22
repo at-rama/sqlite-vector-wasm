@@ -8,8 +8,9 @@ import { releaseFixture, syntheticAttestation } from './fixture.mjs';
 
 const empty = () => ({schemaVersion:1,tags:[],npmVersions:[],releaseTags:[],heads:{latest:null,next:null}});
 const ok = data => ({status:200,headers:{},data});
-async function qualified(t) {
+async function qualified(t, {bootstrap=false}={}) {
   const fixture = await releaseFixture(t);
+  if(bootstrap)fixture.context.initialNpmException=true;
   const handoff = await qualify({...fixture,readSnapshot:async()=>empty(),produce:async ({metadata})=>{assert.deepEqual(metadata,{name:'@at-rama/sqlite-vector-wasm',version:'0.1.0'});return {bundle:fixture.bundle};},run:async (cmd,args)=>cmd==='git' && args[0]==='rev-parse' ? fixture.context.commit : ''});
   const evidence = JSON.parse(await readFile(handoff.evidencePath));
   return {...fixture,handoff,evidence,attestation:{bundle:syntheticAttestation(evidence)}};
@@ -85,9 +86,11 @@ test('successful writes complete without invoking public visibility inspectors',
 });
 
 test('initial exception publishes GitHub automatically, hands off the same archive and records npm pending',async t=>{
-  const f=await qualified(t),services=destinations(f,{bootstrap:true});
+  const f=await qualified(t,{bootstrap:true}),services=destinations(f,{bootstrap:true});
   assert.equal((await publish({...f,readSnapshot:async()=>empty(),services})).status,'npm-pending');
   assert.ok(services.calls.some(c=>c.name==='github'));assert.ok(!services.calls.some(c=>c.name==='npm'));
+  assert.equal(f.evidence.publicationMode,'initial-manual-npm');assert.equal(f.evidence.deliveryReceipt,undefined);
+  assert.ok(!services.calls.some(c=>c.name==='delivery.json'));
 });
 
 test('manual first-npm exception cannot be selected for a subsequent release',async t=>{
@@ -150,4 +153,11 @@ test('release binds canonical README and Usage to their packaged source snapshot
   await writeFile(join(f.repository,path),(await readFile(join(f.repository,path),'utf8'))+'\nUnreviewed change.\n');
   await assert.rejects(acceptedPayload({bundle:f.bundle,commit:f.context.commit,repository:f.repository,identity:f.packaged.package}),/differs from selected source revision/);
  }
+});
+
+test('publisher cannot silently change the qualified initial-npm setup',async t=>{
+ const f=await qualified(t),services=destinations(f,{bootstrap:true});
+ await assert.rejects(publish({...f,readSnapshot:async()=>empty(),services}),/setup differs from qualified handoff/);assert.deepEqual(services.calls,[]);
+ const g=await qualified(t,{bootstrap:true}),trusted=destinations(g);
+ await assert.rejects(publish({...g,readSnapshot:async()=>empty(),services:trusted}),/setup differs from qualified handoff/);assert.deepEqual(trusted.calls,[]);
 });

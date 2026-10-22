@@ -70,7 +70,7 @@ export async function reviewedDocumentation({ repository, pr, selected, readAt, 
   // readiness, not an obsolete public observer's aggregate workflow verdict.
   const siteWorkflow = run.path?.split('@')[0];
   assert.ok(['.github/workflows/site.yml','.github/workflows/acceptance.yml'].includes(siteWorkflow), 'Unrelated Site workflow');
-  successfulRun(run, repository, siteWorkflow, 'pull_request', {requireSuccess:false});
+  successfulRun(run, repository, siteWorkflow, 'pull_request', {requireSuccess:siteWorkflow === '.github/workflows/acceptance.yml'});
   assert.equal(run.head_sha, head, 'Stale documentation preview');
   const jobs = await apiJSON(get, `${api}/actions/runs/${run.id}/jobs?per_page=100`);
   assert.equal(jobs.total_count, jobs.jobs?.length, 'Truncated documentation jobs');
@@ -82,8 +82,10 @@ export async function reviewedDocumentation({ repository, pr, selected, readAt, 
   const inPR = siteWorkflow === '.github/workflows/acceptance.yml';
   const producer = inPR ? run : preparation;
   if (inPR) {
-    const matching = jobs.jobs.filter(j => j.name === 'composition');
-    assert.equal(matching.length, 1); assert.equal(matching[0].status, 'completed'); assert.equal(matching[0].conclusion, 'success', 'Candidate producer failed or missing');
+    for (const name of ['composition','acceptance']) {
+      const matching = jobs.jobs.filter(j => j.name === name);
+      assert.equal(matching.length, 1); assert.equal(matching[0].status, 'completed'); assert.equal(matching[0].conclusion, 'success', `Required candidate ${name} failed or missing`);
+    }
   }
   const prepared = await artifact({ repository, run: producer, name: inPR ? `candidate-${run.id}-${run.run_attempt}` : `updates-${preparation.id}-${attempt}`, get, directory });
   const candidate = await uniqueRecord(prepared, 'candidate.json', c => c.commit === head);

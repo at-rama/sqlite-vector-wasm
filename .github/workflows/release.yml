@@ -59,6 +59,7 @@ jobs:
         id: prepare
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASE_SETUP: ${{ vars.RELEASE_SETUP }}
         run: sh tools/release.sh prepare
       - name: Preserve qualification handoff
         if: always()

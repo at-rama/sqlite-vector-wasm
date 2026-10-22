@@ -19,7 +19,7 @@ const readAt = async (commit,path) => {
   const bytes = Buffer.from(file.content, 'base64'); assert.equal(bytes.length, file.size, 'Incomplete reviewed source');
   return bytes.toString('utf8');
 };
-const context = async siteRunId => integratedContext({repository:repositoryName(env.GITHUB_REPOSITORY),event:await json(env.GITHUB_EVENT_PATH),get,readAt,siteRunId});
+const context = async siteRunId => ({...await integratedContext({repository:repositoryName(env.GITHUB_REPOSITORY),event:await json(env.GITHUB_EVENT_PATH),get,readAt,siteRunId}), ...(env.RELEASE_SETUP === 'initial-manual-npm' ? {initialNpmException:true} : {})});
 
 try {
   const [mode,...args] = process.argv.slice(2);

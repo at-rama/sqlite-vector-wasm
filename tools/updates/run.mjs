@@ -6,7 +6,7 @@ import { reconcileNotices, noticePaths } from './notices.mjs';
 import { command } from '../acceptance/run.mjs';
 import { calculate, commitPattern } from '../release/policy.mjs';
 import { candidateDescriptor, candidateBody } from './context.mjs';
-import { candidateDocumentPaths, prepareDocumentation } from './documentation.mjs';
+import { candidateDocumentPaths, prepareDocumentation, documentSnapshot } from './documentation.mjs';
 import { pairKey } from '../watch/state.mjs';
 
 const json = async path => JSON.parse(await readFile(path, 'utf8'));
@@ -97,6 +97,7 @@ export async function prepareCandidate({ context, readSnapshot, readCandidates, 
       await writeFile(join(directory, 'release.json'), await regularBytes(join(repository, 'inputs/release.json')));
       return commit;
     });
+    assert.deepEqual(await documentSnapshot(repository), result.documentSources, 'Prepared documentation changed before PR');
     await step('repository', async () => {
       await run('sh', ['tools/check-repository.sh'], { cwd: repository, log: join(directory, 'repository.log') });
     });

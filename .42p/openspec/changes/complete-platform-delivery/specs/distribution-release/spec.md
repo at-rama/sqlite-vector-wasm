@@ -50,6 +50,10 @@ Normal publication SHALL retain an archive-bound operational receipt with its ma
 - **WHEN** an actual pre-revision publication or the historical initial manual-npm exception is inspected
 - **THEN** its original evidence remains distinguishable and existing read-only checks remain available without fabricating a new automatic publishing receipt or another bootstrap exception
 
+#### Scenario: Qualified initial manual-npm mode
+- **WHEN** the already bounded initial manual-npm setup is selected
+- **THEN** qualification records that mode, publication must agree with it and remains npm-pending until the existing read-only completion check succeeds; no normal receipt or another first-publication exception is fabricated
+
 ### Requirement: Bounded manual incident procedure
 
 Publication SHALL retain precise operation identities, accepted results, failures and uncertain completion for a bounded manual incident procedure. It SHALL distinguish publication from Site deployment and journal retention. The procedure SHALL preserve the already qualified identity/archive and prohibit blind republication, overwrite or destructive compensation. No general automatic recovery engine SHALL be introduced.

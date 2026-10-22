@@ -8,6 +8,7 @@ import {httpReader,pages,download,publicationIdentity,repositoryName} from '../r
 import {candidateDescriptorChanged,descriptor} from '../release/context.mjs';
 import {githubServices} from '../release/services.mjs';
 import {assertDelivered} from '../release/delivery.mjs';
+import {checkInitialCompletion} from '../release/run.mjs';
 import {mainPlaceholder} from './placeholder.mjs';
 import {mainDemo} from './current-demo.mjs';
 import {sourceAt} from './source-at.mjs';
@@ -33,6 +34,7 @@ async function publicationCompletion({repository,publication,release,get,trigger
  if(trigger){assert.equal(trigger.repository?.full_name,repository);assert.equal(trigger.path?.split("@")[0],".github/workflows/release.yml");
   assert.equal(trigger.event,"pull_request");assert.equal(trigger.status,"completed");
   assert.ok([pr.head.sha,publication.commit].includes(trigger.head_sha),"Unrelated publication completion");}
+ if(publication.publicationMode !== undefined){assert.equal(publication.publicationMode,"initial-manual-npm","Unsupported publication mode");assert.equal(publication.deliveryReceipt,undefined,"Conflicting publication modes");}
  if(publication.deliveryReceipt !== undefined){
   assert.equal(publication.repository,repository,"Publication repository mismatch");
   assert.ok(publication.documentation?.reviewed,"Missing reviewed publication documentation");
@@ -42,6 +44,11 @@ async function publicationCompletion({repository,publication,release,get,trigger
   const publicationBytes=await download(record[0].url,get),receiptBytes=await download(receipts[0].url,get),receipt=JSON.parse(receiptBytes);
   assertDelivered(receipt,release,publication,publicationBytes);
   return {status:"complete",completion:"durable-release-receipt",releaseId:release.id,receiptSha256:hash(receiptBytes)};
+ }
+ if(publication.publicationMode === "initial-manual-npm" || publication.initial){
+  const complete=await checkInitialCompletion({evidence:publication,get,verifyGitHub:async()=>services.verifyGitHub(release,publication)});
+  assert.equal(complete.status,"complete","Initial npm publication remains pending");
+  return {status:"complete",completion:"bounded-initial-read-only",releaseId:release.id};
  }
  // Pre-receipt compatibility only: inspect existing destinations without creating
  // a new receipt or depending on a historical Actions artifact.

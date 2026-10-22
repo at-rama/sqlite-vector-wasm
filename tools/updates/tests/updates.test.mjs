@@ -7,7 +7,7 @@ import { command } from '../../acceptance/run.mjs';
 import { calculate } from '../../release/policy.mjs';
 import { invocation, candidateDescriptor, candidateBody } from '../context.mjs';
 import { prepareCandidate, resolveSources } from '../run.mjs';
-import { candidateDocumentPaths, documentSnapshot } from '../documentation.mjs';
+import { candidateDocumentPaths, documentSnapshot, prepareDocumentation } from '../documentation.mjs';
 import { candidateServices } from '../services.mjs';
 import { reconcileNotices } from '../notices.mjs';
 import { noticeInputs, root, hash } from '../../package/package.mjs';
@@ -69,7 +69,7 @@ async function fixture(t, options={}) {
       await writeFile(join(prepared,'tools/package/notices',record.name),bytes);record.sha256=hash(bytes);
     }
     await writeFile(manifestPath,JSON.stringify(manifest,null,2)+'\n');return {prepared};};
-  const execute=()=>prepareCandidate({repository,context:c,run,reconcile,services:c.rehearsal?undefined:services,
+  const execute=()=>prepareCandidate({repository,context:c,run,reconcile,prepareDocuments:async args=>{const hashes=await prepareDocumentation(args);if(options.failure==='prepared-docs')hashes['README.md']='0'.repeat(64);return hashes;},services:c.rehearsal?undefined:services,
     readCandidates:async()=>{calls.push('candidates');if(options.failure==='candidates')throw Error('Candidate inventory unavailable');return options.candidates || [];},
     resolve:async()=>{calls.push('resolve');if(options.failure==='resolve')throw Error('digest drift');return lock(c.selection);},readSnapshot:async()=>{calls.push('state');if(options.failure==='state')throw Error('unavailable');return options.states?.[reads++]||empty();}});
   return {repository,git,calls,execute};
@@ -225,4 +225,9 @@ test('native PR transport timeout reports uncertainty without exposing credentia
  let calls=0;const service=candidateServices({repository:'a/b',token:'PRIVATE',request:async()=>{calls++;throw Error('PRIVATE');}});
  await assert.rejects(service.createPullRequest({branch:'candidate/run-17-2',commit:'a'.repeat(40)}),e=>e.completionUnknown===true&&/inspect existing branch\/PR/.test(e.message)&&!e.message.includes('PRIVATE'));
  assert.equal(calls,1);
+});
+
+test('prepared document digests must still match the clean committed source before remote writes',async t=>{
+ const f=await fixture(t,{failure:'prepared-docs'});await assert.rejects(f.execute(),e=>/Prepared documentation changed before PR/.test(e.cause?.message));
+ assert.ok(!f.calls.includes('push'));assert.ok(!f.calls.includes('pr'));
 });

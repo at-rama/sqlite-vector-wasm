@@ -35,6 +35,8 @@ test('hosted workflow pins actions, separates read qualification/write publicati
   const qualification=workflow.split('  qualify:')[1].split('  publish:')[0];
   assert.ok(!qualification.includes('write'));
   assert.ok(qualification.includes('actions: read'));
+  assert.ok(qualification.includes('RELEASE_SETUP: ${{ vars.RELEASE_SETUP }}'));
+  assert.equal([...workflow.matchAll(/RELEASE_SETUP: \$\{\{ vars.RELEASE_SETUP \}\}/g)].length,2);
   assert.ok(publicationPermissions(workflow).includes('actions: read'));
   assert.ok(qualification.includes('needs: candidate') && qualification.includes("if: needs.candidate.outputs.present == 'true'"));
   const publication=workflow.split('  publish:')[1];assert.ok(publication.includes('needs: qualify') && publication.includes('id-token: write') && publication.includes('attestations: write'));

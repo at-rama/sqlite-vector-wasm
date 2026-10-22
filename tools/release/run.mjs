@@ -78,10 +78,11 @@ export function provenance(context, identity, accepted, documentation) {
   bindSelection(context, accepted);
   assert.ok(!documentation || context.pullRequest, 'Documentation publication requires reviewed integration');
   if (context.pullRequest) assertFinalDocumentation(context, identity, accepted, documentation);
+  assert.ok(!context.initialNpmException || identity.initial, 'Initial manual-npm qualification is initial only');
   const evidence = { schemaVersion: 1, ...identity, commit: context.commit, repository: context.repository,
     upstreams: { ...context.selection }, ...(engineKey(context.selection) === 'sqliteVector' ? {engine:engineIdentity(accepted.build)} : {}), sourceLock: accepted.sourceLock,
     sourceLockSha256: accepted.report.sourceLockSha256, build: accepted.build.build,
-    runtimeFiles: accepted.build.runtimeFiles, archive: accepted.archive, deliveryReceipt: 'delivery.json',
+    runtimeFiles: accepted.build.runtimeFiles, archive: accepted.archive, ...(context.initialNpmException ? {publicationMode:'initial-manual-npm'} : {deliveryReceipt:'delivery.json'}),
     acceptance: { verdict: accepted.report.verdict, source: accepted.report.source, stages: accepted.report.stages,
       browser: accepted.report.browserResults.browser, hosting: accepted.report.browserResults.hosting,
       reportSha256: hash(jsonBytes(accepted.report)) },
@@ -156,6 +157,7 @@ export async function publish({ handoff, readSnapshot, services, attestation, re
     assert.deepEqual(calculate({ selection: handoff.context.selection, snapshot, comment: handoff.context.comment }), handoff.identity, 'Stale publication state/identity');
     const bootstrap = services.initialNpmException === true;
     assert.ok(!bootstrap || handoff.identity.initial && !snapshot.tags.length && !snapshot.npmVersions.length && !snapshot.releaseTags.length, 'Bootstrap exception is initial only');
+    assert.equal(bootstrap, handoff.context.initialNpmException === true, 'Publication setup differs from qualified handoff');
     await services.assertReady({ bootstrap });
     attestSubject(attestation.bundle, expected.evidence);
     const attestationPath = join(handoff.directory, 'attestation.json'); await writeFile(attestationPath, jsonBytes(attestation.bundle));

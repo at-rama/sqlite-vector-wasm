@@ -68,10 +68,12 @@ test('review binds preparation, qualified archive, exact Site jobs/local assembl
 test('review accepts Site called by the required Acceptance workflow and rejects missing called deploy',async t=>{
  const f=await reviewFixture(t);f.site.path='.github/workflows/acceptance.yml';
  for(const job of f.jobs.jobs)job.name='site / '+job.name;
- f.jobs.jobs.push({name:'composition',status:'completed',conclusion:'success'});f.jobs.total_count++;
+ f.jobs.jobs.push(...['composition','acceptance'].map(name=>({name,status:'completed',conclusion:'success'})));f.jobs.total_count+=2;
  f.candidate.status='qualified-in-pr';f.candidate.qualification={runId:18,attempt:1};f.input.runId=18;
  assert.equal((await f.invoke()).site.runId,18);
- f.jobs.jobs[1].conclusion='failure';await assert.rejects(f.invoke(),/Site deploy failed/);
+ f.jobs.jobs[1].conclusion='failure';await assert.rejects(f.invoke(),/Site deploy failed/);f.jobs.jobs[1].conclusion='success';
+ f.jobs.jobs[3].conclusion='failure';await assert.rejects(f.invoke(),/candidate acceptance failed/);f.jobs.jobs[3].conclusion='success';
+ f.site.conclusion='failure';await assert.rejects(f.invoke(),/Unsuccessful evidence run/);
 });
 
 for(const failure of ['prepared-head','prepared-archive','prepared-status','rehearsal','missing-source','wrong-preparation','wrong-repository','wrong-workflow','wrong-event','site-pending','site-failed','site-head','job-missing','job-failed','input-run','input-artifact','input-digest','example-archive','example-replay','live-head','live-branch','live-source','missing-mobile'])
