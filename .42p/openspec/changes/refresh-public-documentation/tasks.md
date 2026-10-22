@@ -1,0 +1,26 @@
+# Tasks
+
+## 1. Restore durable consumer documentation and measured footprint
+
+- [ ] 1.1 Renew the real 0.3.x loader/WASM measurement and write `docs/runtime-footprint.md` with exact publication/archive identity, filenames, raw sizes, decoded hashes, date, endpoints and request/response encodings; verify the reproducible command's HTTP gzip body counts and decoded-byte equality against the published archive, explicitly distinguishing Pages 0.3.0 from matching npm 0.3.1 bytes when applicable.
+- [ ] 1.2 Clean README and Usage generic installation/descriptions, retain complete native SQLite-Vector examples and browser/Worker/OPFS boundaries, and restore the README's rounded practical footprint paragraph with an absolute repository link to the note; verify direct Markdown readability and that generic prose/install commands contain no frozen release versions while reproducibility information remains exact.
+- [ ] 1.3 Review authored public links, including Usage's canonical Presentation destination and the unpinned generic upstream reference, and preserve useful navigation; verify repository-only targets exist and installed README/Usage links remain usable through the existing package document-link checks, without adding the note to package document mapping.
+
+## 2. Separate latest badges from qualified example rendering
+
+- [ ] 2.1 Replace manually described npm/component publication badges with npm latest version/license and latest runtime-manifest SQLite/SQLite-Vector data, retaining useful CI/upstream links and readable labels; check the JSON paths against the real published manifest and verify image/link targets or explicitly record blocked responses, with no build-time latest runtime selection.
+- [ ] 2.2 Adapt the existing documentation renderer to generic source installation and a generated checked-example reproducibility disclosure: keep generic published installation separate from its exact pinned recipe and render candidate installation from the supplied archive with explicit unpublished identity; extend `tools/site/tests/documentation.test.mjs` for both contexts and latest-badge/checked-identity separation, retaining source-hash and stale/missing-evidence failures.
+- [ ] 2.3 Update `tools/site/example.mjs` to validate the exact generated recipe and locate the actual Usage copy/initialization/Float32 snippets by bounded section/role rather than shell-fence ordinal; add targeted missing/ambiguous-snippet and inserted-fence regressions in the existing example/renderer tests, verify those tests pass and document the adjusted extraction only where contributor guidance needs it.
+
+## 3. Check documentation behavior against the retained contract
+
+- [ ] 3.1 Run the affected `tools/site/tests/*.test.mjs` and locked-renderer `tools/site/checks/*.test.mjs` suites for both stable/preview bases; verify source fidelity, new note/badge targets, canonical/relative links, images, fragments and unchanged code snippets, with no new framework or dependency.
+- [ ] 3.2 Execute the actual revised guide initialization/Float32 and copy recipe in page and dedicated module Worker using the existing exact qualified candidate handoff and matching published-selection path as applicable; verify archive/commit/source hashes, observed SQLite/Vector identities, copied companion inventory and expected neighbors in the existing evidence format, leaving missing qualified input blocked rather than substituting npm latest or rebuilding an engine solely for this editorial change.
+- [ ] 3.3 Exercise source-generic candidate/published transitions and documentation-only rebuild preservation, including a differing informational latest value and stale/missing/incorrect archive evidence; verify selection and demo-runtime digest invariance and all existing fail-closed identity checks, keeping finite synthetic record tests distinct from real browser execution.
+
+## 4. Observe integration and report readiness
+
+- [ ] 4.1 Observe the exact deployed Pages candidate at desktop/mobile widths using the existing Site checks; verify Presentation/Usage content and reproducibility disclosure against its branch/commit, distinguish real deployment evidence from loopback-only checks and record prerequisites/access failures explicitly.
+- [ ] 4.2 Check public documentation, upstream references, npm/badge/manifest destinations and navigation to the existing demo; record exact checked URLs/outcomes, including blocked endpoints, without changing deployment policy or treating an inaccessible destination as successfully verified.
+- [ ] 4.3 Compare supplied demo selection/runtime asset hashes before and after the documentation rebuild and confirm the navigation reaches the same independent demo identity; record this as preservation/integration evidence, leave demo sources and their known stale explanatory sentence untouched, and make no renewed full demo/product acceptance claim.
+- [ ] 4.4 Run `sh tools/check-repository.sh`, strict OpenSpec validation and applicable registered tests, review the final diff against A-site_docs and renew both coverage directions in `design.md` if inputs changed; report available evidence and blockers for the separately invoked 42P Verification, retaining human integration/publication authority and leaving archive until satisfactory Verification.
