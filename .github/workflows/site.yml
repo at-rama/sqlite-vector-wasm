@@ -2,6 +2,11 @@ name: Site
 
 on:
   workflow_call:
+    inputs:
+      qualified_artifact:
+        required: false
+        type: string
+        default: ''
   push:
     branches: [main]
     paths:
@@ -85,6 +90,7 @@ jobs:
         if: github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
+          SITE_CANDIDATE_ARTIFACT: ${{ inputs.qualified_artifact }}
         run: node tools/site/candidate-input.mjs
       - name: Check real builds and browser integration
         if: steps.selection.outputs.relevant == 'true'

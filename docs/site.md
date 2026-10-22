@@ -133,8 +133,7 @@ The runnable demo uses the pinned corpus/reference material in `tools/site/demo-
 The shared preview still identifies the exact PR branch and commit. Its stable
 root is built from a separately checked-out eligible public source, rather than
 assuming current main is already published. Candidate previews consume the
-original Updates-qualified archive; unpublished tooling PRs consume an exact-head
-publisher-free Release exercise. This selection does not depend on active OpenSpec
+same-run Acceptance-qualified archive through an explicit composition → Site dependency. Unpublished tooling PRs use the same producer with an explicitly labelled fixture forecast and no publisher. This selection does not depend on active OpenSpec
 files and does not authorize distribution publication.
 
 For a merged Vector candidate, Site verifies the descriptor, source lock, preparation, integrated human PR, exact publication subject and matching durable completion. New publication manifests declare `delivery.json`: the receipt binds completed writes and the exact manifest/archive to its matching finalized GitHub Release, whose required assets must be present. Draft, incomplete, wrong-commit/archive or missing declared receipts cannot promote stable documentation. A successful workflow or responding public URL is not a substitute. Manifest/archive downloads verify acquisition integrity; they do not repeat publication qualification.

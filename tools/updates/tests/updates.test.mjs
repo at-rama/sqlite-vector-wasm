@@ -98,9 +98,9 @@ async function fixture(t, options={}) {
   return {repository,git,calls,execute};
 }
 
-test('qualified committed pair precedes push/PR; diagnostics stay ignored',async t=>{
+test('coherent committed pair opens a qualification-pending PR; diagnostics stay ignored',async t=>{
   // Candidate preparation consumes the release-owned npm identity.
-  const f=await fixture(t);const result=await f.execute();assert.equal(result.status,'candidate-ready');assert.equal(result.identity.version,'0.1.0');assert.deepEqual(f.calls,['candidates','resolve','state','notices','tools/check-repository.sh','tools/test-repository.sh','qualify','state','documentation','push','pr']);
+  const f=await fixture(t);const result=await f.execute();assert.equal(result.status,'candidate-awaiting-qualification');assert.equal(result.identity.version,'0.1.0');assert.deepEqual(f.calls,['candidates','resolve','state','notices','tools/check-repository.sh','tools/test-repository.sh','push','pr']);
   assert.equal(result.preflight.name,'@at-rama/sqlite-vector-wasm');assert.equal(result.identity.name,'@at-rama/sqlite-vector-wasm');
   assert.equal(await f.git(['status','--porcelain','--untracked-files=all']),'');assert.deepEqual((await f.git(['diff-tree','--no-commit-id','--name-only','-r',result.commit])).split('\n'),['inputs/release.json']);
   const descriptor=JSON.parse(await readFile(join(f.repository,'inputs/release.json')));assert.equal(descriptor.releaseComment,context().comment);
@@ -111,14 +111,14 @@ test('qualified committed pair precedes push/PR; diagnostics stay ignored',async
   assert.match(candidateBody(result),/NOT yet eligible/);assert.match(candidateBody(result),new RegExp(result.commit+'/checks'));
   assert.deepEqual(result.documentSources,await documentSnapshot(f.repository));
 });
-for(const failure of ['candidates','resolve','state','notices','commit','tools/check-repository.sh','tools/test-repository.sh','qualify','revision','push','pr','head']) test(`mandatory ${failure} failure stops and retains truthful evidence`,async t=>{
+for(const failure of ['candidates','resolve','state','notices','commit','tools/check-repository.sh','tools/test-repository.sh','push','pr','head']) test(`mandatory ${failure} failure stops and retains truthful evidence`,async t=>{
   const f=await fixture(t,{failure});let path;await assert.rejects(f.execute(),error=>{path=error.message.split('evidence: ')[1];return !!path;});const evidence=JSON.parse(await readFile(path));assert.equal(evidence.status,'failed');assert.ok(evidence.diagnostic);
   if(['notices','commit'].includes(failure)) {assert.equal(evidence.commit,undefined);assert.ok(!f.calls.includes('tools/check-repository.sh'));assert.ok(!f.calls.includes('qualify'));}
   if(!['push','pr','head'].includes(failure))assert.ok(!f.calls.includes('push'));
   if(['pr','head'].includes(failure))assert.equal(evidence.branchResult.head,evidence.commit);
 });
-test('rehearsal has no writes; changed observed state changes the forecast',async t=>{
-  const f=await fixture(t,{context:{rehearsal:true},states:[empty(),published('0.1.0')]});const r=await f.execute();assert.equal(r.status,'qualified-without-pr');assert.equal(r.identity.version,'0.1.1');assert.equal(r.forecastChanged,true);assert.ok(!f.calls.includes('push'));assert.equal(r.publicationCalls,0);
+test('preparation rehearsal leaves qualification pending and performs no remote writes',async t=>{
+  const f=await fixture(t,{context:{rehearsal:true},states:[empty(),published('0.1.0')]});const r=await f.execute();assert.equal(r.status,'prepared-without-pr');assert.equal(r.identity.version,'0.1.0');assert.equal(r.forecastChanged,undefined);assert.ok(!f.calls.includes('qualify'));assert.ok(!f.calls.includes('documentation'));assert.ok(!f.calls.includes('push'));assert.equal(r.publicationCalls,0);
 });
 test('real shared policy handles next and rollback without alternate calculator',async t=>{
   const f=await fixture(t,{context:{selection:{...pair,sqliteVector:'1.1.3-alpha.1'}},states:[published('0.1.0'),published('0.1.0')]});assert.equal((await f.execute()).identity.version,'0.1.1-alpha.1');
@@ -198,11 +198,9 @@ test('real reconciliation rejects invalid helper output before tracked promotion
   assert.equal(JSON.parse(await readFile(join(directory,'notices.json'))).status,'failed');
 });
 
-for (const failure of ['engine','sources','lock-digest','repository','comment','preparation','pushed-head','archive','documentation','docs-head','docs-archive','docs-sources','docs-forecast','docs-replay','docs-changed']) test(`qualification/presentation rejects ${failure} mismatch`, async t => {
-  const f=await fixture(t,{failure});
-  await assert.rejects(f.execute());
-  assert.ok(!f.calls.includes('pr'));
-  if(failure!=='pushed-head') assert.ok(!f.calls.includes('push'));
+test('pushed head substitution remains a preparation failure',async t=>{
+ const f=await fixture(t,{failure:'pushed-head'});await assert.rejects(f.execute());
+ assert.ok(!f.calls.includes('qualify'));assert.ok(!f.calls.includes('documentation'));
 });
 
 test('candidate adapter rejects a racing create, wrong pushed head and wrong PR head', async()=>{
@@ -228,5 +226,5 @@ test('repeat preparation references existing exact-pair PRs/runs without qualifi
 test('current preparation observation and other pairs do not suppress this candidate',async t=>{
   const own={kind:'run',selection:pair,runId:17,attempt:2};
   const other={kind:'pr',selection:{...pair,sqliteVector:'1.1.3'},runId:16,attempt:1};
-  const f=await fixture(t,{candidates:[own,other]});assert.equal((await f.execute()).status,'candidate-ready');
+  const f=await fixture(t,{candidates:[own,other]});assert.equal((await f.execute()).status,'candidate-awaiting-qualification');
 });

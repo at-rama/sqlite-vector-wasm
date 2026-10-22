@@ -29,6 +29,8 @@ fi
 # Acceptance control tests are offline; real production/browser evidence is separate.
 if [ -f tools/acceptance/run.mjs ]; then
     test -f tools/acceptance/tests/acceptance.test.mjs
+    test -f tools/acceptance/candidate.mjs
+    test -f tools/acceptance/tests/candidate.test.mjs
     node --test tools/acceptance/tests/*.test.mjs
 fi
 
@@ -76,5 +78,6 @@ if [ -f tools/site/build.mjs ]; then
     test -f tools/site/tests/runtime.test.mjs
     test -f tools/site/tests/workflow.test.mjs
     test -f tools/site/tests/publication.test.mjs
+    test -f tools/site/tests/gate.test.mjs
     node --test tools/site/tests/*.test.mjs
 fi

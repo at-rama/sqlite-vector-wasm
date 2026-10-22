@@ -21,7 +21,7 @@ for(const eventName of ['push','workflow_dispatch'])test(eventName+' keeps the e
 test('an unrelated PR cannot expose pending main; exact preview and original demo are separate',async()=>{
  const result=await siteSelection({...common,eventName:'pull_request',selectStable:selected,resolveSource:async()=>{throw Error('pending');}});
  assert.equal(result.stable.sourceCommit,prior);assert.deepEqual(result.stable.demoSelection,stable.demoSelection);
- assert.deepEqual(result.preview,{branch:event.pull_request.head.ref,commit:head});assert.equal(result.input,'exercise');
+ assert.deepEqual(result.preview,{branch:event.pull_request.head.ref,commit:head});assert.equal(result.input,'qualification');
  assert.deepEqual(result.previewSelection,candidateProfile);
 });
 for(const restriction of ['fork','dependabot'])test(restriction+' validates without stable publication eligibility',async()=>{
@@ -151,7 +151,7 @@ test('failed or skipped publisher completion does not select or deploy stable so
 test('a cleanup PR without release.json still selects an unpublished preview and preserves stable eligibility',async()=>{
  const absent=async(commit,path)=>path==='inputs/release.json'?null:readAt(commit,path);
  const result=await siteSelection({...common,readAt:absent,eventName:'pull_request',selectStable:selected,resolveSource:async()=>{throw Error('unpublished');}});
- assert.equal(result.input,'exercise');assert.deepEqual(result.previewSelection,candidateProfile);
+ assert.equal(result.input,'qualification');assert.deepEqual(result.previewSelection,candidateProfile);
  assert.equal(result.stable.sourceCommit,prior);
 });
 
@@ -166,4 +166,9 @@ test('only adopted main placeholder replaces the historical stable demo, indepen
  await assert.rejects(assertStableCurrent({repository,mainCommit:main,stableDocumentation:stable,stablePlaceholder:{...result.stablePlaceholder,sha256:'0'.repeat(64)}},{get:common.get,readAt:source,selectStable:selected}),/placeholder source changed/);
  const previewOnly=await siteSelection({...common,readAt:async(commit,path,...args)=>path==='site/demo/index.md'?(commit===head?markdown:'# Old demo'):readAt(commit,path,...args),eventName:'pull_request',selectStable:selected,resolveSource:async()=>{throw Error('pending');}});
  assert.equal(previewOnly.stablePlaceholder,undefined);
+});
+
+test('explicit unpublished documentation without a descriptor is pending, not an invented stable publication',async t=>{
+ const f=await candidate(t);delete f.source['inputs/release.json'];
+ await assert.rejects(f.invoke(),e=>e.publicationPending===true&&/awaits a matching publication descriptor/.test(e.message));
 });

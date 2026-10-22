@@ -39,8 +39,8 @@ test('hosted workflow pins actions, separates read qualification/write publicati
   assert.ok(qualification.includes('needs: candidate') && qualification.includes("if: needs.candidate.outputs.present == 'true'"));
   const publication=workflow.split('  publish:')[1];assert.ok(publication.includes('needs: qualify') && publication.includes('id-token: write') && publication.includes('attestations: write'));
   assert.ok(publication.includes('github.event.action == \'closed\' && github.event.pull_request.merged == true'));
-  assert.ok(workflow.includes('.42p/openspec/changes/release-sqlite-vector-product/tasks.md'));
-  assert.ok(workflow.includes('sh tools/release.sh exercise') && workflow.includes('ref: ${{ github.event.pull_request.head.sha }}'));
+  assert.doesNotMatch(workflow,/\n  exercise:|sh tools\/release\.sh exercise/);
+  assert.match(workflow,/types: \[closed\]/);
 });
 
 test('mandatory release-suite registration fails when the test file is absent',async t=>{

@@ -91,17 +91,25 @@ test('manual, unknown, empty or unavailable comparisons always require productio
 test('workflow keeps required job and gates setup, production and artifacts with the same scope', async () => {
   const workflow = await readFile(new URL('../../../.github/workflows/acceptance.yml', import.meta.url), 'utf8');
   assert.match(workflow, /  pull_request:/);
-  assert.match(workflow, /  push:/);
+  assert.doesNotMatch(workflow, /  push:/);
   assert.match(workflow, /  workflow_dispatch:/);
   assert.doesNotMatch(workflow, /paths-ignore:|paths:/);
   assert.match(workflow, /  acceptance:\n    needs: \[scope, composition, site\]\n    if: always\(\)\n    runs-on:/);
   assert.match(workflow, /fetch-depth: 0/);
   assert.match(workflow, /github.event.pull_request.base.sha/);
   assert.match(workflow, /github.event.before/);
-  assert.match(workflow, /HEAD_SHA: \$\{\{ github.sha \}\}/);
+  assert.match(workflow, /HEAD_SHA: \$\{\{ github.event.pull_request.head.sha \|\| github.sha \}\}/);
   assert.match(workflow, /python3 tools\/acceptance\/scope.py >> "\$GITHUB_OUTPUT"/);
   assert.match(workflow, /composition:\n    needs: scope\n    if: needs.scope.outputs.required == 'true'/);
   assert.match(workflow, /Produce and accept exact final package/);
   assert.match(workflow, /Preserve available acceptance evidence and exact payload\n        if: always\(\)/);
   assert.match(workflow, /No package qualification was performed/);
+});
+
+test('site-only PR with an unpublished example requires the shared candidate archive producer',async t=>{
+ const f=await fixture(t);await mkdir(join(f.cwd,'tools/site'),{recursive:true});
+ await writeFile(join(f.cwd,'tools/site/docs-example.json'),JSON.stringify({mode:'candidate'}));commit(f.cwd);f.base=git(f.cwd,'rev-parse','HEAD');
+ await writeFile(join(f.cwd,'site/index.html'),'changed');commit(f.cwd);assert.equal(select(f),'required=true');
+ await writeFile(join(f.cwd,'tools/site/docs-example.json'),JSON.stringify({mode:'published'}));commit(f.cwd);f.base=git(f.cwd,'rev-parse','HEAD');
+ await writeFile(join(f.cwd,'site/index.html'),'published docs shell');commit(f.cwd);assert.equal(select(f),'required=false');
 });

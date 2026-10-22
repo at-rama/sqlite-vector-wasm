@@ -99,3 +99,12 @@ Start with the retained operation outcomes, exact `publication.json`, archive an
 4. If distribution publication is complete and only Pages failed, retry Site alone from the same durable publication evidence. Public HTTP unavailability after acknowledged deployment does not invalidate delivery.
 
 Historical `published-verification-pending` outcomes describe the former public-visibility check. Their existing read-only inspection adapters can diagnose them without a new publication. The actual historical initial `0.1.0` manual-npm completion remains the separately bounded `check-initial` path above.
+
+
+## Single PR qualification handoff
+
+Manual Updates prepares coherent committed inputs and opens the PR with qualification pending. Acceptance produces one exact-head archive through the complete existing production/browser matrix. Its explicit job dependency supplies that immutable candidate artifact to Site, which runs the one candidate documentation example and exact local assembled checks before official preview deployment. The required acceptance result includes the called Site result. Automatic main Acceptance and the former Release PR exercise do not build the same candidate again. Manual supplied-identity acceptance remains available.
+
+Release reviews the matching PR producer and Site jobs/reports, including exact head, archive digest, forecast, source/renderer hashes and example; another run/commit/archive or missing mandatory proof cannot qualify it. Already prepared historical direct-Site/Updates proof stays distinguishable. The integrated definitive revision/version/archive is then recalculated and fully qualified; changed final bytes require their own applicable proof. These are two different subjects, not reuse of a candidate pass as final acceptance.
+
+PR artifact retention is a review/active handoff lifetime, not durable delivery authority. Renew expired or unavailable applicable proof before integrating; Release stops if mandatory review proof cannot be acquired. Never bypass it with a green status alone or rerun publication blindly. Once publication completes, its durable manifest/receipt/attestation/archive preserve the reviewed/final correspondence and Site rebuilds require no expiring Actions artifact.

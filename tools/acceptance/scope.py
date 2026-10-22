@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 """Select complete package acceptance unless the entire automatic diff is site-only."""
+import json
+from pathlib import Path
 import os
 import re
 import subprocess
@@ -33,6 +35,13 @@ def required():
     paths.pop()
     if not paths or any(not path.startswith(b"site/") for path in paths):
         return True, "empty diff or changes outside site/"
+    profile = Path("tools/site/docs-example.json")
+    if profile.exists():
+        try:
+            if json.loads(profile.read_text())["mode"] == "candidate":
+                return True, "site checks require the exact unpublished candidate archive"
+        except (OSError, ValueError, KeyError):
+            return True, "documentation selection unavailable"
     return False, "site-only changes"
 
 

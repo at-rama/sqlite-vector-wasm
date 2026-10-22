@@ -72,7 +72,11 @@ async function eligibleSource({repository,commit,readAt,get,trigger,directory,co
   assert.ok(["ahead","identical"].includes(compare.status)&&compare.merge_base_commit?.sha===published.commit,"Unrelated publication revision");
   promotion=await completion({repository,publication:published,release,get,trigger,directory});
  }else{
-  assert.ok(profile.version&&profile.mode!=="candidate","Unpublished documentation cannot be stable");
+  if(profile.mode==="candidate"){
+   assert.deepEqual(profile,candidateProfile,"Unknown unpublished documentation profile");
+   throw Object.assign(new Error("Candidate documentation awaits a matching publication descriptor"),{publicationPending:true});
+  }
+  assert.ok(profile.version,"Unpublished documentation cannot be stable");
   release=await json(get,`${api(repository)}/releases/${profile.releaseId}`);const assets=release.assets.filter(a=>a.name==="publication.json");assert.equal(assets.length,1);
   const bytes=await download(assets[0].url,get);assert.equal(hash(bytes),profile.publicationSha256,"Pinned publication changed");published=JSON.parse(bytes);
   assert.equal(published.version,profile.version);assert.equal(published.commit,profile.commit);assert.equal(published.archive.sha256,profile.archiveSha256);
@@ -139,10 +143,10 @@ async function siteSelection({repository,eventName,event,ref,sha,actor,readAt,ge
   const descriptorRaw=await readAt(preview.commit,"inputs/release.json",true);
   const value=descriptorRaw===null?null:JSON.parse(descriptorRaw);
   const nominal=value?.schemaVersion===2&&new RegExp('^candidate/run-'+value.preparation?.runId+'-[1-9][0-9]*$').test(pr.head.ref)&&await candidateDescriptorChanged({repository,pullRequest:pr,get});
-  if(nominal){assert.deepEqual(profile,candidateProfile);descriptor(value,JSON.parse(await readAt(preview.commit,"inputs/sqlite-vector.sources.lock.json")));previewSelection=profile;input="updates";}
+  if(nominal){assert.deepEqual(profile,candidateProfile);descriptor(value,JSON.parse(await readAt(preview.commit,"inputs/sqlite-vector.sources.lock.json")));previewSelection=profile;input="qualification";}
   else{
    try{const ready=await resolveSource({repository,commit:preview.commit,readAt,get,directory});previewSelection=ready?.selection;}
-   catch(error){assert.equal(profile.mode,"candidate","Unpublished preview must declare the candidate profile");assert.deepEqual(profile,candidateProfile);previewSelection=profile;input="exercise";}
+   catch(error){assert.equal(profile.mode,"candidate","Unpublished preview must declare the candidate profile");assert.deepEqual(profile,candidateProfile);previewSelection=profile;input="qualification";}
   }
  }
  const stablePlaceholder=(!pull||internal)?await mainPlaceholder(readAt,mainCommit):null;

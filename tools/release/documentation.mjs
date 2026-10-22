@@ -56,17 +56,6 @@ export async function reviewedDocumentation({ repository, pr, selected, readAt, 
   const preparation = await apiJSON(get, `${api}/actions/runs/${selected.preparation.runId}/attempts/${attempt}`);
   successfulRun(preparation, repository, '.github/workflows/updates.yml', 'workflow_dispatch');
   assert.equal(preparation.head_branch, 'main'); assert.equal(preparation.run_attempt, attempt);
-  const prepared = await artifact({ repository, run: preparation, name: `updates-${preparation.id}-${attempt}`, get, directory });
-  const candidate = await uniqueRecord(prepared, 'candidate.json', c => c.commit === head);
-  assert.equal(candidate.status, 'candidate-ready', 'Preparation did not create this candidate PR');
-  assert.equal(candidate.baseCommit, preparation.head_sha, 'Preparation base mismatch');
-  assert.equal(candidate.pullRequest?.number, pr.number); assert.equal(candidate.pullRequest.head, head);
-  assert.deepEqual(candidate.selection, selected.selection); assert.deepEqual(candidate.preparation, selected.preparation);
-  assert.deepEqual(candidate.documentSources, sources, 'Reviewed source snapshot mismatch');
-  assertDocumentation(candidate.documentation?.example, { commit: head, selection: selected.selection,
-    archive: candidate.archive, sourceHashes: sources, identity: candidate.identity });
-  const accepted = await uniqueRecord(prepared, 'acceptance.json', r => r.source?.commit === head);
-  assertApplicable(accepted, head, candidate.archive);
 
   let run;
   if (siteRunId) run = await apiJSON(get, `${api}/actions/runs/${siteRunId}`);
@@ -90,16 +79,35 @@ export async function reviewedDocumentation({ repository, pr, selected, readAt, 
     assert.equal(matching.length, 1); assert.equal(matching[0].status, 'completed');
     assert.equal(matching[0].conclusion, 'success', `Required Site ${name} failed or missing`);
   }
+  const inPR = siteWorkflow === '.github/workflows/acceptance.yml';
+  const producer = inPR ? run : preparation;
+  if (inPR) {
+    const matching = jobs.jobs.filter(j => j.name === 'composition');
+    assert.equal(matching.length, 1); assert.equal(matching[0].status, 'completed'); assert.equal(matching[0].conclusion, 'success', 'Candidate producer failed or missing');
+  }
+  const prepared = await artifact({ repository, run: producer, name: inPR ? `candidate-${run.id}-${run.run_attempt}` : `updates-${preparation.id}-${attempt}`, get, directory });
+  const candidate = await uniqueRecord(prepared, 'candidate.json', c => c.commit === head);
+  assert.equal(candidate.status, inPR ? 'qualified-in-pr' : 'candidate-ready', 'Candidate qualification did not complete');
+  if (inPR) assert.deepEqual(candidate.qualification, {runId:run.id,attempt:run.run_attempt});
+  else assert.equal(candidate.baseCommit, preparation.head_sha, 'Preparation base mismatch');
+  assert.equal(candidate.pullRequest?.number, pr.number); assert.equal(candidate.pullRequest.head, head);
+  assert.deepEqual(candidate.selection, selected.selection); assert.deepEqual(candidate.preparation, selected.preparation);
+  assert.deepEqual(candidate.documentSources, sources, 'Reviewed source snapshot mismatch');
+  if (!inPR) assertDocumentation(candidate.documentation?.example, { commit: head, selection: selected.selection,
+    archive: candidate.archive, sourceHashes: sources, identity: candidate.identity });
+  const accepted = await uniqueRecord(prepared, 'acceptance.json', r => r.source?.commit === head);
+  assertApplicable(accepted, head, candidate.archive);
   const checks = await artifact({ repository, run, name: `site-checks-${run.id}`, get, directory });
   const input = await uniqueRecord(checks, 'handoff.json', h => h.artifactId === prepared.id);
-  assert.equal(input.runId, preparation.id); assert.equal(input.commit, head); assert.equal(input.artifactSha256, prepared.sha256);
+  assert.equal(input.runId, producer.id); assert.equal(input.commit, head); assert.equal(input.artifactSha256, prepared.sha256);
   const example = await uniqueRecord(checks, 'result.json', r => r.context?.mode === 'candidate');
   assertDocumentation(example, { commit: head, selection: selected.selection, archive: candidate.archive, sourceHashes: sources, identity: candidate.identity });
   const live = await uniqueRecord(checks, 'assembled.json');
   assert.equal(live.publication?.preview?.branch, pr.head.ref, 'Observed preview branch mismatch');
   await assertObservedDocuments({ live, example, repository, pullRequest: pr.number, head, readAt });
   return { candidateCommit: head, forecast: candidate.identity.version, archive: candidate.archive, sourceHashes: sources, rendererHashes: renderers,
-    preparation: { runId: preparation.id, attempt, artifactId: prepared.id, artifactSha256: prepared.sha256 },
+    preparation: { runId: preparation.id, attempt },
+    qualification: { runId: producer.id, attempt: producer.run_attempt, artifactId: prepared.id, artifactSha256: prepared.sha256 },
     site: { runId: run.id, attempt: run.run_attempt, checksArtifactId: checks.id, checksSha256: checks.sha256 }, example };
 }
 

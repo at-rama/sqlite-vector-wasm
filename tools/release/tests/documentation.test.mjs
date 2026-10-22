@@ -44,10 +44,10 @@ async function reviewFixture(t) {
  const get=async url=>({status:200,data:url.includes('/attempts/')?preparation:url.includes('/jobs?')?jobs:url.includes('?head_sha=')?{workflow_runs:[site]}:site});
  const artifact=async({name})=>{
    const directory=join(f.repository,'.work/review',name);
-   if(name.startsWith('updates-')) {await record(directory,'candidate.json',candidate);await record(directory,'acceptance.json',accepted);}
+   if(name.startsWith('updates-')||name.startsWith('candidate-')) {await record(directory,'candidate.json',candidate);await record(directory,'acceptance.json',accepted);}
    else if(name.startsWith('site-checks-')) {await record(directory,'handoff.json',input);await record(directory,'result.json',f.example);await record(directory,'assembled.json',live);}
    else await record(directory,'live-pages.json',live);
-   return {directory,id:name.startsWith('updates-')?101:name.startsWith('site-checks-')?102:103,sha256:'d'.repeat(64)};
+   return {directory,id:(name.startsWith('updates-')||name.startsWith('candidate-'))?101:name.startsWith('site-checks-')?102:103,sha256:'d'.repeat(64)};
  };
  const changes={path:undefined};
  const readAt=async(revision,path)=>{assert.ok([head,merge].includes(revision));return source[path]+(revision===merge&&changes.path===path?' unreviewed':'');};
@@ -68,6 +68,8 @@ test('review binds preparation, qualified archive, exact Site jobs/local assembl
 test('review accepts Site called by the required Acceptance workflow and rejects missing called deploy',async t=>{
  const f=await reviewFixture(t);f.site.path='.github/workflows/acceptance.yml';
  for(const job of f.jobs.jobs)job.name='site / '+job.name;
+ f.jobs.jobs.push({name:'composition',status:'completed',conclusion:'success'});f.jobs.total_count++;
+ f.candidate.status='qualified-in-pr';f.candidate.qualification={runId:18,attempt:1};f.input.runId=18;
  assert.equal((await f.invoke()).site.runId,18);
  f.jobs.jobs[1].conclusion='failure';await assert.rejects(f.invoke(),/Site deploy failed/);
 });

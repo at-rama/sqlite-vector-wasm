@@ -98,41 +98,17 @@ export async function prepareCandidate({ context, readSnapshot, readCandidates, 
       await run('sh', ['tools/check-repository.sh'], { cwd: repository, log: join(directory, 'repository.log') });
       await run('sh', ['tools/test-repository.sh'], { cwd: repository, log: join(directory, 'tests.log') });
     });
-    const qualified = await step('qualification', () => qualification({ repository, run,
-      context: { repository: context.repository, commit: result.commit, selection: context.selection,
-        comment: context.comment, preparation: context.preparation },
-      readSnapshot: async () => { result.qualificationState = await readSnapshot(); await save(); return result.qualificationState; } }));
-    const expected = calculate({ selection: context.selection, snapshot: result.qualificationState, comment: context.comment });
-    assert.deepEqual(qualified.identity, expected, 'Qualification forecast mismatch');
-    const evidence = await json(qualified.evidencePath);
-    assert.equal(evidence.commit, result.commit, 'Qualification revision mismatch');
-    assert.deepEqual(evidence.upstreams, context.selection);
-    assert.deepEqual(evidence.engine, {key:'sqliteVector', upstream:'sqliteai/sqlite-vector', version:context.selection.sqliteVector}, 'Qualification engine mismatch');
-    assert.deepEqual(evidence.sourceLock, lock, 'Qualification sources mismatch');
-    assert.equal(evidence.sourceLockSha256, hash(await regularBytes(join(repository, 'inputs/sqlite-vector.sources.lock.json'))), 'Qualification lock digest mismatch');
-    assert.equal(evidence.repository, context.repository, 'Qualification repository mismatch');
-    assert.deepEqual(evidence.invocation.preparation, context.preparation);
-    assert.equal(evidence.invocation.comment, context.comment);
-    const payload = await regularBytes(join(qualified.bundle, 'payload.tgz'));
-    assert.deepEqual(evidence.archive, {size:payload.length, sha256:hash(payload)}, 'Qualification archive mismatch');
-    result.identity = qualified.identity; result.archive = evidence.archive; result.bundle = qualified.bundle;
-    result.qualificationEvidence = qualified.evidencePath;
-    result.forecastChanged = JSON.stringify(result.preflight) !== JSON.stringify(result.identity);
-    result.documentation = await step('documentation-example', async () => {
-      const example = await documentation({ repository, qualified, directory, run });
-      assertDocumentation(example, { commit: result.commit, selection: context.selection, archive: evidence.archive,
-        sourceHashes: result.documentSources, identity: result.identity });
-      assert.deepEqual(await documentSnapshot(repository), result.documentSources, 'Candidate documentation changed after commit');
-      return { example, sourceHashes: result.documentSources, previewState: 'pending', integrationEligible: false,
-        previewUrl: `https://${context.repository.split('/')[0]}.github.io/${context.repository.split('/')[1]}/preview/`,
-        checksUrl: `https://github.com/${context.repository}/commit/${result.commit}/checks` };
-    });
+    // Full product qualification belongs to the exact-head PR producer.
+    result.identity = result.preflight;
+    result.documentation = { sourceHashes: result.documentSources, previewState: 'pending', integrationEligible: false,
+      previewUrl: `https://${context.repository.split('/')[0]}.github.io/${context.repository.split('/')[1]}/preview/`,
+      checksUrl: `https://github.com/${context.repository}/commit/${result.commit}/checks` };
     assert.equal(await run('git', ['rev-parse', 'HEAD'], { cwd: repository }), result.commit);
-    assert.equal(await run('git', ['status', '--porcelain', '--untracked-files=all'], { cwd: repository }), '', 'Candidate changed after qualification');
+    assert.equal(await run('git', ['status', '--porcelain', '--untracked-files=all'], { cwd: repository }), '', 'Candidate changed during preparation');
     await save();
     if (context.rehearsal) {
       assert.equal(services, undefined, 'Rehearsal has no write adapter');
-      result.status = 'qualified-without-pr'; result.publicationCalls = 0;
+      result.status = 'prepared-without-pr'; result.publicationCalls = 0;
     } else {
       assert.ok(services, 'Candidate write authorization unavailable');
       result.branchResult = await step('push', async () => {
@@ -144,7 +120,7 @@ export async function prepareCandidate({ context, readSnapshot, readCandidates, 
       result.pullRequest = await step('pull-request', () => services.createPullRequest({ branch: context.branch,
         commit: result.commit, title: `chore: prepare ${result.identity.version} distribution`, body: candidateBody(result) }));
       assert.equal(result.pullRequest.head, result.commit, 'Created PR head mismatch');
-      result.status = 'candidate-ready';
+      result.status = 'candidate-awaiting-qualification';
     }
     await save(); return { ...result, path };
   } catch (error) {
