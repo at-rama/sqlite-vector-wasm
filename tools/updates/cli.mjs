@@ -24,5 +24,5 @@ try {
     services: rehearsal ? undefined : candidateServices({ repository: context.repository, token: env.GH_TOKEN, cwd: root }) });
   console.log(JSON.stringify(result));
 } catch (error) {
-  console.error(error.message); process.exitCode = 1;
+  console.error(error.message); if (error.cause) console.error(error.cause.message); process.exitCode = 1;
 }

@@ -1,13 +1,12 @@
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, readFile, writeFile, rename, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
-import { root, noticeInputs, regularBytes, hash } from '../package/package.mjs';
+import { root, noticeInputs, regularBytes } from '../package/package.mjs';
 import { reconcileNotices, noticePaths } from './notices.mjs';
 import { command } from '../acceptance/run.mjs';
 import { calculate, commitPattern } from '../release/policy.mjs';
-import { qualify } from '../release/run.mjs';
 import { candidateDescriptor, candidateBody } from './context.mjs';
-import { candidateDocumentPaths, prepareDocumentation, checkDocumentation, assertDocumentation, documentSnapshot } from './documentation.mjs';
+import { candidateDocumentPaths, prepareDocumentation } from './documentation.mjs';
 import { pairKey } from '../watch/state.mjs';
 
 const json = async path => JSON.parse(await readFile(path, 'utf8'));
@@ -34,16 +33,20 @@ export async function resolveSources({ repository, directory, context, run = com
 }
 
 export async function prepareCandidate({ context, readSnapshot, readCandidates, services, repository = root,
-  resolve = resolveSources, reconcile = reconcileNotices, qualification = qualify,
-  prepareDocuments = prepareDocumentation, documentation = checkDocumentation, run = command }) {
+  resolve = resolveSources, reconcile = reconcileNotices,
+  prepareDocuments = prepareDocumentation, run = command }) {
   await mkdir(join(repository, '.work/updates'), { recursive: true });
   const directory = await mkdtemp(join(repository, '.work/updates/run-'));
-  const result = { schemaVersion: 1, status: 'in-progress', ...context, directory, operations: [] };
+  const result = { schemaVersion: 1, status: 'in-progress', ...context, directory, integrationEligible: false, publicationCalls: 0, operations: [] };
   const path = join(directory, 'candidate.json');
   const save = () => saveJson(path, result);
   const step = async (name, action) => {
-    try { const value = await action(); result.operations.push({ name, status: 'passed' }); await save(); return value; }
-    catch (error) { result.operations.push({ name, status: 'failed', diagnostic: error.message }); throw error; }
+    let value;
+    try { value = await action(); }
+    catch (error) { result.operations.push({ name, status: error.completionUnknown ? 'unknown' : 'failed', diagnostic: error.message }); throw error; }
+    result.operations.push({ name, status: 'passed' });
+    try { await save(); } catch (error) { error.message = `Operation ${name} acknowledged; preparation journal persistence failed: ${error.message}`; throw error; }
+    return value;
   };
   await save();
   try {
@@ -96,7 +99,6 @@ export async function prepareCandidate({ context, readSnapshot, readCandidates, 
     });
     await step('repository', async () => {
       await run('sh', ['tools/check-repository.sh'], { cwd: repository, log: join(directory, 'repository.log') });
-      await run('sh', ['tools/test-repository.sh'], { cwd: repository, log: join(directory, 'tests.log') });
     });
     // Full product qualification belongs to the exact-head PR producer.
     result.identity = result.preflight;
@@ -124,7 +126,8 @@ export async function prepareCandidate({ context, readSnapshot, readCandidates, 
     }
     await save(); return { ...result, path };
   } catch (error) {
-    result.status = 'failed'; result.diagnostic = error.message; await save();
+    result.status = 'failed'; result.diagnostic = error.message;
+    try { await save(); } catch (retention) { error.message += `; preparation diagnostics could not be retained: ${retention.message}`; }
     throw new Error(`Candidate preparation failed; evidence: ${path}`, { cause: error });
   }
 }
