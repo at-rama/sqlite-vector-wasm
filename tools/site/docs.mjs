@@ -25,7 +25,7 @@ export async function prepareDocs(root, source, base, options = {}) {
   const parsed = {};
   for (const name of Object.keys(documents)) {
     const raw = await readFile(join(root, name), 'utf8');
-    const text = renderPublicDocument(raw, context);
+    const text = renderPublicDocument(raw, context, { presentation: name === 'README.md' });
     const env = { path: join(root, name), relativePath: name };
     const tokens = md.parse(text, env);
     const ids = [];

@@ -15,7 +15,7 @@ export function dirtyDocumentation(root) {
   assert.ok([0, 1].includes(result.status), 'Cannot inspect documentation revision');
   return result.status !== 0;
 }
-export function renderPublicDocument(text, context) {
+export function renderPublicDocument(text, context, { presentation = false } = {}) {
   if (!context) return text;
   assert.ok(['candidate', 'published'].includes(context.mode), 'Invalid documentation mode');
   assert.match(context.version, /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/);
@@ -24,10 +24,9 @@ export function renderPublicDocument(text, context) {
   const engineVersion = context.upstreams.sqliteVector;
   assert.ok(context.upstreams.sqlite && engineVersion, 'Missing documentation composition');
   const label = context.mode === 'candidate' ? 'Unpublished release candidate' : 'Published distribution';
-  const status = `> Reproducibility — ${label} **${context.version}** · SQLite ${context.upstreams.sqlite} · ${engine} ${engineVersion}. ${context.mode === 'candidate' ? 'Use the supplied qualified archive; no npm availability is asserted.' : 'The checked example uses this exact published archive; generic installation and npm latest badges may describe a different publication.'}\n\n`;
-  const line = text.indexOf('\n');
-  assert.ok(line > 0, 'Missing documentation title');
-  let rendered = text.slice(0, line + 1) + '\n' + status + text.slice(line + 1);
+  const status = `> Reproducibility — ${label} **${context.version}** · SQLite ${context.upstreams.sqlite} · ${engine} ${engineVersion}. ${context.mode === 'candidate' ? 'Use the supplied qualified archive; no npm availability is asserted.' : 'To reproduce this example, use the exact publication below.'}\n\n`;
+  assert.ok(text.indexOf('\n') > 0, 'Missing documentation title');
+  let rendered = text;
   // Accept earlier source syntax without requiring a release literal in current
   // Markdown. Latest badges are informational and never supply this context.
   const sourceVersion = text.match(/npm install @at-rama\/sqlite-vector-wasm@([0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?)/)?.[1];
@@ -40,8 +39,15 @@ export function renderPublicDocument(text, context) {
   else {
     rendered = rendered.replaceAll(installation, 'npm install @at-rama/sqlite-vector-wasm')
       .replaceAll('npm install ./payload.tgz', 'npm install @at-rama/sqlite-vector-wasm');
-    rendered = rendered.replace(/(```sh\nnpm install @at-rama\/sqlite-vector-wasm\n```)/,
-      `$1\n\nTo reproduce the checked example, install its exact publication instead:\n\n\`\`\`sh\nnpm install @at-rama/sqlite-vector-wasm@${context.version}\n\`\`\``);
+  }
+  // Keep Presentation product-first; Usage carries the checked example identity.
+  // Candidate Presentation still identifies the unpublished archive it installs.
+  if (!presentation || context.mode === 'candidate') {
+    const recipe = !presentation && context.mode === 'published'
+      ? `\`\`\`sh\nnpm install @at-rama/sqlite-vector-wasm@${context.version}\n\`\`\`\n\n` : '';
+    const installationBlock = /(```sh\nnpm install (?:@at-rama\/sqlite-vector-wasm|\.\/payload\.tgz)\n```)/;
+    assert.match(rendered, installationBlock, 'Missing documentation installation');
+    rendered = rendered.replace(installationBlock, `$1\n\n${status}${recipe}`.trimEnd());
   }
   return rendered;
 }
