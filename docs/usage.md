@@ -2,8 +2,6 @@
 
 Use SQLite's browser JavaScript/WASM APIs with SQLite-Vector built in. This guide takes you from serving the runtime assets to vector search, Workers and persistent storage.
 
-Install `@at-rama/sqlite-vector-wasm` and serve its complete runtime asset set.
-
 ## Host and initialize
 
 ```sh
@@ -50,7 +48,7 @@ console.log(neighbors);
 
 `vector_init()` associates the table and column with a vector type, dimension and distance metric for the current connection. Initialize that association again when opening another connection to the same stored data; do not recreate the table or reinsert its rows just to query it. The column stores the vectors themselves as BLOBs. Keep the stored vectors and query vectors consistent in type and dimension.
 
-This example performs exact search without quantization. For quantized search and its preparation and refresh requirements, consult the [SQLite-Vector reference](https://github.com/sqliteai/sqlite-vector). Quantization is an optional workflow, not a prerequisite for the examples here.
+For quantized search and its preparation and refresh requirements, consult the [SQLite-Vector reference](https://github.com/sqliteai/sqlite-vector).
 
 ## Binary vectors and Hamming distance
 
@@ -104,7 +102,7 @@ console.log(response.result.resultRows);
 await promiser({ type: 'close', dbId });
 ```
 
-Worker companions must resolve from the same asset directory; when a Worker entry is hosted elsewhere, the upstream `sqlite3.dir=/sqlite` URL parameter can locate the assets. Supplied bundler-friendly variants rely on the bundler's support for upstream asset-URL handling; compatibility with every bundler is not guaranteed. The Worker1 documentation describes its message and promiser APIs.
+Worker companions must resolve from the same asset directory; when a Worker entry is hosted elsewhere, the upstream `sqlite3.dir=/sqlite` URL parameter can locate the assets. The Worker1 documentation describes its message and promiser APIs.
 
 ## Browser persistence
 
