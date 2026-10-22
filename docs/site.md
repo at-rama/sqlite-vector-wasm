@@ -38,7 +38,9 @@ bash tools/harness.sh exec sh tools/site.sh exercise
 
 `check` serves the built output at the project prefix on loopback without COOP/COEP. Chrome checks direct and client-side navigation at 1280px and 390px, mobile menus, GitHub/npm and documentation links, overflow, asset errors and the expected page state: absence of demo runtime/corpus requests or Workers for a placeholder, or native identity and the complete deterministic demo checks for the runnable page. `exercise` checks prepared documentation, placeholder preservation across stable/preview/documentation rebuilds, complete artifact assembly and generic supplied-asset integrity failures. Relative-image and missing-link checks remain. Results and screenshots stay under `.work/site/`.
 
-Placeholder checks do not count as vector execution, published-runtime qualification or distribution acceptance. The runnable demo additionally requires the complete independent runtime checks; local and deployed observations are recorded separately.
+Placeholder checks do not count as vector execution, published-runtime qualification or distribution acceptance. The runnable demo additionally requires its complete independent runtime checks. Documentation qualification uses the exact locally served assembled Pages artifact, with the recorded candidate revision and document hashes, both prefixes and desktop/mobile checks. The minimal SQL example is checked separately against the exact qualified candidate archive or matching published runtime. Missing, stale, mismatched or failed applicable evidence blocks integration.
+
+Candidate review also requires completed preview deployment. Local qualification does not fabricate that acknowledgment. Once both succeeded, public URL availability or a second public browser observation does not gate documentation qualification. A public diagnostic reports only the deployment it actually observed; it cannot replace exact candidate evidence.
 
 ## GitHub Pages
 
@@ -71,7 +73,7 @@ One workflow-level concurrency group covers stable selection/build, assembly, de
 
 The workflow retains compiler/browser/assembly results, revision metadata and screenshots for 30 days. After successful deployment a separate read-only job observes the public Pages URLs, compares `site-publication.json` before and after browser checks, verifies the exact preview identity and preserves `site-live-<run-id>` evidence. Replaced shared content is a failed observation, not evidence for another commit.
 
-### Local preview and actual Pages checks
+### Local qualification and optional public diagnostics
 
 Build a preview from a checkout with the same locked dependencies:
 
@@ -82,7 +84,7 @@ sh tools/site.sh build --preview "$preview_branch" "$preview_commit"
 bash tools/harness.sh exec sh tools/site.sh check --preview "$preview_branch" "$preview_commit"
 ```
 
-To check an actual published preview, use the branch and full commit displayed by the intended deployment:
+Public checks are optional operational diagnostics. To inspect a published preview, use the branch and full commit displayed by the intended deployment:
 
 ```sh
 bash tools/harness.sh exec sh tools/site.sh check \
@@ -98,7 +100,7 @@ bash tools/harness.sh exec node tools/site/observe.mjs \
   evidence/pages/site-publication.json .work/site/live-pages.json
 ```
 
-Record the URL, selected revisions and actual outcomes. Local serving, successful compiler tests and passing configuration checks do not establish actual Pages success. If Pages setup, environment permission or the deployment is unavailable, the actual-Pages task stays open. Do not merge merely to obtain evidence.
+Record the URL, selected revisions and actual outcomes. Local serving establishes artifact checks, not deployment completion. If Pages setup, environment permission or deployment completion is unavailable, preview review stays blocked; public HTTP observation is not an additional gate. Do not merge merely to obtain evidence.
 
 For redeployment, manually run Site on `main`; it retains that checkout's selected demo runtime. For rollback, restore reviewed site sources/configuration and the corresponding explicit demo selection through the repository integration path, then redeploy. Do not compile or republish the package to roll back the site.
 
@@ -115,7 +117,7 @@ bash tools/harness.sh exec sh tools/site.sh example --candidate-bundle /absolute
 
 `example` verifies the qualified candidate handoffs/archive or downloads and verifies an explicit published selection, then installs the exact local archive in a temporary consumer using offline npm with lifecycle scripts disabled. It executes the asset-copy commands extracted from Usage, checks the eleven copied runtime names and hashes, and serves `public/` on loopback. Chrome executes the guide's initialization and Float32 SQL in both the page and a dedicated module Worker, checks the two expected neighbors/distances and SQLite and selected-engine versions, then rechecks runtime hashes. `.work/docs-example/result.json` records the selected archive, guide/snippet/copy-command hashes, copied inventory and observed results. A download, integrity, copy or execution failure fails the command. This scoped example establishes no OPFS, complete Worker/API or emoji-demo acceptance.
 
-The rendered header and install command follow the explicitly checked identity without rewriting authored instructions after publication. A completed publication supplies an explicit published selection through `SITE_DOCUMENTATION_SELECTION`; a newer unrelated release does not silently change it. Candidate rendering checks the source/commit/lock identities and rejects stale or missing execution evidence. Historical example replays are separate records and cannot authorize the current preview. The Site workflow retains example results separately from deployed-documentation observations.
+The rendered header and install command follow the explicitly checked identity without rewriting authored instructions after publication. A completed publication supplies an explicit published selection through `SITE_DOCUMENTATION_SELECTION`; a newer unrelated release does not silently change it. Candidate rendering checks the source/commit/lock identities and rejects stale or missing execution evidence. Historical example replays are separate records and cannot authorize the current preview. The Site workflow retains example results separately from assembled-documentation checks.
 
 
 Copied documentation images enter the VitePress compiler with source-root public asset URLs. Vite applies the selected stable/preview prefix once; the browser manifest records that final destination. The compiler/browser exercise includes relative inline/reference SVGs, a filename with an encoded space, query/fragment preservation and source-relative Usage images under both bases. It decodes the emitted images, compares the copied SVG bytes and rejects a missing source image without retaining stale output.
