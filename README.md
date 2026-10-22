@@ -59,7 +59,7 @@ The package preserves upstream SQLite/SQLite-Vector behavior. It does **not** pr
 
 ## Distribution and source
 
-Download size is approximately **672 kB with gzip (1.77 MB raw)** for the ES module loader and WASM binary together, based on the [measured published runtime](https://github.com/at-rama/sqlite-vector-wasm/blob/main/docs/runtime-footprint.md). Application data and additional requested companion files are extra; transfer size depends on server compression and caching. These figures describe downloaded files, not runtime memory usage.
+Download size is approximately **672 kB with gzip (1.77 MB raw)** for the ES module loader and WASM binary together, based on the [measured published runtime](https://github.com/at-rama/sqlite-vector-wasm/blob/1193e6964ff262a3c4d17e0593a639fd4ca244ad/docs/runtime-footprint.md). Application data and additional requested companion files are extra; transfer size depends on server compression and caching. These figures describe downloaded files, not runtime memory usage.
 
 - [npm package](https://www.npmjs.com/package/@at-rama/sqlite-vector-wasm)
 - [GitHub Releases](https://github.com/at-rama/sqlite-vector-wasm/releases)
