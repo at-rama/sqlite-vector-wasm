@@ -29,6 +29,7 @@ jobs:
     runs-on: ubuntu-24.04
     outputs:
       required: ${{ steps.scope.outputs.required }}
+      site_required: ${{ steps.site.outputs.required }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -42,6 +43,13 @@ jobs:
           BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
           HEAD_SHA: ${{ github.sha }}
         run: python3 tools/acceptance/scope.py >> "$GITHUB_OUTPUT"
+      - name: Select applicable Site merge checks
+        id: site
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.sha }}
+        run: python3 tools/site/gate.py scope >> "$GITHUB_OUTPUT"
       - name: Report site-only non-applicability
         if: steps.scope.outputs.required == 'false'
         run: echo 'Package acceptance not applicable. No package qualification was performed.' >> "$GITHUB_STEP_SUMMARY"
@@ -80,8 +88,19 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+  site:
+    needs: scope
+    if: needs.scope.outputs.site_required == 'true'
+    uses: ./.github/workflows/site.yml
+    permissions:
+      contents: read
+      pull-requests: read
+      actions: read
+      pages: write
+      id-token: write
+
   acceptance:
-    needs: [scope, composition]
+    needs: [scope, composition, site]
     if: always()
     runs-on: ubuntu-24.04
     steps:
@@ -96,3 +115,8 @@ jobs:
           REQUIRED: ${{ needs.scope.outputs.required }}
           COMPOSITION_RESULT: ${{ needs.composition.result }}
         run: python3 tools/acceptance/ci.py >> "$GITHUB_STEP_SUMMARY"
+      - name: Require applicable Site qualification and preview deployment
+        env:
+          SITE_REQUIRED: ${{ needs.scope.outputs.site_required }}
+          SITE_RESULT: ${{ needs.site.result }}
+        run: python3 tools/site/gate.py complete >> "$GITHUB_STEP_SUMMARY"

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {readFile,writeFile,mkdtemp,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
+import {deliveryReceipt,deliveryOperations} from '../../release/delivery.mjs';
 import {documentHash as hash} from '../documentation.mjs';
 import {candidateProfile} from '../../updates/documentation.mjs';
 import {stableSource,siteSelection,assertStableCurrent,eligibleSource,publicationCompletion,verifyPublished} from '../eligibility.mjs';
@@ -32,14 +33,15 @@ test('genuine absent shell supports preview bootstrap, unknown stable eligibilit
  assert.equal((await siteSelection({...common,eventName:'pull_request',selectStable:async()=>null,resolveSource:async()=>null})).stable,null);
  await assert.rejects(siteSelection({...common,eventName:'workflow_dispatch',ref:'refs/heads/main',selectStable:async()=>null}),/Stable source absent/);
 });
-test('previous public source is resolved from existing Pages/Git evidence and reverified',async()=>{
- const seen=[];
- const get=async url=>response(url.includes('/compare/')?{status:'ahead',merge_base_commit:{sha:prior}}:{repository,stablePresent:true,mainCommit:prior});
- const result=await stableSource({repository,mainCommit:main,readAt,get,resolveSource:async({commit})=>{seen.push(commit);if(commit===main)throw Error('publication pending');return structuredClone(stable);}});
- assert.equal(result.sourceCommit,prior);assert.deepEqual(seen,[main,prior]);
- await assert.rejects(stableSource({repository,mainCommit:main,readAt,get,trigger:{id:1},resolveSource:async()=>{throw Error('partial publication');}}),/partial publication/);
- for(const bad of [{repository:'other/repo',stablePresent:true,mainCommit:prior},{repository,stablePresent:false,mainCommit:prior},{repository,stablePresent:true,mainCommit:main}])
- await assert.rejects(stableSource({repository,mainCommit:main,readAt,get:async()=>response(bad),resolveSource:async()=>{throw Error('pending');}}));
+const pending=()=>Object.assign(new Error('publication pending'),{publicationPending:true});
+test('previous source is resolved from bounded Git history without public Pages or CI artifacts',async()=>{
+ const seen=[],urls=[];
+ const get=async url=>{urls.push(url);assert.ok(url.startsWith('https://api.github.com/'));return response(url.includes('/compare/')?{status:'ahead',merge_base_commit:{sha:prior}}:[{parents:[{sha:prior}]}]);};
+ const result=await stableSource({repository,mainCommit:main,readAt,get,resolveSource:async({commit})=>{seen.push(commit);if(commit===main)throw pending();return structuredClone(stable);}});
+ assert.equal(result.sourceCommit,prior);assert.deepEqual(seen,[main,prior]);assert.equal(urls.length,2);
+ await assert.rejects(stableSource({repository,mainCommit:main,readAt,get,trigger:{id:1},resolveSource:async()=>{throw pending();}}),/pending/);
+ await assert.rejects(stableSource({repository,mainCommit:main,readAt,get:async()=>assert.fail('No fallback on unknown evidence'),resolveSource:async()=>{throw Error('API unavailable');}}),/API unavailable/);
+ await assert.rejects(stableSource({repository,mainCommit:main,readAt,get:async()=>response([]),resolveSource:async()=>{throw pending();}}),/bounded descriptor history/);
 });
 test('freshness rejects advanced publication eligibility without requiring a new main commit',async()=>{
  const record={repository,mainCommit:main,stableDocumentation:structuredClone(stable)};
@@ -54,7 +56,7 @@ test('manual old controller and foreign completion fail before deployment',async
 test('a successful qualification exercise supplies no product handoff and cannot promote',async()=>{
  const run={id:9,head_sha:head,run_attempt:1,repository:{full_name:repository},path:'.github/workflows/release.yml',event:'pull_request',status:'completed',conclusion:'success'};
  const result=await siteSelection({...common,eventName:'workflow_run',ref:'refs/heads/main',event:{repository:{full_name:repository},workflow_run:run},
- get:async url=>response(url.endsWith('/commits/main')?{sha:main}:url.includes('/artifacts?')?{total_count:1,artifacts:[{name:'release-exercise-9-1'}]}:run),selectStable:async()=>assert.fail('no promotion from exercise')});
+ get:async url=>response(url.endsWith('/commits/main')?{sha:main}:url.includes('/jobs?')?{total_count:1,jobs:[{name:'publish',status:'completed',conclusion:'skipped'}]}:run),selectStable:async()=>assert.fail('no promotion from exercise')});
  assert.equal(result.relevant,false);assert.equal(result.publish,false);
 });
 async function candidate(t) {
@@ -90,49 +92,61 @@ test('ordinary published documentation revision remains deployable after complet
  const f=await candidate(t);f.source['tools/site/docs-example.json']=JSON.stringify({mode:'published',version:f.pub.version,archiveSha256:f.pub.archive.sha256});
  assert.equal((await f.invoke()).sourceCommit,main);
 });
-test('handoff must match integrated human PR, workflow, attempt, outcome and canonical provenance',async t=>{
- const f=await candidate(t),directory=await mkdtemp(join(tmpdir(),'site-completion-'));t.after(()=>rm(directory,{recursive:true,force:true}));
- const run={id:9,head_sha:head,run_attempt:1,repository:{full_name:repository},path:'.github/workflows/release.yml',event:'pull_request',status:'completed',conclusion:'success'};
+async function durable(t) {
+ const f=await candidate(t);f.pub.repository=repository;f.pub.deliveryReceipt='delivery.json';
+ f.release.prerelease=false;f.release.assets=['publication.json','payload.tgz','attestation.json','delivery.json'].map(name=>({name,state:'uploaded',url:'https://fixture/'+name}));
+ const bytes=Buffer.from(JSON.stringify(f.pub,null,2)+'\n');
+ const receipt=structuredClone(deliveryReceipt(f.pub,f.release,deliveryOperations.map(operation=>({operation,status:'succeeded'}))));
  const pr={merged:true,state:'closed',merged_by:{type:'User'},base:{ref:'main',repo:{full_name:repository}},head:{sha:head,repo:{full_name:repository}},merge_commit_sha:prior};
- const outcome={status:'published-verification-pending',identity:{version:f.pub.version,tag:f.pub.tag},outcomes:['tag','draft','archive','provenance','attestation','npm','github','github-identity','npm-identity'].map(operation=>({operation,status:operation==='npm-identity'?'pending':'succeeded'}))};
- const completedOutcome=structuredClone(outcome);completedOutcome.status='complete';completedOutcome.outcomes.at(-1).status='succeeded';completedOutcome.publication=f.pub;
- await writeFile(join(directory,'publication.json'),JSON.stringify(f.pub));
- const invoke=async()=>{await writeFile(join(directory,'outcome.json'),JSON.stringify(outcome));return publicationCompletion({repository,publication:f.pub,release:f.release,trigger:run,directory,
- get:async url=>response(url.includes('/pulls/')?pr:url.includes('/artifacts?')?{total_count:1,artifacts:[{name:'release-outcome-9-1',expired:false}]}:run),
- artifact:async()=>({directory,id:10,sha256:'e'.repeat(64)}),services:{verifyGitHub:async()=>{}}});};
- assert.equal((await invoke()).runId,9);
- outcome.status='failed';await assert.rejects(invoke(),/Incomplete release publication handoff/);outcome.status='published-verification-pending';
- run.conclusion='failure';await assert.rejects(invoke(),/Failed publication/);run.conclusion='success';
- run.repository.full_name='other/repo';await assert.rejects(invoke(),/Unrelated/);run.repository.full_name=repository;
- pr.merge_commit_sha=head;await assert.rejects(invoke());pr.merge_commit_sha=prior;
- const changed=structuredClone(f.pub);changed.archive.sha256='0'.repeat(64);await writeFile(join(directory,'publication.json'),JSON.stringify(changed));await assert.rejects(invoke(),/differs/);
+ const run={id:9,head_sha:head,run_attempt:1,repository:{full_name:repository},path:'.github/workflows/release.yml',event:'pull_request',status:'completed'};
+ const input={repository,publication:f.pub,release:f.release,trigger:run,get:async url=>{
+  assert.doesNotMatch(url,/actions\/|github\.io|registry\.npmjs/,'No expiring artifact or public visibility input');
+  return response(url.includes('/pulls/')?pr:url.endsWith('/delivery.json')?Buffer.from(JSON.stringify(receipt)):bytes);
+ }};
+ return {...f,bytes,receipt,pr,run,input};
+}
+test('durable completion needs exact finalized subject and integrated human PR, not CI artifacts',async t=>{
+ const f=await durable(t);assert.equal((await publicationCompletion(f.input)).completion,'durable-release-receipt');
+ f.pr.merge_commit_sha=head;await assert.rejects(publicationCompletion(f.input));f.pr.merge_commit_sha=prior;
+ f.run.head_sha=main;await assert.rejects(publicationCompletion(f.input),/Unrelated/);f.run.head_sha=head;
+ f.release.draft=true;await assert.rejects(publicationCompletion(f.input),/not finalized/);f.release.draft=false;
+ f.receipt.subject.archive.sha256='0'.repeat(64);await assert.rejects(publicationCompletion(f.input),/subject mismatch/);
 });
-
+test('new receipt cannot be missing or borrowed from another archive/commit or replaced by manifest contents',async t=>{
+ for(const mutate of [f=>f.release.assets.pop(),f=>{f.receipt.subject.commit=main;},f=>{f.receipt.publicationSha256='0'.repeat(64);},f=>{f.receipt.operations[5].status='unknown';}]){
+  const f=await durable(t);mutate(f);await assert.rejects(publicationCompletion(f.input));
+ }
+});
+test('historical completion uses only explicit read-only destination checks and cannot fabricate a receipt',async t=>{
+ const f=await candidate(t),seen=[];
+ const pr={merged:true,state:'closed',merged_by:{type:'User'},base:{ref:'main',repo:{full_name:repository}},head:{sha:head,repo:{full_name:repository}},merge_commit_sha:prior};
+ const invoke=status=>publicationCompletion({repository,publication:f.pub,release:f.release,get:async url=>{assert.ok(url.includes('/pulls/'));return response(pr);},
+ services:{verifyGitHub:async()=>seen.push('github'),verifyNpm:async()=>{seen.push('npm');return {status};}}});
+ assert.equal((await invoke('verified')).completion,'historical-destination-inspection');assert.deepEqual(seen,['github','npm']);
+ await assert.rejects(invoke('verification-pending'),/Historical npm identity/);
+});
 test('matching completion passes only its verified run to stable selection; stale attempt stops',async()=>{
  const run={id:9,head_sha:head,run_attempt:2,repository:{full_name:repository},path:'.github/workflows/release.yml',event:'pull_request',status:'completed',conclusion:'success'};
  const value={...common,eventName:'workflow_run',ref:'refs/heads/main',event:{repository:{full_name:repository},workflow_run:structuredClone(run)},
- get:async url=>response(url.endsWith('/commits/main')?{sha:main}:url.includes('/artifacts?')?{total_count:1,artifacts:[{name:'release-outcome-9-2',expired:false}]}:run),
+ get:async url=>response(url.endsWith('/commits/main')?{sha:main}:url.includes('/jobs?')?{total_count:1,jobs:[{name:'publish',status:'completed',conclusion:'success'}]}:run),
  selectStable:async({trigger})=>{assert.deepEqual(trigger,run);return {...stable,sourceCommit:main};}};
  assert.equal((await siteSelection(value)).stable.sourceCommit,main);
  run.run_attempt=3;await assert.rejects(siteSelection(value));
 });
-test('fallback source must remain an ancestor and its published state must still verify',async()=>{
- const args={repository,mainCommit:main,readAt,resolveSource:async({commit})=>{if(commit===main)throw Error('pending');return stable;}};
- await assert.rejects(stableSource({...args,get:async url=>response(url.includes('/compare/')?{status:'diverged',merge_base_commit:{sha:head}}:{repository,stablePresent:true,mainCommit:prior})}),/unrelated/);
- await assert.rejects(stableSource({...args,get:async url=>response(url.includes('/compare/')?{status:'ahead',merge_base_commit:{sha:prior}}:{repository,stablePresent:true,mainCommit:prior}),resolveSource:async()=>{throw Error('registry unavailable');}}),/registry unavailable/);
+test('fallback source must remain an ancestor and unknown historical eligibility stops',async()=>{
+ const args={repository,mainCommit:main,readAt,resolveSource:async({commit})=>{if(commit===main)throw pending();return stable;}};
+ await assert.rejects(stableSource({...args,get:async url=>response(url.includes('/compare/')?{status:'diverged',merge_base_commit:{sha:head}}:[{parents:[{sha:prior}]}])}),/unrelated/);
+ await assert.rejects(stableSource({...args,get:async url=>response(url.includes('/compare/')?{status:'ahead',merge_base_commit:{sha:prior}}:[{parents:[{sha:prior}]}]),resolveSource:async({commit})=>{throw commit===main?pending():Error('registry unavailable');}}),/registry unavailable/);
 });
 
-test('a failed completion attempt cannot borrow an older successful handoff from the same run',async t=>{
- const f=await candidate(t),directory=await mkdtemp(join(tmpdir(),'site-attempt-'));t.after(()=>rm(directory,{recursive:true,force:true}));
- const run={id:9,head_sha:head,run_attempt:2,repository:{full_name:repository},path:'.github/workflows/release.yml',event:'pull_request',status:'completed',conclusion:'failure'};
- const pr={merged:true,state:'closed',merged_by:{type:'User'},base:{ref:'main',repo:{full_name:repository}},head:{sha:head,repo:{full_name:repository}},merge_commit_sha:prior};
- const invoke=()=>publicationCompletion({repository,publication:f.pub,release:f.release,trigger:run,directory,
- get:async url=>response(url.includes('/pulls/')?pr:url.includes('/artifacts?')?{total_count:2,artifacts:[1,2].map(n=>({name:'release-outcome-9-'+n,expired:false}))}:url.includes('/attempts/1')?{...run,run_attempt:1,conclusion:'success'}:run),
- artifact:async({name})=>{await writeFile(join(directory,'publication.json'),JSON.stringify(f.pub));await writeFile(join(directory,'outcome.json'),JSON.stringify({status:name.endsWith('-1')?'complete':'failed',identity:{version:f.pub.version,tag:f.pub.tag}}));return {directory,id:10,sha256:'e'.repeat(64)};},
- services:{verifyGitHub:async()=>{}}});
- await assert.rejects(invoke(),/Incomplete release publication handoff/);
+test('failed or skipped publisher completion does not select or deploy stable sources',async()=>{
+ for(const conclusion of ['failure','skipped','cancelled']){
+ const run={id:9,head_sha:head,run_attempt:2,repository:{full_name:repository},path:'.github/workflows/release.yml',event:'pull_request',status:'completed',conclusion};
+ const result=await siteSelection({...common,eventName:'workflow_run',ref:'refs/heads/main',event:{repository:{full_name:repository},workflow_run:run},
+ get:async url=>response(url.endsWith('/commits/main')?{sha:main}:url.includes('/jobs?')?{total_count:1,jobs:[{name:'publish',status:'completed',conclusion}]}:run),selectStable:async()=>assert.fail('No stable promotion')});
+ assert.equal(result.relevant,false);assert.equal(result.publish,false);
+ }
 });
-
 
 test('a cleanup PR without release.json still selects an unpublished preview and preserves stable eligibility',async()=>{
  const absent=async(commit,path)=>path==='inputs/release.json'?null:readAt(commit,path);

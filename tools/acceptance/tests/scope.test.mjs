@@ -94,7 +94,7 @@ test('workflow keeps required job and gates setup, production and artifacts with
   assert.match(workflow, /  push:/);
   assert.match(workflow, /  workflow_dispatch:/);
   assert.doesNotMatch(workflow, /paths-ignore:|paths:/);
-  assert.match(workflow, /  acceptance:\n    needs: \[scope, composition\]\n    if: always\(\)\n    runs-on:/);
+  assert.match(workflow, /  acceptance:\n    needs: \[scope, composition, site\]\n    if: always\(\)\n    runs-on:/);
   assert.match(workflow, /fetch-depth: 0/);
   assert.match(workflow, /github.event.pull_request.base.sha/);
   assert.match(workflow, /github.event.before/);

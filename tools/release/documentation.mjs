@@ -73,18 +73,20 @@ export async function reviewedDocumentation({ repository, pr, selected, readAt, 
   else {
     const listing = await apiJSON(get, `${api}/actions/runs?head_sha=${head}&event=pull_request&per_page=100`);
     assert.ok(Array.isArray(listing.workflow_runs));
-    const matches = listing.workflow_runs.filter(r => r.head_sha === head && r.path?.split('@')[0] === '.github/workflows/site.yml');
+    const matches = listing.workflow_runs.filter(r => r.head_sha === head && ['.github/workflows/site.yml','.github/workflows/acceptance.yml'].includes(r.path?.split('@')[0]));
     assert.ok(matches.length, 'Missing exact-head documentation preview');
     run = matches.sort((a,b) => b.id - a.id)[0];
   }
   // Required named jobs and their identity-bound local results establish Site
   // readiness, not an obsolete public observer's aggregate workflow verdict.
-  successfulRun(run, repository, '.github/workflows/site.yml', 'pull_request', {requireSuccess:false});
+  const siteWorkflow = run.path?.split('@')[0];
+  assert.ok(['.github/workflows/site.yml','.github/workflows/acceptance.yml'].includes(siteWorkflow), 'Unrelated Site workflow');
+  successfulRun(run, repository, siteWorkflow, 'pull_request', {requireSuccess:false});
   assert.equal(run.head_sha, head, 'Stale documentation preview');
   const jobs = await apiJSON(get, `${api}/actions/runs/${run.id}/jobs?per_page=100`);
   assert.equal(jobs.total_count, jobs.jobs?.length, 'Truncated documentation jobs');
   for (const name of ['build','deploy']) {
-    const matching = jobs.jobs.filter(j => j.name === name);
+    const matching = jobs.jobs.filter(j => j.name === (siteWorkflow === '.github/workflows/acceptance.yml' ? `site / ${name}` : name));
     assert.equal(matching.length, 1); assert.equal(matching[0].status, 'completed');
     assert.equal(matching[0].conclusion, 'success', `Required Site ${name} failed or missing`);
   }

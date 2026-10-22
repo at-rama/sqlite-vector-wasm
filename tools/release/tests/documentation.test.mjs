@@ -65,6 +65,13 @@ test('review binds preparation, qualified archive, exact Site jobs/local assembl
  for(const key of ['inputs/release.json','inputs/sqlite-vector.sources.lock.json']){f.changes.path=key;await assert.rejects(f.invoke(),/Unreviewed integrated/);}
 });
 
+test('review accepts Site called by the required Acceptance workflow and rejects missing called deploy',async t=>{
+ const f=await reviewFixture(t);f.site.path='.github/workflows/acceptance.yml';
+ for(const job of f.jobs.jobs)job.name='site / '+job.name;
+ assert.equal((await f.invoke()).site.runId,18);
+ f.jobs.jobs[1].conclusion='failure';await assert.rejects(f.invoke(),/Site deploy failed/);
+});
+
 for(const failure of ['prepared-head','prepared-archive','prepared-status','rehearsal','missing-source','wrong-preparation','wrong-repository','wrong-workflow','wrong-event','site-pending','site-failed','site-head','job-missing','job-failed','input-run','input-artifact','input-digest','example-archive','example-replay','live-head','live-branch','live-source','missing-mobile'])
 test(`review rejects ${failure} without publication authority`,async t=>{
  const f=await reviewFixture(t);

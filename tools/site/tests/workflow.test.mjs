@@ -14,7 +14,7 @@ test('selected sources cannot access Actions caches and privileged deployment ex
   assert.doesNotMatch(deploy, /\bref:|pull_request\.head|stable_commit|workflow_run\.head|npm (?:install|ci)|harness\.sh/);
   assert.match(deploy, /run: node tools\/site\/publication\.mjs guard evidence\/pages\/site-publication\.json/);
   assert.doesNotMatch(workflow, /ref: \$\{\{/);
-  assert.equal([...workflow.matchAll(/run: node tools\/site\/checkout\.mjs preview/g)].length, 2);
+  assert.equal([...workflow.matchAll(/run: node tools\/site\/checkout\.mjs preview/g)].length, 1);
   assert.match(workflow, /run: node tools\/site\/checkout\.mjs stable/);
 });
 
@@ -22,7 +22,8 @@ test('the complete publication sequence shares concurrency; builds and observers
   const workflow = await source();
   const build = workflow.split('\n  build:')[1].split('\n  deploy:')[0];
   const deploy = workflow.split('\n  deploy:')[1].split('\n  observe:')[0];
-  const observe = workflow.split('\n  observe:')[1];
+  const observe = '';
+  assert.doesNotMatch(workflow,/\n  observe:|site-live-|SITE_URL/);
   assert.match(workflow.split('\njobs:')[0], /group: github-pages\n  cancel-in-progress: false/);
   assert.doesNotMatch(build + observe, /pages: write|id-token: write|contents: write|secrets\./);
   assert.match(deploy, /pages: write\n      id-token: write/);
@@ -41,8 +42,6 @@ test('the complete publication sequence shares concurrency; builds and observers
   assert.match(build, /eligibility\.mjs select/);
   assert.match(build, /sh tools\/site.sh build --preview "\$PREVIEW_BRANCH" "\$PREVIEW_COMMIT"/);
   assert.match(build, /path: candidate\/\.work\/pages/);
-  assert.match(observe, /tools\/site\/observe.mjs "\$SITE_URL"/);
-  assert.match(observe, /path:\s*(?:\|\s*)?live-pages.json/);
   assert.match(workflow, /node-version: '24\.19\.0'/);
   assert.doesNotMatch(build.slice(0, build.indexOf('    steps:')), /runner\./);
   assert.match(build, /Check real builds and browser integration\n        if: steps.selection.outputs.relevant == 'true'\n        env:\n          HARNESS_STATE: \$\{\{ runner\.temp \}\}/);
@@ -52,8 +51,9 @@ test('the complete publication sequence shares concurrency; builds and observers
 
 test('automatic publication is input scoped and unmerged closure has no trigger', async () => {
   const workflow = await source();
-  assert.match(workflow, /pull_request:\n    paths: &site-inputs/);
-  assert.match(workflow, /push:\n    branches: \[main\]\n    paths: \*site-inputs/);
+  assert.match(workflow, /workflow_call:/);
+  assert.doesNotMatch(workflow,/^  pull_request:/m);
+  assert.match(workflow, /push:\n    branches: \[main\]\n    paths:/);
   assert.match(workflow, /workflow_dispatch:/);
   assert.doesNotMatch(workflow, /types:.*closed/);
   for (const path of ['README.md', 'docs/usage.md', 'site/**', 'tools/site/**', 'tools/site.sh',
@@ -83,4 +83,13 @@ test('stable placeholder is bound to main while historical docs keep their own p
  assert.match(workflow,/node \.\.\/candidate\/tools\/site\/placeholder.mjs/);
  assert.match(workflow,/unset SITE_CANDIDATE_BUNDLE SITE_DOCUMENTATION_SELECTION SITE_DOCUMENTATION_PREVIEW_INPUT/);
  assert.match(workflow,/export SITE_DOCUMENTATION_SELECTION="\$STABLE_PROFILE"/);
+});
+
+test('PR Site is a dependency of the protected acceptance result, without cross-workflow polling',async()=>{
+ const parent=await readFile(new URL('../../../.github/workflows/acceptance.yml',import.meta.url),'utf8');
+ assert.match(parent,/uses: \.\/\.github\/workflows\/site\.yml/);
+ assert.match(parent,/needs: \[scope, composition, site\]/);
+ assert.match(parent,/SITE_RESULT: \$\{\{ needs\.site\.result \}\}/);
+ assert.match(parent,/run: python3 tools\/site\/gate\.py complete/);
+ assert.match(await source(),/tools\/site\/observe\.mjs \.work\/pages/);
 });
