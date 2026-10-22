@@ -1,11 +1,12 @@
 import assert from 'node:assert/strict';
 import { join } from 'node:path';
-import { readFile } from 'node:fs/promises';
+import { readFile, mkdir, cp } from 'node:fs/promises';
 import { root, hash } from '../package/package.mjs';
 import { assertApplicable } from '../acceptance/contracts.mjs';
 import { candidateDocumentPaths, assertDocumentation, documentSnapshot, checkDocumentation } from '../updates/documentation.mjs';
 import { documentationSources, renderPublicDocument } from '../site/documentation.mjs';
 import { runArtifact, uniqueRecord } from './artifacts.mjs';
+import { prepareDocs } from '../site/docs.mjs';
 
 const successfulRun = (run, repository, path, event) => {
   assert.equal(run.repository?.full_name, repository, 'Unrelated evidence repository');
@@ -129,12 +130,20 @@ export function assertFinalDocumentation(context, identity, accepted, documentat
   }
 }
 
+// This standalone link check needs the shell's actual Demo route, but no
+// demo runtime acquisition or build. Missing routes/fragments still fail.
+export async function prepareDocumentationLinks(repository, destination) {
+  await mkdir(join(destination, 'demo'), { recursive: true });
+  await cp(join(repository, 'site/demo/index.md'), join(destination, 'demo/index.md'));
+  return prepareDocs(repository, destination, '/sqlite-vector-wasm/preview/');
+}
+
 export async function renewDocumentation({ repository, qualified, directory, run }) {
   const example = await checkDocumentation({ repository, qualified, directory, run });
   const report = JSON.parse(await readFile(join(qualified.bundle, 'acceptance.json'), 'utf8'));
   const destination = join(directory, 'documentation-links');
   await run('bash', ['tools/harness.sh', 'exec', 'node', '--input-type=module', '-e',
-    "import {prepareDocs} from './tools/site/docs.mjs'; await prepareDocs(process.cwd(),process.argv[1],'/sqlite-vector-wasm/preview/');", destination],
+    "import {prepareDocumentationLinks} from './tools/release/documentation.mjs'; await prepareDocumentationLinks(process.cwd(),process.argv[1]);", destination],
   { cwd: repository, env: { ...process.env, HARNESS_STATE: report.toolsDirectory }, log: join(directory, 'documentation-links.log') });
   const manifest = JSON.parse(await readFile(join(destination, 'public/site-docs.json'), 'utf8'));
   return { example, links: { check: 'source-relative-targets-and-fragments', context: manifest.documentation,

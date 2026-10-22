@@ -7,6 +7,36 @@ import { execFileSync } from 'node:child_process';
 import { documentationHashes, sourceCommit, checkedDocumentation, renderPublicDocument, documentHash } from '../documentation.mjs';
 import { selectDocumentationRun, acquireDocumentationBundle } from '../candidate-input.mjs';
 
+test('generic Markdown keeps latest installation distinct from the checked publication', () => {
+  const source = '# Using sqlite-vector-wasm\n\n```sh\nnpm install @at-rama/sqlite-vector-wasm\n```\n\n![npm latest](https://img.shields.io/npm/v/@at-rama/sqlite-vector-wasm/latest)\n';
+  const context = {mode:'published',version:'0.3.1',upstreams:{sqlite:'3.54.1',sqliteVector:'1.1.2'}};
+  const published = renderPublicDocument(source, context);
+  assert.match(published, /```sh\nnpm install @at-rama\/sqlite-vector-wasm\n```/);
+  assert.match(published, /npm install @at-rama\/sqlite-vector-wasm@0\.3\.1/);
+  assert.match(published, /Reproducibility — Published distribution \*\*0\.3\.1\*\*/);
+  const candidate = renderPublicDocument(source, {...context,mode:'candidate',version:'0.4.0'});
+  assert.match(candidate, /npm install \.\/payload.tgz/);
+  assert.doesNotMatch(candidate, /npm install @at-rama\/sqlite-vector-wasm/);
+  assert.match(candidate, /Unpublished release candidate \*\*0\.4\.0\*\*/);
+  for (const rendered of [published,candidate]) assert.ok(rendered.includes('https://img.shields.io/npm/v/@at-rama/sqlite-vector-wasm/latest'));
+  assert.equal(renderPublicDocument(source, null), source);
+});
+
+test('Presentation keeps its opening and generic install while Usage owns reproducibility', () => {
+  const source = '# sqlite-vector-wasm\n\n**SQLite for the browser, with vector search built in.**\n\n## Quick start\n\n```sh\nnpm install @at-rama/sqlite-vector-wasm\n```\n';
+  const context = {mode:'published',version:'0.3.1',upstreams:{sqlite:'3.54.1',sqliteVector:'1.1.2'}};
+  assert.equal(renderPublicDocument(source, context, {presentation:true}), source);
+  const usage = renderPublicDocument(source, context);
+  assert.ok(usage.startsWith(source.trimEnd()));
+  assert.match(usage, /Reproducibility — Published distribution/);
+  assert.match(usage, /npm install @at-rama\/sqlite-vector-wasm@0\.3\.1/);
+  const candidate = renderPublicDocument(source, {...context,mode:'candidate'}, {presentation:true});
+  assert.ok(candidate.startsWith(source.split('```sh')[0]));
+  assert.match(candidate, /npm install \.\/payload.tgz/);
+  assert.match(candidate, /Unpublished release candidate \*\*0\.3\.1\*\*/);
+  assert.doesNotMatch(candidate, /npm install @at-rama\/sqlite-vector-wasm/);
+});
+
 test('the shared authored guide renders the checked next version instead of its preceding release', () => {
  const source='# Using sqlite-vector-wasm\n\nInstall `@at-rama/sqlite-vector-wasm@0.3.0`.\n\n```sh\nnpm install @at-rama/sqlite-vector-wasm@0.3.0\n```\n';
  const context={mode:'candidate',version:'0.3.1',upstreams:{sqlite:'3.54.1',sqliteVector:'1.1.2'}};
@@ -19,7 +49,7 @@ test('the shared authored guide renders the checked next version instead of its 
 });
 
 test('candidate presentation never claims npm availability and published identity changes are mechanical', () => {
-  const text='# Usage\n\nnpm install ./payload.tgz\n\nSELECT vector_version();\n';
+  const text='# Usage\n\n```sh\nnpm install ./payload.tgz\n```\n\nSELECT vector_version();\n';
   const input={mode:'candidate',version:'0.3.0',upstreams:{sqlite:'3.54.1',sqliteVector:'1.1.2'}};
   const candidate=renderPublicDocument(text,input);
   assert.match(candidate,/Unpublished release candidate \*\*0\.3\.0\*\*/);assert.match(candidate,/npm install \.\/payload.tgz/);

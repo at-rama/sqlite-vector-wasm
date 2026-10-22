@@ -14,6 +14,27 @@ import { channelFor } from '../release/policy.mjs';
 import { sourceCommit, documentationHashes, dirtyDocumentation, renderPublicDocument, documentationSelection } from './documentation.mjs';
 
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+// Read the actual guide sections; generated reproducibility fences must not
+// change which authored copy recipe and SQL snippets the browser exercises.
+export function exampleSnippets(tokens) {
+  function section(title, language, predicate = () => true) {
+    const starts = tokens.flatMap((token, i) => token.type === 'heading_open'
+      && tokens[i + 1]?.content === title ? [i] : []);
+    assert.equal(starts.length, 1, `Missing/ambiguous documented section: ${title}`);
+    const start = starts[0], level = Number(tokens[start].tag.slice(1));
+    let end = tokens.findIndex((token, i) => i > start && token.type === 'heading_open'
+      && Number(token.tag.slice(1)) <= level);
+    if (end === -1) end = tokens.length;
+    const matches = tokens.slice(start, end).filter(token => token.type === 'fence'
+      && token.info.trim() === language && token.content.trim() && predicate(token.content));
+    assert.equal(matches.length, 1, `Missing/ambiguous ${language} example in ${title}`);
+    return matches[0].content;
+  }
+  return {
+    recipe: section('Host and initialize', 'sh', code => /^mkdir -p public\/sqlite\s*$/m.test(code)),
+    snippets: [section('Host and initialize', 'js'), section('Float32 nearest neighbors', 'js')],
+  };
+}
 export function validateExample(selection, guide, publication, archive) {
   assert.match(guide, new RegExp(`(?:published version|Published distribution) \\*\\*${selection.version.replaceAll('.', '\\.')}\\*\\*`), 'Announced guide version mismatch');
   assert.ok(guide.includes(`npm install @at-rama/sqlite-vector-wasm@${selection.version}`), 'Install version mismatch');
@@ -95,8 +116,7 @@ export async function example(root = repository, options = {}) {
     assert.equal(bytes.length, file.size); assert.equal(sha(bytes), file.sha256);
   }
   const tokens = (await renderer(root)).parse(guide, {});
-  const recipe = tokens.filter(token => token.type === 'fence' && token.info.trim() === 'sh')[1]?.content;
-  assert.ok(recipe, 'Missing documented asset-copy commands');
+  const { recipe, snippets } = exampleSnippets(tokens);
   execFileSync('sh', ['-c', recipe], { cwd: directory, stdio: 'pipe' });
   const publicRoot = join(directory, 'public'), runtime = join(publicRoot, 'sqlite');
   assert.deepEqual((await readdir(runtime)).sort(), [...runtimeNames].sort(), 'Copied runtime inventory mismatch');
@@ -104,8 +124,6 @@ export async function example(root = repository, options = {}) {
     const bytes = await regularBytes(join(runtime, file.name));
     assert.equal(bytes.length, file.size); assert.equal(sha(bytes), file.sha256);
   }
-  const snippets = tokens.filter(token => token.type === 'fence' && token.info.trim() === 'js').slice(0, 2).map(token => token.content);
-  assert.equal(snippets.length, 2, 'Missing actual initialization/minimal SQL snippets');
   const exampleCode = snippets.join('\n') + `
 const sqliteVersion = db.selectValue('SELECT sqlite_version()');
 const engineVersion = db.selectValue('SELECT vector_version()');

@@ -1,10 +1,33 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, cp, mkdir, writeFile, readFile, rm, symlink } from 'node:fs/promises';
+import { mkdtemp, cp, mkdir, writeFile, readFile, rm, symlink, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { repository } from '../build.mjs';
 import { prepare } from '../prepare.mjs';
+import { renderer } from '../docs.mjs';
+import { renderPublicDocument } from '../documentation.mjs';
+import { exampleSnippets } from '../example.mjs';
+import { prepareDocumentationLinks } from '../../release/documentation.mjs';
+
+test('actual guide snippets survive generated install fences and reject ambiguity', async () => {
+  const guide = await readFile(join(repository, 'docs/usage.md'), 'utf8');
+  const md = await renderer(repository);
+  const raw = exampleSnippets(md.parse(guide, {}));
+  assert.match(raw.recipe, /cp node_modules\/@at-rama\/sqlite-vector-wasm/);
+  assert.match(raw.snippets[0], /sqlite3InitModule/);
+  assert.match(raw.snippets[1], /vector_full_scan/);
+  for (const mode of ['published','candidate']) {
+    const rendered = renderPublicDocument(guide, {mode,version:'0.3.1',upstreams:{sqlite:'3.54.1',sqliteVector:'1.1.2'}});
+    assert.deepEqual(exampleSnippets(md.parse(rendered, {})), raw);
+    // An unrelated example before Host and initialize must not replace its SQL.
+    const prefixed = rendered.replace('## Host and initialize', '```js\nthrow Error("unrelated");\n```\n\n## Host and initialize');
+    assert.deepEqual(exampleSnippets(md.parse(prefixed, {})), raw);
+  }
+  assert.throws(() => exampleSnippets(md.parse(guide.replace('## Host and initialize','## Other'), {})), /section/);
+  assert.throws(() => exampleSnippets(md.parse(guide.replace(raw.recipe, raw.recipe + '\n```\n\n```sh\n' + raw.recipe), {})), /ambiguous sh/);
+  assert.throws(() => exampleSnippets(md.parse(guide.replace(raw.snippets[1], ''), {})), /ambiguous js/);
+});
 
 for (const preview of [undefined, { branch: 'docs-test', commit: 'a'.repeat(40) }]) {
   test(`real renderer tokens and independent doc edits (${preview ? 'preview' : 'stable'})`, async t => {
@@ -37,3 +60,28 @@ for (const preview of [undefined, { branch: 'docs-test', commit: 'a'.repeat(40) 
     await assert.rejects(readFile(join(root, '.work/site/dist/index.html')), { code: 'ENOENT' });
   });
 }
+
+test('release documentation links resolve the real Demo route and reject missing fragments', async t => {
+  const root = await mkdtemp(join(tmpdir(), 'release-docs-links-'));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  await mkdir(join(root, '.work/site'), { recursive: true });
+  await symlink(join(repository, '.work/site/node_modules'), join(root, '.work/site/node_modules'));
+  await symlink(join(repository, '.git'), join(root, '.git'));
+  await mkdir(join(root, 'docs'));
+  await mkdir(join(root, 'site/demo'), { recursive: true });
+  for (const name of ['README.md', 'docs/usage.md', 'site/demo/index.md']) {
+    await cp(join(repository, name), join(root, name));
+  }
+  const destination = join(root, '.work/documentation-links');
+  const manifest = await prepareDocumentationLinks(root, destination);
+  assert.ok(manifest.pages[0].links.includes('/sqlite-vector-wasm/preview/demo/'));
+  assert.equal(await readFile(join(destination, 'demo/index.md'), 'utf8'),
+    await readFile(join(repository, 'site/demo/index.md'), 'utf8'));
+  assert.deepEqual(await readdir(join(destination, 'demo')), ['index.md']);
+  const readme = await readFile(join(root, 'README.md'), 'utf8');
+  await writeFile(join(root, 'README.md'), readme + '\n[Demo anchor](https://at-rama.github.io/sqlite-vector-wasm/demo/#missing)\n');
+  await assert.rejects(prepareDocumentationLinks(root, destination), /missing anchor/);
+  await writeFile(join(root, 'README.md'), readme);
+  await rm(join(root, 'site/demo/index.md'));
+  await assert.rejects(prepareDocumentationLinks(root, destination), /ENOENT/);
+});
