@@ -132,9 +132,3 @@ try {
 ```
 
 See [SQLite's persistence prerequisites](https://sqlite.org/wasm/doc/trunk/persistence.md) for VFS selection, concurrency and initialization details. Browser quotas and private-browsing modes can restrict or disable persistence; check storage behavior in the actual deployment.
-
-## Package provenance and licensing
-
-`package.json` identifies the installed package version; `runtime.json` records its SQLite and SQLite-Vector versions, source digests, assets and build settings. To check the running extension, execute `SELECT vector_version()` and compare it with `runtime.json`.
-
-The distribution's `LICENSE` covers project-authored Apache-2.0 material; `NOTICE` and `licenses/`, including `licenses/origins.json`, preserve the upstream terms and attribution. See the [project presentation](https://at-rama.github.io/sqlite-vector-wasm/) for distribution and source-build documentation.
