@@ -11,11 +11,17 @@ export function githubServices({ repository, token, get, directory, initialNpmEx
   const request = async (method, path, body, binary = false) => {
     const url = path.startsWith('https://') ? path : api + path;
     assert.ok(url.startsWith(api) || url.startsWith(`https://uploads.github.com/repos/${repository}/`), 'Unexpected publication endpoint');
-    const response = await fetch(url, { method, signal:AbortSignal.timeout(120000), headers:{
+    let response, value;
+    try {
+    response = await fetch(url, { method, signal:AbortSignal.timeout(120000), headers:{
       Authorization:`Bearer ${token}`, Accept:'application/vnd.github+json', 'User-Agent':'sqlite-vector-wasm-release',
       'Content-Type':binary ? 'application/octet-stream' : 'application/json',
     }, body:body === undefined ? undefined : binary ? body : JSON.stringify(body) });
-    const value = await response.json();
+    value = await response.json();
+    } catch (cause) {
+      const error = new Error(`${method} ${new URL(url).pathname}: publication acceptance unknown; inspect the existing identity before any retry`, {cause});
+      error.completionUnknown = true; throw error;
+    }
     assert.ok(response.ok, `${method} ${new URL(url).pathname} failed (${response.status}): ${value.message || 'service error'}`);
     return value;
   };
@@ -70,23 +76,42 @@ export function githubServices({ repository, token, get, directory, initialNpmEx
       // The harness checks the pinned SDK paths, versions and digests itself.
       if (!bootstrap) await run('bash',['tools/harness.sh','check'],{env:environment});
     },
-    createTag: (tag,commit) => request('POST','git/refs',{ref:`refs/tags/${tag}`,sha:commit}),
-    createDraft: (identity,notes) => request('POST','releases',{tag_name:identity.tag,target_commitish:undefined,name:`sqlite-vector-wasm ${identity.version}`,body:notes,draft:true,prerelease:identity.channel === 'next',make_latest:identity.channel === 'latest' ? 'true':'false'}),
+    async createTag(tag,commit) {
+      const result = await request('POST','git/refs',{ref:`refs/tags/${tag}`,sha:commit});
+      assert.equal(result.ref, `refs/tags/${tag}`); assert.equal(result.object?.sha, commit); assert.equal(result.object.type, 'commit'); return result;
+    },
+    async createDraft(identity,notes) {
+      const result = await request('POST','releases',{tag_name:identity.tag,target_commitish:undefined,name:`sqlite-vector-wasm ${identity.version}`,body:notes,draft:true,prerelease:identity.channel === 'next',make_latest:identity.channel === 'latest' ? 'true':'false'});
+      assert.ok(Number.isSafeInteger(result.id) && result.id > 0); assert.equal(result.tag_name, identity.tag); assert.equal(result.draft, true); assert.equal(result.prerelease, identity.channel === 'next'); return result;
+    },
     async upload(release,name,path) {
       assert.ok(!release.assets?.some(asset=>asset.name===name), 'Existing asset cannot be overwritten');
       const url = release.upload_url.replace(/\{.*$/, '') + `?name=${encodeURIComponent(name)}`;
-      const result = await request('POST',url,await regularBytes(path),true);
-      assert.equal(result.name,name); assert.equal(result.state,'uploaded'); return {id:result.id,name:result.name};
+      const bytes = await regularBytes(path);
+      const result = await request('POST',url,bytes,true);
+      assert.ok(Number.isSafeInteger(result.id) && result.id > 0, 'Invalid uploaded asset identity');
+      assert.equal(result.name,name); assert.equal(result.state,'uploaded');
+      assert.equal(result.size,bytes.length,'Uploaded asset size mismatch');
+      if (result.digest) assert.equal(result.digest,`sha256:${sha256(bytes)}`,'Uploaded asset digest mismatch');
+      return {id:result.id,name:result.name,size:result.size,...(result.digest?{digest:result.digest}:{})};
     },
-    async npmPublish(archive,channel) {
+    async npmPublish(archive,channel,evidence) {
       // npm rejects one file loaded twice as both user and global configuration.
       const userConfig = join(directory,'empty-user.npmrc'), globalConfig = join(directory,'empty-global.npmrc');
       await Promise.all([writeFile(userConfig,'\n',{flag:'wx'}),writeFile(globalConfig,'\n',{flag:'wx'})]);
-      await run('bash',['tools/harness.sh','exec','npm','publish',archive,'--tag',channel,'--access','public','--ignore-scripts','--provenance'],
-        {env:{...environment,npm_config_userconfig:userConfig,npm_config_globalconfig:globalConfig,npm_config_registry:'https://registry.npmjs.org/'}});
-      return {channel};
+      try {
+        await run('bash',['tools/harness.sh','exec','npm','publish',archive,'--tag',channel,'--access','public','--ignore-scripts','--provenance'],
+          {env:{...environment,npm_config_userconfig:userConfig,npm_config_globalconfig:globalConfig,npm_config_registry:'https://registry.npmjs.org/'}});
+      } catch (error) { error.completionUnknown = true; throw error; }
+      return {channel, ...(evidence ? {name:evidence.name,version:evidence.version,archive:evidence.archive} : {}), accepted:true};
     },
-    finalize: release => request('PATCH',`releases/${release.id}`,{draft:false}),
+    async finalize(release) {
+      const result = await request('PATCH',`releases/${release.id}`,{draft:false});
+      assert.equal(result.id, release.id); assert.equal(result.draft, false);
+      if (release.tag_name) assert.equal(result.tag_name, release.tag_name);
+      if (release.prerelease !== undefined) assert.equal(result.prerelease, release.prerelease);
+      return result;
+    },
     verifyGitHub, verifyNpm,
   };
 }

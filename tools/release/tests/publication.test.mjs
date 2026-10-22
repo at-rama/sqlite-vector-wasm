@@ -66,27 +66,22 @@ test('steady-state publication sends exact bytes, generated provenance and comme
   const f=await qualified(t),services=destinations(f);
   const result=await publish({...f,readSnapshot:async()=>empty(),services});
   assert.equal(result.status,'complete');
-  assert.deepEqual(services.calls.map(c=>c.name),['ready','tag','draft','payload.tgz','publication.json','attestation.json','npm','github','github-identity','npm-identity']);
+  assert.deepEqual(services.calls.map(c=>c.name),['ready','tag','draft','payload.tgz','publication.json','attestation.json','npm','delivery.json','github']);
   assert.equal(services.calls.find(c=>c.name==='npm').args[0],join(f.bundle,'payload.tgz'));
   assert.equal(services.calls.find(c=>c.name==='npm').args[1],'latest');
   assert.ok(f.handoff.notes.includes(f.context.comment));assert.deepEqual(f.evidence.sourceLock,f.report.sourceLock);assert.deepEqual(f.evidence.build,f.constructed.build);
 });
 
-test('post-publish npm visibility lag records a successful publication requiring later inspection',async t=>{
+test('successful writes complete without invoking public visibility inspectors',async t=>{
   const f=await qualified(t),services=destinations(f);
-  services.verifyNpm=async evidence=>{services.calls.push({name:'npm-identity',args:[evidence]});
-    return {status:'verification-pending',version:evidence.version,channel:evidence.channel,
-      reason:'npm channel has not yet converged',observed:'0.0.0'};};
+  services.verifyGitHub=services.verifyNpm=async()=>assert.fail('No public reread after publishing');
   const result=await publish({...f,readSnapshot:async()=>empty(),services});
-  assert.equal(result.status,'published-verification-pending');
-  assert.equal(result.verification.observed,'0.0.0');
-  const operations=services.calls.map(c=>c.name);
-  assert.deepEqual(operations.slice(-4),['npm','github','github-identity','npm-identity']);
+  assert.equal(result.status,'complete');
   const outcome=JSON.parse(await readFile(join(f.handoff.directory,'outcome.json')));
-  assert.equal(outcome.status,'published-verification-pending');
-  assert.equal(outcome.outcomes.find(x=>x.operation==='npm').status,'succeeded');
-  assert.equal(outcome.outcomes.find(x=>x.operation==='github').status,'succeeded');
-  assert.equal(outcome.outcomes.find(x=>x.operation==='npm-identity').status,'pending');
+  assert.equal(outcome.status,'complete');
+  assert.deepEqual(outcome.outcomes.map(o=>o.operation),['tag','draft','archive','provenance','attestation','npm','receipt','github']);
+  const receipt=JSON.parse(await readFile(join(f.handoff.directory,'delivery.json')));
+  assert.equal(receipt.subject.archive.sha256,f.evidence.archive.sha256);
 });
 
 test('initial exception publishes GitHub automatically, hands off the same archive and records npm pending',async t=>{
@@ -119,7 +114,7 @@ test('stale state, concurrent occupancy, changed evidence and wrong attestation 
 
 test('every side-effect failure preserves operation outcomes without compensation or identity reuse',async t=>{
   const f=await qualified(t);
-  for(const failAt of ['ready','tag','draft','payload.tgz','publication.json','attestation.json','npm','github','github-identity','npm-identity']){
+  for(const failAt of ['ready','tag','draft','payload.tgz','publication.json','attestation.json','npm','delivery.json','github']){
     const services=destinations(f,{failAt});await assert.rejects(publish({...f,readSnapshot:async()=>empty(),services}),/injected/);
     const outcome=JSON.parse(await readFile(join(f.handoff.directory,'outcome.json')));assert.equal(outcome.status,'failed');
     assert.equal(services.calls.at(-1).name,failAt);assert.ok(!services.calls.some(c=>/delete|overwrite|repair/.test(c.name)));

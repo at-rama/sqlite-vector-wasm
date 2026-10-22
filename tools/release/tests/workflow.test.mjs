@@ -75,7 +75,7 @@ test('HTTP/qualified npm adapters use non-forced identities, exact uploads and e
   const directory=await mkdtemp(join(tmpdir(),'release-adapters-'));t.after(()=>rm(directory,{recursive:true,force:true}));
   const archive=join(directory,'payload.tgz');await writeFile(archive,'exact bytes');
   const requests=[],commands=[],original=globalThis.fetch;t.after(()=>{globalThis.fetch=original;});
-  globalThis.fetch=async(url,options)=>{requests.push({url,options});return {ok:true,status:201,json:async()=>new URL(url).hostname === 'uploads.github.com'?{id:2,name:'payload.tgz',state:'uploaded'}:{id:1}};};
+  globalThis.fetch=async(url,options)=>{requests.push({url,options});const body=options.headers['Content-Type']==='application/json'?JSON.parse(options.body):null;return {ok:true,status:201,json:async()=>new URL(url).hostname === 'uploads.github.com'?{id:2,name:'payload.tgz',state:'uploaded',size:options.body.length}:url.endsWith('/git/refs')?{ref:body.ref,object:{sha:body.sha,type:'commit'}}:{id:1,tag_name:body.tag_name,draft:true,prerelease:body.prerelease}};};
   const services=githubServices({repository:'a/b',token:'synthetic',directory,get:async()=>{},run:async(cmd,args,options)=>{commands.push({cmd,args,options});return '';},environment:{}});
   await services.createTag('dist/v0.1.0','a'.repeat(40));
   assert.deepEqual(JSON.parse(requests[0].options.body),{ref:'refs/tags/dist/v0.1.0',sha:'a'.repeat(40)});

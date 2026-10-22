@@ -7,6 +7,7 @@ import { vectorLock, recordedSelection, assertSelected, assertSelectionEvidence,
 import { engineKey, calculate } from './policy.mjs';
 import { publicationIdentity, npmState, download, sha256 } from './state.mjs';
 import { assertReviewedSources, assertFinalDocumentation, renewDocumentation } from './documentation.mjs';
+import { deliveryReceipt } from './delivery.mjs';
 
 const jsonBytes = value => Buffer.from(JSON.stringify(value, null, 2) + '\n');
 const json = async path => JSON.parse(await regularBytes(path));
@@ -80,7 +81,7 @@ export function provenance(context, identity, accepted, documentation) {
   const evidence = { schemaVersion: 1, ...identity, commit: context.commit, repository: context.repository,
     upstreams: { ...context.selection }, ...(engineKey(context.selection) === 'sqliteVector' ? {engine:engineIdentity(accepted.build)} : {}), sourceLock: accepted.sourceLock,
     sourceLockSha256: accepted.report.sourceLockSha256, build: accepted.build.build,
-    runtimeFiles: accepted.build.runtimeFiles, archive: accepted.archive,
+    runtimeFiles: accepted.build.runtimeFiles, archive: accepted.archive, deliveryReceipt: 'delivery.json',
     acceptance: { verdict: accepted.report.verdict, source: accepted.report.source, stages: accepted.report.stages,
       browser: accepted.report.browserResults.browser, hosting: accepted.report.browserResults.hosting,
       reportSha256: hash(jsonBytes(accepted.report)) },
@@ -136,8 +137,13 @@ export async function publish({ handoff, readSnapshot, services, attestation, re
   const outcomePath = join(handoff.directory, 'outcome.json');
   const save = value => writeFile(outcomePath, jsonBytes({ stableDocumentationEligible: false, ...value, outcomes }));
   const step = async (operation, action) => {
-    try { const result = await action(); outcomes.push({ operation, status:result?.status === 'verification-pending' ? 'pending' : 'succeeded', result }); await save({ status:'in-progress' }); return result; }
-    catch (error) { outcomes.push({ operation, status:'failed', diagnostic:error.message }); throw error; }
+    let result;
+    try { result = await action(); }
+    catch (error) { outcomes.push({ operation, status:error.completionUnknown ? 'unknown' : 'failed', diagnostic:error.message }); throw error; }
+    outcomes.push({ operation, status:'succeeded', result });
+    try { await save({ status:'in-progress' }); }
+    catch (error) { error.message = `Operation ${operation} acknowledged; local journal persistence failed: ${error.message}`; throw error; }
+    return result;
   };
   try {
     if (handoff.context.pullRequest) await assertReviewedSources(handoff.context, repository);
@@ -158,23 +164,23 @@ export async function publish({ handoff, readSnapshot, services, attestation, re
     await step('archive', () => services.upload(release, 'payload.tgz', accepted.archivePath));
     await step('provenance', () => services.upload(release, 'publication.json', handoff.evidencePath));
     await step('attestation', () => services.upload(release, 'attestation.json', attestationPath));
-    if (!bootstrap) await step('npm', () => services.npmPublish(accepted.archivePath, handoff.identity.channel));
+    if (!bootstrap) {
+      await step('npm', () => services.npmPublish(accepted.archivePath, handoff.identity.channel, expected.evidence));
+      const receipt = deliveryReceipt(expected.evidence, release, outcomes);
+      const receiptPath = join(handoff.directory, 'delivery.json'); await writeFile(receiptPath, jsonBytes(receipt));
+      await step('receipt', () => services.upload(release, 'delivery.json', receiptPath));
+    }
     await step('github', () => services.finalize(release));
-    await step('github-identity', () => services.verifyGitHub(release, expected.evidence));
     if (bootstrap) {
       const result = { status:'npm-pending', identity:handoff.identity, release, evidencePath:handoff.evidencePath, archivePath:accepted.archivePath };
-      await save(result); return result;
-    }
-    const verification = await step('npm-identity', () => services.verifyNpm(expected.evidence));
-    assert.ok(['verified','verification-pending'].includes(verification?.status), 'Unexpected npm verification verdict');
-    if (verification.status === 'verification-pending') {
-      const result = { status:'published-verification-pending', identity:handoff.identity, release, verification };
       await save(result); return result;
     }
     const result = { status:'complete', identity:handoff.identity, release, publication: expected.evidence,
       stableDocumentationEligible: Boolean(handoff.context.pullRequest && handoff.documentation) }; await save(result); return result;
   } catch (error) {
-    await save({ status:'failed', diagnostic:error.message }); error.message += `; per-operation evidence: ${outcomePath}`; throw error;
+    try { await save({ status:'failed', diagnostic:error.message }); }
+    catch (journalError) { error.message += `; journal unavailable: ${journalError.message}`; }
+    error.message += `; per-operation evidence: ${outcomePath}`; throw error;
   }
 }
 

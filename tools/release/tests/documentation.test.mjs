@@ -33,19 +33,19 @@ async function reviewFixture(t) {
  const common={status:'completed',conclusion:'success',run_attempt:1,repository:{full_name:repository}};
  const preparation={...common,id:17,path:'.github/workflows/updates.yml',event:'workflow_dispatch',head_sha:base,head_branch:'main'};
  const site={...common,id:18,path:'.github/workflows/site.yml',event:'pull_request',head_sha:head};
- const jobs={total_count:3,jobs:['build','deploy','observe'].map(name=>({name,status:'completed',conclusion:'success'}))};
+ const jobs={total_count:2,jobs:['build','deploy'].map(name=>({name,status:'completed',conclusion:'success'}))};
  const candidate={status:'candidate-ready',commit:head,baseCommit:base,pullRequest:{number:4,head},selection:selected.selection,
    preparation:selected.preparation,documentSources:f.sources,archive:f.example.context.archive,identity:{version:'0.1.0'},documentation:{example:f.example}};
  const accepted=structuredClone(f.report);accepted.source.commit=head;
  const input={runId:17,commit:head,artifactId:101,artifactSha256:'d'.repeat(64)};
  const live={publication:{repository,pullRequest:4,mode:'preview',preview:{commit:head,branch:pr.head.ref}},results:[{
-   preview:{commit:head,branch:pr.head.ref},url:'https://a.github.io/b/preview/',viewports:[1280,390],browser:'synthetic policy fixture',destinations:3,directVisits:6,clientTransitions:6,
+   preview:{commit:head,branch:pr.head.ref},url:'http://127.0.0.1:3333/sqlite-vector-wasm/preview/',viewports:[1280,390],browser:'synthetic policy fixture',destinations:3,directVisits:6,clientTransitions:6,
    documentation:documentationSources.map(p=>({source:p,sha256:hash(Buffer.from(renderPublicDocument(source[p],f.example.context)))}))}]};
  const get=async url=>({status:200,data:url.includes('/attempts/')?preparation:url.includes('/jobs?')?jobs:url.includes('?head_sha=')?{workflow_runs:[site]}:site});
  const artifact=async({name})=>{
    const directory=join(f.repository,'.work/review',name);
    if(name.startsWith('updates-')) {await record(directory,'candidate.json',candidate);await record(directory,'acceptance.json',accepted);}
-   else if(name.startsWith('site-checks-')) {await record(directory,'handoff.json',input);await record(directory,'result.json',f.example);}
+   else if(name.startsWith('site-checks-')) {await record(directory,'handoff.json',input);await record(directory,'result.json',f.example);await record(directory,'assembled.json',live);}
    else await record(directory,'live-pages.json',live);
    return {directory,id:name.startsWith('updates-')?101:name.startsWith('site-checks-')?102:103,sha256:'d'.repeat(64)};
  };
@@ -55,7 +55,7 @@ async function reviewFixture(t) {
  return {...f,source,pr,preparation,site,jobs,candidate,accepted,input,live,invoke,readAt,changes};
 }
 
-test('review binds preparation, qualified archive, exact Site jobs/live content and unchanged merged sources',async t=>{
+test('review binds preparation, qualified archive, exact Site jobs/local assembled content and unchanged merged sources',async t=>{
  const f=await reviewFixture(t),result=await f.invoke();
  assert.equal(result.candidateCommit,head);assert.deepEqual(result.sourceHashes,f.sources);assert.equal(result.site.runId,18);
  for(const path of [...candidateDocumentPaths,...reviewedRendererPaths]) {
@@ -79,10 +79,10 @@ test(`review rejects ${failure} without publication authority`,async t=>{
   case 'wrong-workflow':f.site.path='.github/workflows/other.yml';break;
   case 'wrong-event':f.site.event='push';break;
   case 'site-pending':f.site.status='in_progress';break;
-  case 'site-failed':f.site.conclusion='failure';break;
+  case 'site-failed':f.site.conclusion='failure';f.jobs.jobs[0].conclusion='failure';break;
   case 'site-head':f.site.head_sha='e'.repeat(40);break;
   case 'job-missing':f.jobs.jobs.pop();f.jobs.total_count--;break;
-  case 'job-failed':f.jobs.jobs[2].conclusion='failure';break;
+  case 'job-failed':f.jobs.jobs[1].conclusion='failure';break;
   case 'input-run':f.input.runId=19;break;
   case 'input-artifact':f.input.artifactId=999;break;
   case 'input-digest':f.input.artifactSha256='e'.repeat(64);break;
@@ -94,6 +94,12 @@ test(`review rejects ${failure} without publication authority`,async t=>{
   case 'missing-mobile':f.live.results[0].viewports=[1280];break;
  }
  await assert.rejects(f.invoke());
+});
+
+test('an obsolete public observer failure cannot override qualified local build and completed deployment',async t=>{
+ const f=await reviewFixture(t);f.site.conclusion='failure';
+ f.jobs.jobs.push({name:'observe',status:'completed',conclusion:'failure'});f.jobs.total_count++;
+ assert.equal((await f.invoke()).candidateCommit,head);
 });
 
 const state=()=>({schemaVersion:1,tags:['dist/v0.1.0'],releaseTags:['dist/v0.1.0'],npmVersions:['0.1.0'],heads:{latest:{version:'0.1.0',commit:head,upstreams:selected.selection},next:null}});
@@ -136,21 +142,24 @@ for(const failure of ['no-review','changed-source','changed-renderer','wrong-fin
 });
 test('incomplete destinations and changed final proof never supply stable promotion',async t=>{
  const f=await finalFixture(t),handoff=await f.invoke(),evidence=JSON.parse(await readFile(handoff.evidencePath));
- for(const failAt of ['npm','github','github-identity']) {
+ for(const failAt of ['npm','github']) {
   const services=destinations(failAt);await assert.rejects(publish({...f,handoff,readSnapshot:async()=>state(),services,attestation:{bundle:syntheticAttestation(evidence)}}));
   const result=JSON.parse(await readFile(join(handoff.directory,'outcome.json')));assert.equal(result.status,'failed');assert.notEqual(result.stableDocumentationEligible,true);assert.equal(result.publication,undefined);
  }
  const pending=await publish({...f,handoff,readSnapshot:async()=>state(),services:destinations(null,'verification-pending'),attestation:{bundle:syntheticAttestation(evidence)}});
- assert.equal(pending.status,'published-verification-pending');assert.notEqual(pending.stableDocumentationEligible,true);
+ assert.equal(pending.status,'complete');assert.equal(pending.stableDocumentationEligible,true);
  const changed=structuredClone(handoff);changed.documentation.example.context.archive.sha256='0'.repeat(64);
  const noCalls=destinations();await assert.rejects(publish({...f,handoff:changed,readSnapshot:async()=>state(),services:noCalls,attestation:{bundle:syntheticAttestation(evidence)}}));assert.deepEqual(noCalls.calls,[]);
 });
 
 
-test('visibility completion and site retries only re-observe the same already executed publication',async t=>{
+test('historical visibility inspection only re-observes the same already executed publication',async t=>{
  const f=await finalFixture(t),handoff=await f.invoke(),evidence=JSON.parse(await readFile(handoff.evidencePath));
  await publish({...f,handoff,readSnapshot:async()=>state(),services:destinations(null,'verification-pending'),attestation:{bundle:syntheticAttestation(evidence)}});
  const outcome=JSON.parse(await readFile(join(handoff.directory,'outcome.json'))),reads=[];
+ outcome.status='published-verification-pending';delete outcome.publication;
+ outcome.outcomes=outcome.outcomes.filter(o=>o.operation!=='receipt');
+ outcome.outcomes.push({operation:'github-identity',status:'succeeded'},{operation:'npm-identity',status:'pending'});
  const verifyGitHub=async()=>reads.push('github-read');
  const verifyNpm=async()=>{reads.push('npm-read');return {status:'verified'};};
  const result=await inspectPublicationCompletion({evidence,outcome,verifyGitHub,verifyNpm});
