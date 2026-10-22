@@ -5,6 +5,28 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { repository } from '../build.mjs';
 import { prepare } from '../prepare.mjs';
+import { renderer } from '../docs.mjs';
+import { renderPublicDocument } from '../documentation.mjs';
+import { exampleSnippets } from '../example.mjs';
+
+test('actual guide snippets survive generated install fences and reject ambiguity', async () => {
+  const guide = await readFile(join(repository, 'docs/usage.md'), 'utf8');
+  const md = await renderer(repository);
+  const raw = exampleSnippets(md.parse(guide, {}));
+  assert.match(raw.recipe, /cp node_modules\/@at-rama\/sqlite-vector-wasm/);
+  assert.match(raw.snippets[0], /sqlite3InitModule/);
+  assert.match(raw.snippets[1], /vector_full_scan/);
+  for (const mode of ['published','candidate']) {
+    const rendered = renderPublicDocument(guide, {mode,version:'0.3.1',upstreams:{sqlite:'3.54.1',sqliteVector:'1.1.2'}});
+    assert.deepEqual(exampleSnippets(md.parse(rendered, {})), raw);
+    // An unrelated example before Host and initialize must not replace its SQL.
+    const prefixed = rendered.replace('## Host and initialize', '```js\nthrow Error("unrelated");\n```\n\n## Host and initialize');
+    assert.deepEqual(exampleSnippets(md.parse(prefixed, {})), raw);
+  }
+  assert.throws(() => exampleSnippets(md.parse(guide.replace('## Host and initialize','## Other'), {})), /section/);
+  assert.throws(() => exampleSnippets(md.parse(guide.replace(raw.recipe, raw.recipe + '\n```\n\n```sh\n' + raw.recipe), {})), /ambiguous sh/);
+  assert.throws(() => exampleSnippets(md.parse(guide.replace(raw.snippets[1], ''), {})), /ambiguous js/);
+});
 
 for (const preview of [undefined, { branch: 'docs-test', commit: 'a'.repeat(40) }]) {
   test(`real renderer tokens and independent doc edits (${preview ? 'preview' : 'stable'})`, async t => {

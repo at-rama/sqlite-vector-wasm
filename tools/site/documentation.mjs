@@ -24,19 +24,25 @@ export function renderPublicDocument(text, context) {
   const engineVersion = context.upstreams.sqliteVector;
   assert.ok(context.upstreams.sqlite && engineVersion, 'Missing documentation composition');
   const label = context.mode === 'candidate' ? 'Unpublished release candidate' : 'Published distribution';
-  const status = `> ${label} **${context.version}** · SQLite ${context.upstreams.sqlite} · ${engine} ${engineVersion}. ${context.mode === 'candidate' ? 'Use the supplied qualified archive; no npm availability is asserted.' : 'The example uses the matching published archive.'}\n\n`;
+  const status = `> Reproducibility — ${label} **${context.version}** · SQLite ${context.upstreams.sqlite} · ${engine} ${engineVersion}. ${context.mode === 'candidate' ? 'Use the supplied qualified archive; no npm availability is asserted.' : 'The checked example uses this exact published archive; generic installation and npm latest badges may describe a different publication.'}\n\n`;
   const line = text.indexOf('\n');
   assert.ok(line > 0, 'Missing documentation title');
   let rendered = text.slice(0, line + 1) + '\n' + status + text.slice(line + 1);
-  // The authored source may still name the preceding published release. Bind
-  // the rendered install instructions to this checked archive, not that literal.
+  // Accept earlier source syntax without requiring a release literal in current
+  // Markdown. Latest badges are informational and never supply this context.
   const sourceVersion = text.match(/npm install @at-rama\/sqlite-vector-wasm@([0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?)/)?.[1];
   if (sourceVersion) {
     rendered = rendered.replaceAll(`@at-rama/sqlite-vector-wasm@${sourceVersion}`, `@at-rama/sqlite-vector-wasm@${context.version}`)
       .replaceAll('`' + sourceVersion + '`', '`' + context.version + '`');
   }
-  if (context.mode === 'published') rendered = rendered.replaceAll('npm install ./payload.tgz', `npm install @at-rama/sqlite-vector-wasm@${context.version}`);
-  else rendered = rendered.replaceAll(`npm install @at-rama/sqlite-vector-wasm@${context.version}`, 'npm install ./payload.tgz');
+  const installation = /npm install @at-rama\/sqlite-vector-wasm(?:@[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?)?(?![A-Za-z0-9@/.-])/g;
+  if (context.mode === 'candidate') rendered = rendered.replaceAll(installation, 'npm install ./payload.tgz');
+  else {
+    rendered = rendered.replaceAll(installation, 'npm install @at-rama/sqlite-vector-wasm')
+      .replaceAll('npm install ./payload.tgz', 'npm install @at-rama/sqlite-vector-wasm');
+    rendered = rendered.replace(/(```sh\nnpm install @at-rama\/sqlite-vector-wasm\n```)/,
+      `$1\n\nTo reproduce the checked example, install its exact publication instead:\n\n\`\`\`sh\nnpm install @at-rama/sqlite-vector-wasm@${context.version}\n\`\`\``);
+  }
   return rendered;
 }
 export async function documentationSelection(root) {

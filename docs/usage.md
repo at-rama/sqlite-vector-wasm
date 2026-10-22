@@ -2,12 +2,12 @@
 
 Use SQLite's browser JavaScript/WASM APIs with SQLite-Vector built in. This guide takes you from serving the runtime assets to vector search, Workers and persistent storage.
 
-Install `@at-rama/sqlite-vector-wasm@0.3.0` and serve its complete runtime asset set.
+Install `@at-rama/sqlite-vector-wasm` and serve its complete runtime asset set.
 
 ## Host and initialize
 
 ```sh
-npm install @at-rama/sqlite-vector-wasm@0.3.0
+npm install @at-rama/sqlite-vector-wasm
 ```
 
 From your project's root, copy **all eleven runtime files** into one public asset directory. For example, with a POSIX shell:
@@ -50,7 +50,7 @@ console.log(neighbors);
 
 `vector_init()` associates the table and column with a vector type, dimension and distance metric for the current connection. Initialize that association again when opening another connection to the same stored data; do not recreate the table or reinsert its rows just to query it. The column stores the vectors themselves as BLOBs. Keep the stored vectors and query vectors consistent in type and dimension.
 
-This example performs exact search without quantization. For quantized search and its preparation and refresh requirements, consult the [SQLite-Vector reference](https://github.com/sqliteai/sqlite-vector/tree/1.1.2). Quantization is an optional workflow, not a prerequisite for the examples here.
+This example performs exact search without quantization. For quantized search and its preparation and refresh requirements, consult the [SQLite-Vector reference](https://github.com/sqliteai/sqlite-vector). Quantization is an optional workflow, not a prerequisite for the examples here.
 
 ## Binary vectors and Hamming distance
 
@@ -137,4 +137,4 @@ See [SQLite's persistence prerequisites](https://sqlite.org/wasm/doc/trunk/persi
 
 `package.json` identifies the installed package version; `runtime.json` records its SQLite and SQLite-Vector versions, source digests, assets and build settings. To check the running extension, execute `SELECT vector_version()` and compare it with `runtime.json`.
 
-The distribution's `LICENSE` covers project-authored Apache-2.0 material; `NOTICE` and `licenses/`, including `licenses/origins.json`, preserve the upstream terms and attribution. See the [project README](../README.md) for distribution and source-build documentation.
+The distribution's `LICENSE` covers project-authored Apache-2.0 material; `NOTICE` and `licenses/`, including `licenses/origins.json`, preserve the upstream terms and attribution. See the [project presentation](https://at-rama.github.io/sqlite-vector-wasm/) for distribution and source-build documentation.

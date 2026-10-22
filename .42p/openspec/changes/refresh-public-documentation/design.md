@@ -73,7 +73,7 @@ Review this planning-only PR, then explicitly invoke Apply on the same branch. A
 
 ## Allocation coverage before Apply
 
-The effective contract is the cumulative five-requirement `site-docs` baseline with the two complete modified blocks in this Change. This table maps the entire selected unit, including preserved obligations; unchanged requirements are not omitted simply because their blocks are absent from the delta. Task numbers refer to [tasks.md](tasks.md), to be completed before Apply.
+The effective contract is the cumulative five-requirement `site-docs` baseline with the two complete modified blocks in this Change. This table maps the entire selected unit, including preserved obligations; unchanged requirements are not omitted simply because their blocks are absent from the delta. Task numbers refer to [tasks.md](tasks.md). This correspondence is established before Apply; the implementation tasks are executed during Apply.
 
 | A-site_docs contribution / qualified source | Effective requirement and scenarios | Planned tasks |
 | --- | --- | --- |

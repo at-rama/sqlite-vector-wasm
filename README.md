@@ -1,10 +1,13 @@
 # sqlite-vector-wasm
 
-[![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](https://github.com/at-rama/sqlite-vector-wasm/blob/main/LICENSE)
-[![SQLite](https://img.shields.io/badge/SQLite-WASM-003B57?logo=sqlite&logoColor=white)](https://sqlite.org/wasm)
-[![SQLite-Vector](https://img.shields.io/badge/SQLite--Vector-integrated-00897B)](https://github.com/sqliteai/sqlite-vector)
+[![npm latest](https://img.shields.io/npm/v/@at-rama/sqlite-vector-wasm/latest)](https://www.npmjs.com/package/@at-rama/sqlite-vector-wasm)
+[![npm license](https://img.shields.io/npm/l/@at-rama/sqlite-vector-wasm)](https://github.com/at-rama/sqlite-vector-wasm/blob/main/LICENSE)
+[![SQLite in npm latest](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fcdn.jsdelivr.net%2Fnpm%2F%40at-rama%2Fsqlite-vector-wasm%40latest%2Fruntime.json&query=%24.inputs.sqlite.version&label=SQLite)](https://sqlite.org/wasm)
+[![SQLite-Vector in npm latest](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fcdn.jsdelivr.net%2Fnpm%2F%40at-rama%2Fsqlite-vector-wasm%40latest%2Fruntime.json&query=%24.inputs.sqliteVector.version&label=SQLite-Vector)](https://github.com/sqliteai/sqlite-vector)
 [![CI](https://github.com/at-rama/sqlite-vector-wasm/actions/workflows/repository.yml/badge.svg)](https://github.com/at-rama/sqlite-vector-wasm/actions/workflows/repository.yml)
 [![Site](https://img.shields.io/badge/Site-Documentation-3451B2)](https://at-rama.github.io/sqlite-vector-wasm/)
+
+The package and component badges describe the npm `latest` publication; the checked example and demo identify their own runtime selections.
 
 **SQLite for the browser, with vector search built in.**
 
@@ -14,10 +17,10 @@ sqlite-vector-wasm distributes SQLite's browser WebAssembly runtime with [SQLite
 
 ## Quick start
 
-Install version `0.3.0`:
+Install the browser assets:
 
 ```sh
-npm install @at-rama/sqlite-vector-wasm@0.3.0
+npm install @at-rama/sqlite-vector-wasm
 ```
 
 Serve **all eleven runtime files** together, for example under `/sqlite/`. The [usage guide](https://at-rama.github.io/sqlite-vector-wasm/usage/#host-and-initialize) provides the copy commands and hosting setup. npm installs the assets; your server must expose their URLs with JavaScript MIME types for `.js`/`.mjs` and `application/wasm` for `.wasm`.
@@ -56,12 +59,12 @@ The package preserves upstream SQLite/SQLite-Vector behavior. It does **not** pr
 
 ## Distribution and source
 
-Archive size depends on the release build. Consult the `0.3.0` release assets for their exact payload and provenance.
+Download size is approximately **672 kB with gzip (1.77 MB raw)** for the ES module loader and WASM binary together, based on the [measured published runtime](https://github.com/at-rama/sqlite-vector-wasm/blob/main/docs/runtime-footprint.md). Application data and additional requested companion files are extra; transfer size depends on server compression and caching. These figures describe downloaded files, not runtime memory usage.
 
 - [npm package](https://www.npmjs.com/package/@at-rama/sqlite-vector-wasm)
 - [GitHub Releases](https://github.com/at-rama/sqlite-vector-wasm/releases)
 
-The `0.3.0` distribution contains `runtime.json`, recording the selected SQLite and SQLite-Vector versions, source digests, runtime files and build options. The distribution includes consumer guides for SQLite-Vector.
+Each distribution contains `runtime.json`, recording the selected SQLite and SQLite-Vector versions, source digests, runtime files and build options. The distribution includes consumer guides for SQLite-Vector.
 
 To build or inspect the distribution, see [source acquisition](https://github.com/at-rama/sqlite-vector-wasm/blob/main/docs/source-acquisition.md), [browser builds](https://github.com/at-rama/sqlite-vector-wasm/blob/main/docs/build.md) and [packaging](https://github.com/at-rama/sqlite-vector-wasm/blob/main/docs/packaging.md).
 
