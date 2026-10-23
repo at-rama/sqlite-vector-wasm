@@ -104,32 +104,35 @@ test('documentation rendering rejects stale, missing or mismatched execution evi
   assert.equal(await readFile(join(root,'tools/site/demo-runtime.json'),'utf8'),'unchanged demo selection');
 });
 
-test('documentation input selects only the bound preparation or exact-head publisher-free exercise', () => {
+test('documentation input selects only the exact same-run Acceptance producer', () => {
  const repository='at-rama/sqlite-vector-wasm',commit='a'.repeat(40);
- const fixtureRun={id:1,path:'.github/workflows/release.yml',head_sha:commit,event:'pull_request',repository:{full_name:repository}};
- assert.equal(selectDocumentationRun({fixture:true,runs:[fixtureRun],repository,commit}).run.id,1);
- assert.equal(selectDocumentationRun({fixture:true,runs:[{...fixtureRun,head_sha:'b'.repeat(40)}],repository,commit}),null);
- assert.throws(()=>selectDocumentationRun({fixture:false,runs:[fixtureRun],repository,commit}));
- const update={...fixtureRun,id:2,path:'.github/workflows/updates.yml',event:'workflow_dispatch'};
- const descriptor={schemaVersion:2,preparation:{runId:2}};
- assert.equal(selectDocumentationRun({descriptor,runs:[update],repository,commit}).prefix,'updates');
- assert.throws(()=>selectDocumentationRun({descriptor,runs:[{...update,event:'push'}],repository,commit}));
- assert.throws(()=>selectDocumentationRun({descriptor,runs:[{...update,repository:{full_name:'other/repo'}}],repository,commit}));
+ const run={id:25,run_attempt:2,path:'.github/workflows/acceptance.yml',head_sha:commit,event:'pull_request',status:'in_progress',repository:{full_name:repository}};
+ const input={run,repository,commit,runId:25,attempt:2};
+ assert.equal(selectDocumentationRun(input),run);
+ for(const change of [r=>r.id++,r=>r.run_attempt++,r=>r.repository.full_name='other/repo',r=>r.head_sha='b'.repeat(40),r=>r.path='.github/workflows/updates.yml',r=>r.event='push',r=>r.status='queued']){
+  const other=structuredClone(run);change(other);assert.throws(()=>selectDocumentationRun({...input,run:other}));
+ }
 });
 
-
-test('cleanup preview without a descriptor waits for exact-head exercise; malformed descriptors fail', async t => {
-  const root = await mkdtemp(join(tmpdir(), 'docs-input-'));
-  t.after(() => rm(root, { recursive: true, force: true }));
-  await mkdir(join(root, 'tools/site'), { recursive: true });
-  await writeFile(join(root, 'tools/site/docs-example.json'), JSON.stringify({ mode: 'candidate', engine: 'sqliteVector', sourceLockPath: 'inputs/sqlite-vector.sources.lock.json' }));
-  const commit = 'a'.repeat(40), calls = [];
-  const options = { root, repository: 'a/b', commit, attempts: 1, wait: async () => {}, get: async url => {
-    calls.push(url); return { status: 200, json: async () => ({ workflow_runs: [] }) };
-  } };
-  await assert.rejects(acquireDocumentationBundle(options), /Timed out waiting for exact-head qualified documentation input/);
-  assert.deepEqual(calls, [`https://api.github.com/repos/a/b/actions/runs?head_sha=${commit}&event=pull_request&per_page=100`]);
-  await mkdir(join(root, 'inputs'));
-  await writeFile(join(root, 'inputs/release.json'), '{broken');
-  await assert.rejects(acquireDocumentationBundle(options), SyntaxError);
+test('same-run handoff validates the qualified archive and never waits for another workflow',async t=>{
+ const root=await mkdtemp(join(tmpdir(),'docs-same-run-'));t.after(()=>rm(root,{recursive:true,force:true}));
+ const commit='a'.repeat(40),repository='a/b',directory=join(root,'artifact');
+ await mkdir(join(directory,'acceptance/run-one'),{recursive:true});
+ const archive={size:10,sha256:'d'.repeat(64)},candidate={status:'qualified-in-pr',commit,qualification:{runId:25,attempt:2},identity:{version:'0.1.0'},archive};
+ const report={source:{commit},verdict:'passed'};
+ await writeFile(join(directory,'candidate.json'),JSON.stringify(candidate));
+ await writeFile(join(directory,'acceptance/run-one/acceptance.json'),JSON.stringify(report));
+ const urls=[],run={id:25,run_attempt:2,head_sha:commit,path:'.github/workflows/acceptance.yml',event:'pull_request',status:'in_progress',repository:{full_name:repository}};
+ const jobs={total_count:1,jobs:[{name:'composition',status:'completed',conclusion:'success'}]};
+ const options={root,repository,commit,runId:25,attempt:2,name:'candidate-25-2',get:async url=>{urls.push(url);return {status:200,data:url.includes('/jobs?')?jobs:run};},
+ artifact:async({name})=>{assert.equal(name,'candidate-25-2');return {directory,id:101,sha256:'e'.repeat(64)};},
+ accept:async({identity,commit:head})=>{assert.equal(head,commit);assert.equal(identity.version,'0.1.0');return {archive};}};
+ const result=await acquireDocumentationBundle(options);assert.equal(result.runId,25);assert.equal(result.artifactId,101);assert.equal(urls.length,1);
+ assert.ok(urls.every(url=>!url.includes('?head_sha=')));
+ candidate.archive={...archive,sha256:'0'.repeat(64)};await writeFile(join(directory,'candidate.json'),JSON.stringify(candidate));
+ await assert.rejects(acquireDocumentationBundle(options),/archive handoff/);candidate.archive=archive;
+ candidate.qualification.attempt=1;await writeFile(join(directory,'candidate.json'),JSON.stringify(candidate));await assert.rejects(acquireDocumentationBundle(options));candidate.qualification.attempt=2;
+ await writeFile(join(directory,'candidate.json'),JSON.stringify(candidate));report.verdict='failed';await writeFile(join(directory,'acceptance/run-one/acceptance.json'),JSON.stringify(report));await assert.rejects(acquireDocumentationBundle(options),/No exact-head/);report.verdict='passed';await writeFile(join(directory,'acceptance/run-one/acceptance.json'),JSON.stringify(report));
+ await assert.rejects(acquireDocumentationBundle({...options,artifact:async()=>{throw Error('artifact expired');}}),/expired/);
+ report.source.commit='b'.repeat(40);await writeFile(join(directory,'acceptance/run-one/acceptance.json'),JSON.stringify(report));await assert.rejects(acquireDocumentationBundle(options),/No exact-head/);
 });

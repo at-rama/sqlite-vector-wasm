@@ -128,7 +128,7 @@ test('transition cannot repeat bootstrap; successful injected publication uses o
  await assert.rejects(attempt(),/initial only/);assert.deepEqual(calls,[]);
  services.initialNpmException=false;
  for(const name of ['createTag','createDraft','upload','npmPublish','finalize','verifyGitHub','verifyNpm'])services[name]=async(...args)=>{calls.push({name,args});return name==='verifyNpm'?{status:'verification-pending',reason:'fixture visibility lag'}:{id:1};};
- assert.equal((await attempt()).status,'published-verification-pending');
+ assert.equal((await attempt()).status,'complete');
  assert.equal(calls.filter(c=>c.name==='npmPublish').length,1);assert.equal(calls.find(c=>c.name==='npmPublish').args[0],f.handoff.archivePath);assert.equal(calls.find(c=>c.name==='upload').args[2],f.handoff.archivePath);
  assert.ok(calls.find(c=>c.name==='createDraft').args[1].includes('BREAKING CHANGE'));
 });

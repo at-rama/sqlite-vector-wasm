@@ -1,0 +1,20 @@
+# A-release coverage
+
+Inputs: Allocation and contributing Captures at `85585a833b4cd37959f8ad841109f7b2e4c45c1e`. Examine the complete A-release attribution, including qualified Capture passages and dependencies, against this delta plus the retained `distribution-release` baseline at that commit. This mapping is traceability, not proof of implementation or independent source authority.
+
+| Allocated matter | Realization contract | Tasks / scenarios |
+| --- | --- | --- |
+| D/C-purpose, C-release; W/C-version-identity | Retained Single distribution identity and Matching consumer payload and notices | 3.1; retained identity, source-byte and notice rejection cases |
+| W/C-determinism, C-semver, C-channels, C-selection, C-dispatch; D/C-release | Retained Numerical upstream increment, Distribution maturity ceiling, Upstream-derived publication channel, Independent channel progression and alpha series, Component-aware comparison references, Vector-only shared deterministic calculation | 3.1; retained deterministic/transition/rollback/channel scenarios |
+| W/C-publication and D/C-release uniqueness | Retained Complete publication state and uniqueness | 3.1; collisions and unavailable/inconsistent state remain errors |
+| D/C-autonomy, C-failure, C-release-review; W/C-publication | Retained Human-authorized integration trigger, Definitive identity before final qualification, Applicable complete acceptance evidence; revised Reviewed documentation publication handoff | 1.1, 3.1; exact candidate/local report and renewed definitive identity; missing or substituted proof |
+| W/C-provenance, D/C-release/C-bootstrap | Retained Complete publication provenance and Trusted publishing and supported attestations | 2.1–3.1; same exact archive, hosted OIDC and attestation subject/source |
+| D/C-bootstrap; W/C-publication initial exception | Retained Selected stable bootstrap and Bounded initial npm exception; durable receipt's historical/initial scenario | 2.1, 2.3, 3.1; no fabricated normal npm receipt or new bootstrap |
+| D/C-delivery normal completion and scope-preserved integrity | Added Completed platform operations establish delivery | 2.1–2.2; successful writes without public reads; rejected/uncertain write does not complete |
+| D/C-delivery durable matching Site handoff; D/C-release-review | Added Durable matching publication receipt; revised Reviewed documentation publication handoff | 2.1; exact subject/manifest/Release, required assets, draft and substitution failures |
+| D/C-delivery incidents; D/C-failure | Added Bounded manual incident procedure and retained Publication failures remain explicit | 2.2; acknowledged versus rejected/unknown/journal error, site-only retry, no destructive compensation |
+| D/R-updates, W/R-frugality and W/Q-engine-transition scope | Contextual constraints carried by proposal/design; discovery floor belongs to A-watch, Site deployment belongs to A-site_shell | No independent product task, numbering policy or recovery infrastructure |
+
+Reverse examination: the modified handoff derives from D/C-release-review/C-delivery and the unchanged authoritative-revision requirements. Completed writes, receipt identity, rejection of draft/substituted evidence and manual diagnostics derive from D/C-delivery. A Release receipt is a technical realization choice within existing publication/provenance ownership, not another registry or adoption authority. The unchanged baseline requirements above retain the remaining unit obligations in full; no Site deployment, Watch policy, producer relocation or product API is implemented by this Change.
+
+Pre-Apply derivation: PASS in both directions (100% of the selected unit's applicable obligations accounted for by retained baseline plus deltas; all deltas grounded). Coverage, grounding, preservation and consistency examined. Capture/Allocation correspondence is the previously examined scoped relation; historical-source fidelity is not reasserted. Implementation and hosted delivery remain unverified at this stage.

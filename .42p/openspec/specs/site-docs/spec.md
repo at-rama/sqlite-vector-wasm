@@ -115,12 +115,16 @@ Documentation SHALL build and deploy after shell integration without requiring t
 
 ### Requirement: Scoped deployed documentation checks
 
-Documentation checks SHALL verify source fidelity, rendered links/images/anchors and mobile presentation on the identified GitHub Pages candidate. Minimal-example execution SHALL be reported separately against its exact announced qualified candidate in preview or matching published runtime for stable documentation. Release-candidate integration eligibility SHALL require successful applicable documentation/preview checks for the exact PR head and archive, with missing or stale evidence remaining ineligible. Missing deployment or browser prerequisites SHALL remain explicit and SHALL NOT count as successful verification.
+Documentation checks SHALL verify source fidelity, rendered links/images/anchors and mobile presentation on the exact locally served assembled Pages artifact. Minimal-example execution SHALL remain separate against its exact qualified candidate or matching published runtime. Release-candidate eligibility SHALL require matching successful documentation checks and completed preview deployment. Missing, stale or failed evidence SHALL remain ineligible; public HTTP observation SHALL NOT gate qualification.
 
 #### Scenario: Observe actual Pages documentation
-- **WHEN** the candidate is deployed
-- **THEN** browser checks identify the exact candidate and verify both documents, their navigation and links, images and anchors at desktop/mobile widths under the actual deployment prefix
+- **WHEN** the complete Pages artifact is served locally at its stable/preview prefix
+- **THEN** real-browser checks identify the exact candidate and verify both documents, navigation, links, images and anchors at desktop/mobile widths before deployment
+
+#### Scenario: Completed deployment with unavailable public reads
+- **WHEN** matching local documentation/example checks and preview deployment completed successfully but public reads are unavailable
+- **THEN** documentation qualification remains successful without an additional public observation
 
 #### Scenario: Local checks without a public deployment
-- **WHEN** local rendering succeeds but the candidate cannot be observed on Pages
-- **THEN** local results remain qualified as local and the required deployed documentation check remains incomplete
+- **WHEN** local rendering alone succeeds but applicable assembled browser/example evidence or completed preview deployment is missing, stale, mismatched or failed
+- **THEN** integration remains ineligible; local results do not fabricate either the missing qualification or a successful deployment

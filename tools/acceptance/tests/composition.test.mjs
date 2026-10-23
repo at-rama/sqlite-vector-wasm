@@ -85,7 +85,7 @@ test('required aggregate fails on scope, composition, cancellation or upload fai
 test('workflow qualifies Vector once with exact lock wiring and fail-closed aggregate',async()=>{
  const s=await readFile(join(root,'.github/workflows/acceptance.yml'),'utf8');
  assert.doesNotMatch(s,/matrix:|source_lock:/);
- assert.match(s,/needs: \[scope, composition\]\n    if: always\(\)/);
+ assert.match(s,/needs: \[scope, composition, site\]\n    if: always\(\)/);
  assert.match(s,/SOURCE_LOCK: inputs\/sqlite-vector.sources.lock.json/);
  assert.match(s,/COMPOSITION_RESULT: \$\{\{ needs.composition.result \}\}/);
  assert.match(s,/if-no-files-found: error/);

@@ -38,7 +38,9 @@ bash tools/harness.sh exec sh tools/site.sh exercise
 
 `check` serves the built output at the project prefix on loopback without COOP/COEP. Chrome checks direct and client-side navigation at 1280px and 390px, mobile menus, GitHub/npm and documentation links, overflow, asset errors and the expected page state: absence of demo runtime/corpus requests or Workers for a placeholder, or native identity and the complete deterministic demo checks for the runnable page. `exercise` checks prepared documentation, placeholder preservation across stable/preview/documentation rebuilds, complete artifact assembly and generic supplied-asset integrity failures. Relative-image and missing-link checks remain. Results and screenshots stay under `.work/site/`.
 
-Placeholder checks do not count as vector execution, published-runtime qualification or distribution acceptance. The runnable demo additionally requires the complete independent runtime checks; local and deployed observations are recorded separately.
+Placeholder checks do not count as vector execution, published-runtime qualification or distribution acceptance. The runnable demo additionally requires its complete independent runtime checks. Documentation qualification uses the exact locally served assembled Pages artifact, with the recorded candidate revision and document hashes, both prefixes and desktop/mobile checks. The minimal SQL example is checked separately against the exact qualified candidate archive or matching published runtime. Missing, stale, mismatched or failed applicable evidence blocks integration.
+
+Candidate review also requires completed preview deployment. Local qualification does not fabricate that acknowledgment. Once both succeeded, public URL availability or a second public browser observation does not gate documentation qualification. A public diagnostic reports only the deployment it actually observed; it cannot replace exact candidate evidence.
 
 ## GitHub Pages
 
@@ -59,7 +61,7 @@ Only changes to site sources, tooling and locks, workflow, build/check prerequis
 
 An administrator must set **Settings → Pages → Build and deployment → Source → GitHub Actions**. In **Settings → Environments → github-pages → Deployment branches and tags**, allow both `main` and PR runs. With **Selected branches and tags**, add branch patterns `main` and `refs/pull/*/merge`; the latter matches the workflow event ref, even though the candidate checkout builds the exact PR head. See [GitHub's deployment branch rules](https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments#deployment-branches-and-tags). Retain any applicable review policy and approve a waiting deployment if required. Do not remove protected-main integration gates.
 
-Build and live-observation jobs have read-only permissions. Only the deployment job receives `pages: write` and `id-token: write`, uses the Pages environment and invokes the official deployment action. No personal access token or `pull_request_target` candidate execution is used. The normal `GITHUB_TOKEN` cannot enable Pages automatically; missing setup must be resolved by an administrator. The connector used for development may not expose these administrative settings.
+Build jobs have read-only permissions. Only the deployment job receives `pages: write` and `id-token: write`, uses the Pages environment and invokes the official deployment action. No personal access token or `pull_request_target` candidate execution is used. The normal `GITHUB_TOKEN` cannot enable Pages automatically; missing setup must be resolved by an administrator. The connector used for development may not expose these administrative settings.
 
 ### Construction and publication
 
@@ -67,11 +69,13 @@ For an internal PR, two isolated checkouts use their own sources, tooling locks 
 
 If main genuinely has no tracked site entry points, bootstrap publishes only the preview. Partial stable sources or a failed stable build block publication instead of silently removing the root. A main deployment starts from a clean artifact and therefore removes any preview.
 
-One workflow-level concurrency group covers stable selection/build, assembly, deployment and observation. Pending-run order is not assumed. Read-only API guards reject advanced-main baselines, superseded PR heads and closed PRs, both after assembly and immediately before publication. A rejected run must be rerun with current inputs; it does not publish stale output. Each run's summary links to the site/preview and records its revisions.
+One workflow-level concurrency group covers stable selection/build, assembly and deployment. Pending-run order is not assumed. Read-only API guards reject advanced-main baselines, superseded PR heads and closed PRs, both after assembly and immediately before publication. A rejected run must be rerun with current inputs; it does not publish stale output. Each run's summary links to the site/preview and records its revisions.
 
-The workflow retains compiler/browser/assembly results, revision metadata and screenshots for 30 days. After successful deployment a separate read-only job observes the public Pages URLs, compares `site-publication.json` before and after browser checks, verifies the exact preview identity and preserves `site-live-<run-id>` evidence. Replaced shared content is a failed observation, not evidence for another commit.
+The workflow retains compiler/browser/assembly results, revision metadata and screenshots for 30 days as review/diagnostic traces. Before upload, the assembled Pages directory is served on loopback and checked against its exact publication record and stable/preview identities. The official Pages action must complete deployment; automatic public observation is not a gate. Optional manual public checks remain available below.
 
-### Local preview and actual Pages checks
+For relevant PR changes, Acceptance calls Site as a reusable workflow. Its existing protected `acceptance` result requires the called Site result as well as applicable product qualification. Failed, cancelled, missing or unexpectedly skipped Site work cannot leave that context green. The scope covers source pins, README/Usage, integration tooling and workflows; unrelated PRs do not require a Site deployment. Forks retain local checks without deployment credentials. No additional administrator status rule or polling between workflows is required.
+
+### Local qualification and optional public diagnostics
 
 Build a preview from a checkout with the same locked dependencies:
 
@@ -82,7 +86,7 @@ sh tools/site.sh build --preview "$preview_branch" "$preview_commit"
 bash tools/harness.sh exec sh tools/site.sh check --preview "$preview_branch" "$preview_commit"
 ```
 
-To check an actual published preview, use the branch and full commit displayed by the intended deployment:
+Public checks are optional operational diagnostics. To inspect a published preview, use the branch and full commit displayed by the intended deployment:
 
 ```sh
 bash tools/harness.sh exec sh tools/site.sh check \
@@ -98,7 +102,7 @@ bash tools/harness.sh exec node tools/site/observe.mjs \
   evidence/pages/site-publication.json .work/site/live-pages.json
 ```
 
-Record the URL, selected revisions and actual outcomes. Local serving, successful compiler tests and passing configuration checks do not establish actual Pages success. If Pages setup, environment permission or the deployment is unavailable, the actual-Pages task stays open. Do not merge merely to obtain evidence.
+Record the URL, selected revisions and actual outcomes. Local serving establishes artifact checks, not deployment completion. If Pages setup, environment permission or deployment completion is unavailable, preview review stays blocked; public HTTP observation is not an additional gate. Do not merge merely to obtain evidence.
 
 For redeployment, manually run Site on `main`; it retains that checkout's selected demo runtime. For rollback, restore reviewed site sources/configuration and the corresponding explicit demo selection through the repository integration path, then redeploy. Do not compile or republish the package to roll back the site.
 
@@ -115,7 +119,7 @@ bash tools/harness.sh exec sh tools/site.sh example --candidate-bundle /absolute
 
 `example` verifies the qualified candidate handoffs/archive or downloads and verifies an explicit published selection, then installs the exact local archive in a temporary consumer using offline npm with lifecycle scripts disabled. It executes the asset-copy commands extracted from Usage, checks the eleven copied runtime names and hashes, and serves `public/` on loopback. Chrome executes the guide's initialization and Float32 SQL in both the page and a dedicated module Worker, checks the two expected neighbors/distances and SQLite and selected-engine versions, then rechecks runtime hashes. `.work/docs-example/result.json` records the selected archive, guide/snippet/copy-command hashes, copied inventory and observed results. A download, integrity, copy or execution failure fails the command. This scoped example establishes no OPFS, complete Worker/API or emoji-demo acceptance.
 
-The rendered header and install command follow the explicitly checked identity without rewriting authored instructions after publication. A completed publication supplies an explicit published selection through `SITE_DOCUMENTATION_SELECTION`; a newer unrelated release does not silently change it. Candidate rendering checks the source/commit/lock identities and rejects stale or missing execution evidence. Historical example replays are separate records and cannot authorize the current preview. The Site workflow retains example results separately from deployed-documentation observations.
+The rendered header and install command follow the explicitly checked identity without rewriting authored instructions after publication. A completed publication supplies an explicit published selection through `SITE_DOCUMENTATION_SELECTION`; a newer unrelated release does not silently change it. Candidate rendering checks the source/commit/lock identities and rejects stale or missing execution evidence. Historical example replays are separate records and cannot authorize the current preview. The Site workflow retains example results separately from assembled-documentation checks.
 
 
 Copied documentation images enter the VitePress compiler with source-root public asset URLs. Vite applies the selected stable/preview prefix once; the browser manifest records that final destination. The compiler/browser exercise includes relative inline/reference SVGs, a filename with an encoded space, query/fragment preservation and source-relative Usage images under both bases. It decodes the emitted images, compares the copied SVG bytes and rejects a missing source image without retaining stale output.
@@ -129,38 +133,20 @@ The runnable demo uses the pinned corpus/reference material in `tools/site/demo-
 The shared preview still identifies the exact PR branch and commit. Its stable
 root is built from a separately checked-out eligible public source, rather than
 assuming current main is already published. Candidate previews consume the
-original Updates-qualified archive; unpublished tooling PRs consume an exact-head
-publisher-free Release exercise. This selection does not depend on active OpenSpec
+same-run Acceptance-qualified archive through an explicit composition → Site dependency. Unpublished tooling PRs use the same producer with an explicitly labelled fixture forecast and no publisher. This selection does not depend on active OpenSpec
 files and does not authorize distribution publication.
 
-For a merged Vector candidate, Site verifies the descriptor, source lock,
-preparation, integrated human PR, exact Release workflow attempt and digest-checked
-publication handoff. Complete matching GitHub and npm destinations, final-archive
-documentation checks and the published provenance are required. An exercise,
-failed or partial publication, an unrelated completion or unknown eligibility
-cannot promote candidate documentation. A read-only visibility recheck can
-complete an already published identity; Site never republishes it.
+For a merged Vector candidate, Site verifies the descriptor, source lock, preparation, integrated human PR, exact publication subject and matching durable completion. New publication manifests declare `delivery.json`: the receipt binds completed writes and the exact manifest/archive to its matching finalized GitHub Release, whose required assets must be present. Draft, incomplete, wrong-commit/archive or missing declared receipts cannot promote stable documentation. A successful workflow or responding public URL is not a substitute. Manifest/archive downloads verify acquisition integrity; they do not repeat publication qualification.
 
-Pushes, manual main redeployments and stable roots for other PR previews use the
-same selection. While publication is pending, the previous source is resolved
-from the existing Pages publication record and Git ancestry, then its declared
-publication and actual archives are reverified. If no eligible source can be
-established, deployment stops and existing Pages stays unchanged. Ordinary
-documentation-only changes for an already published selected version remain
-deployable. No new version ledger, main-branch write or engine build is involved.
+Already published pre-receipt selections retain explicitly historical read-only GitHub/npm identity inspection. They do not fabricate a modern receipt and do not depend on old Actions artifacts. Historical acquisition failure blocks the new Site build; it does not retrospectively change the original delivery outcome. New declared receipts never use this compatibility path. The existing initial manual-npm handoff is explicitly marked instead of declaring a normal receipt; its bounded read-only completion check must establish the same initially selected npm archive before it can promote documentation. No new first-publication exception is introduced.
 
-The existing github-pages concurrency group covers selection through observation.
-Immediately before deployment, main/PR freshness and stable publication
-eligibility are checked again. A changed selection rejects a delayed artifact.
-The complete artifact records observed main separately from the stable content
-source and preserves that source's explicit demo selection. A documentation
-promotion never selects a newer demo runtime.
+Pushes, manual main redeployments and stable roots for other previews use the same selection. If the current candidate has no finalized matching publication, Site examines at most 100 descriptor-change commits on observed main and verifies an eligible prior first-parent source and its ancestry/publication. Other API, identity or integrity errors do not activate fallback. Exhausted or unknown eligibility stops deployment, leaving Pages unchanged; inspect the exact descriptor/publication/source manually. No public Pages JSON, version ledger, main write, engine build or replay engine is involved.
 
-A Distribution release completion triggers Site through workflow_run only after
-this workflow is integrated on main. Qualification-only completions without a
-product publication handoff are ignored. This trigger's event and artifacts are
-inputs to validation, not authority by themselves. Forks and Dependabot retain
-validation without Pages deployment permissions.
+Immediately before deployment, main/PR freshness and stable eligibility are checked again. The complete artifact records observed main separately from the stable content source and preserves its explicit demo selection; documentation promotion does not refresh the demo runtime.
+
+A Distribution release completion triggers Site through workflow_run after this workflow is integrated. The triggering repository/path/event/attempt and successful completed publish job are checked as a signal; qualification-only, skipped or failed publishers do not promote. Durable Release evidence independently establishes the matching publication. Later manual rebuilds need neither a release-outcome artifact nor the original CI job history. These deployment paths preserve read-only builds and a separately privileged official deploy job.
+
+If only Pages fails after distribution publication, manually run Site on main using the same durable publication. Do not rerun Release or choose another version to repair Site. If publication itself is partial or uncertain, follow the bounded [publication incident procedure](publication.md); do not construct a successful receipt or overwrite an asset to force eligibility.
 
 
 ## Qualified emoji-demo return

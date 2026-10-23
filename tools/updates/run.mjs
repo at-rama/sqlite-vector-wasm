@@ -1,13 +1,12 @@
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, readFile, writeFile, rename, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
-import { root, noticeInputs, regularBytes, hash } from '../package/package.mjs';
+import { root, noticeInputs, regularBytes } from '../package/package.mjs';
 import { reconcileNotices, noticePaths } from './notices.mjs';
 import { command } from '../acceptance/run.mjs';
 import { calculate, commitPattern } from '../release/policy.mjs';
-import { qualify } from '../release/run.mjs';
 import { candidateDescriptor, candidateBody } from './context.mjs';
-import { candidateDocumentPaths, prepareDocumentation, checkDocumentation, assertDocumentation, documentSnapshot } from './documentation.mjs';
+import { candidateDocumentPaths, prepareDocumentation, documentSnapshot } from './documentation.mjs';
 import { pairKey } from '../watch/state.mjs';
 
 const json = async path => JSON.parse(await readFile(path, 'utf8'));
@@ -34,16 +33,20 @@ export async function resolveSources({ repository, directory, context, run = com
 }
 
 export async function prepareCandidate({ context, readSnapshot, readCandidates, services, repository = root,
-  resolve = resolveSources, reconcile = reconcileNotices, qualification = qualify,
-  prepareDocuments = prepareDocumentation, documentation = checkDocumentation, run = command }) {
+  resolve = resolveSources, reconcile = reconcileNotices,
+  prepareDocuments = prepareDocumentation, run = command }) {
   await mkdir(join(repository, '.work/updates'), { recursive: true });
   const directory = await mkdtemp(join(repository, '.work/updates/run-'));
-  const result = { schemaVersion: 1, status: 'in-progress', ...context, directory, operations: [] };
+  const result = { schemaVersion: 1, status: 'in-progress', ...context, directory, integrationEligible: false, publicationCalls: 0, operations: [] };
   const path = join(directory, 'candidate.json');
   const save = () => saveJson(path, result);
   const step = async (name, action) => {
-    try { const value = await action(); result.operations.push({ name, status: 'passed' }); await save(); return value; }
-    catch (error) { result.operations.push({ name, status: 'failed', diagnostic: error.message }); throw error; }
+    let value;
+    try { value = await action(); }
+    catch (error) { result.operations.push({ name, status: error.completionUnknown ? 'unknown' : 'failed', diagnostic: error.message }); throw error; }
+    result.operations.push({ name, status: 'passed' });
+    try { await save(); } catch (error) { error.message = `Operation ${name} acknowledged; preparation journal persistence failed: ${error.message}`; throw error; }
+    return value;
   };
   await save();
   try {
@@ -94,45 +97,21 @@ export async function prepareCandidate({ context, readSnapshot, readCandidates, 
       await writeFile(join(directory, 'release.json'), await regularBytes(join(repository, 'inputs/release.json')));
       return commit;
     });
+    assert.deepEqual(await documentSnapshot(repository), result.documentSources, 'Prepared documentation changed before PR');
     await step('repository', async () => {
       await run('sh', ['tools/check-repository.sh'], { cwd: repository, log: join(directory, 'repository.log') });
-      await run('sh', ['tools/test-repository.sh'], { cwd: repository, log: join(directory, 'tests.log') });
     });
-    const qualified = await step('qualification', () => qualification({ repository, run,
-      context: { repository: context.repository, commit: result.commit, selection: context.selection,
-        comment: context.comment, preparation: context.preparation },
-      readSnapshot: async () => { result.qualificationState = await readSnapshot(); await save(); return result.qualificationState; } }));
-    const expected = calculate({ selection: context.selection, snapshot: result.qualificationState, comment: context.comment });
-    assert.deepEqual(qualified.identity, expected, 'Qualification forecast mismatch');
-    const evidence = await json(qualified.evidencePath);
-    assert.equal(evidence.commit, result.commit, 'Qualification revision mismatch');
-    assert.deepEqual(evidence.upstreams, context.selection);
-    assert.deepEqual(evidence.engine, {key:'sqliteVector', upstream:'sqliteai/sqlite-vector', version:context.selection.sqliteVector}, 'Qualification engine mismatch');
-    assert.deepEqual(evidence.sourceLock, lock, 'Qualification sources mismatch');
-    assert.equal(evidence.sourceLockSha256, hash(await regularBytes(join(repository, 'inputs/sqlite-vector.sources.lock.json'))), 'Qualification lock digest mismatch');
-    assert.equal(evidence.repository, context.repository, 'Qualification repository mismatch');
-    assert.deepEqual(evidence.invocation.preparation, context.preparation);
-    assert.equal(evidence.invocation.comment, context.comment);
-    const payload = await regularBytes(join(qualified.bundle, 'payload.tgz'));
-    assert.deepEqual(evidence.archive, {size:payload.length, sha256:hash(payload)}, 'Qualification archive mismatch');
-    result.identity = qualified.identity; result.archive = evidence.archive; result.bundle = qualified.bundle;
-    result.qualificationEvidence = qualified.evidencePath;
-    result.forecastChanged = JSON.stringify(result.preflight) !== JSON.stringify(result.identity);
-    result.documentation = await step('documentation-example', async () => {
-      const example = await documentation({ repository, qualified, directory, run });
-      assertDocumentation(example, { commit: result.commit, selection: context.selection, archive: evidence.archive,
-        sourceHashes: result.documentSources, identity: result.identity });
-      assert.deepEqual(await documentSnapshot(repository), result.documentSources, 'Candidate documentation changed after commit');
-      return { example, sourceHashes: result.documentSources, previewState: 'pending', integrationEligible: false,
-        previewUrl: `https://${context.repository.split('/')[0]}.github.io/${context.repository.split('/')[1]}/preview/`,
-        checksUrl: `https://github.com/${context.repository}/commit/${result.commit}/checks` };
-    });
+    // Full product qualification belongs to the exact-head PR producer.
+    result.identity = result.preflight;
+    result.documentation = { sourceHashes: result.documentSources, previewState: 'pending', integrationEligible: false,
+      previewUrl: `https://${context.repository.split('/')[0]}.github.io/${context.repository.split('/')[1]}/preview/`,
+      checksUrl: `https://github.com/${context.repository}/commit/${result.commit}/checks` };
     assert.equal(await run('git', ['rev-parse', 'HEAD'], { cwd: repository }), result.commit);
-    assert.equal(await run('git', ['status', '--porcelain', '--untracked-files=all'], { cwd: repository }), '', 'Candidate changed after qualification');
+    assert.equal(await run('git', ['status', '--porcelain', '--untracked-files=all'], { cwd: repository }), '', 'Candidate changed during preparation');
     await save();
     if (context.rehearsal) {
       assert.equal(services, undefined, 'Rehearsal has no write adapter');
-      result.status = 'qualified-without-pr'; result.publicationCalls = 0;
+      result.status = 'prepared-without-pr'; result.publicationCalls = 0;
     } else {
       assert.ok(services, 'Candidate write authorization unavailable');
       result.branchResult = await step('push', async () => {
@@ -144,11 +123,12 @@ export async function prepareCandidate({ context, readSnapshot, readCandidates, 
       result.pullRequest = await step('pull-request', () => services.createPullRequest({ branch: context.branch,
         commit: result.commit, title: `chore: prepare ${result.identity.version} distribution`, body: candidateBody(result) }));
       assert.equal(result.pullRequest.head, result.commit, 'Created PR head mismatch');
-      result.status = 'candidate-ready';
+      result.status = 'candidate-awaiting-qualification';
     }
     await save(); return { ...result, path };
   } catch (error) {
-    result.status = 'failed'; result.diagnostic = error.message; await save();
+    result.status = 'failed'; result.diagnostic = error.message;
+    try { await save(); } catch (retention) { error.message += `; preparation diagnostics could not be retained: ${retention.message}`; }
     throw new Error(`Candidate preparation failed; evidence: ${path}`, { cause: error });
   }
 }

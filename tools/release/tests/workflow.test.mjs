@@ -35,12 +35,14 @@ test('hosted workflow pins actions, separates read qualification/write publicati
   const qualification=workflow.split('  qualify:')[1].split('  publish:')[0];
   assert.ok(!qualification.includes('write'));
   assert.ok(qualification.includes('actions: read'));
+  assert.ok(qualification.includes('RELEASE_SETUP: ${{ vars.RELEASE_SETUP }}'));
+  assert.equal([...workflow.matchAll(/RELEASE_SETUP: \$\{\{ vars.RELEASE_SETUP \}\}/g)].length,2);
   assert.ok(publicationPermissions(workflow).includes('actions: read'));
   assert.ok(qualification.includes('needs: candidate') && qualification.includes("if: needs.candidate.outputs.present == 'true'"));
   const publication=workflow.split('  publish:')[1];assert.ok(publication.includes('needs: qualify') && publication.includes('id-token: write') && publication.includes('attestations: write'));
   assert.ok(publication.includes('github.event.action == \'closed\' && github.event.pull_request.merged == true'));
-  assert.ok(workflow.includes('.42p/openspec/changes/release-sqlite-vector-product/tasks.md'));
-  assert.ok(workflow.includes('sh tools/release.sh exercise') && workflow.includes('ref: ${{ github.event.pull_request.head.sha }}'));
+  assert.doesNotMatch(workflow,/\n  exercise:|sh tools\/release\.sh exercise/);
+  assert.match(workflow,/types: \[closed\]/);
 });
 
 test('mandatory release-suite registration fails when the test file is absent',async t=>{
@@ -75,7 +77,7 @@ test('HTTP/qualified npm adapters use non-forced identities, exact uploads and e
   const directory=await mkdtemp(join(tmpdir(),'release-adapters-'));t.after(()=>rm(directory,{recursive:true,force:true}));
   const archive=join(directory,'payload.tgz');await writeFile(archive,'exact bytes');
   const requests=[],commands=[],original=globalThis.fetch;t.after(()=>{globalThis.fetch=original;});
-  globalThis.fetch=async(url,options)=>{requests.push({url,options});return {ok:true,status:201,json:async()=>new URL(url).hostname === 'uploads.github.com'?{id:2,name:'payload.tgz',state:'uploaded'}:{id:1}};};
+  globalThis.fetch=async(url,options)=>{requests.push({url,options});const body=options.headers['Content-Type']==='application/json'?JSON.parse(options.body):null;return {ok:true,status:201,json:async()=>new URL(url).hostname === 'uploads.github.com'?{id:2,name:'payload.tgz',state:'uploaded',size:options.body.length}:url.endsWith('/git/refs')?{ref:body.ref,object:{sha:body.sha,type:'commit'}}:{id:1,tag_name:body.tag_name,draft:true,prerelease:body.prerelease}};};
   const services=githubServices({repository:'a/b',token:'synthetic',directory,get:async()=>{},run:async(cmd,args,options)=>{commands.push({cmd,args,options});return '';},environment:{}});
   await services.createTag('dist/v0.1.0','a'.repeat(40));
   assert.deepEqual(JSON.parse(requests[0].options.body),{ref:'refs/tags/dist/v0.1.0',sha:'a'.repeat(40)});

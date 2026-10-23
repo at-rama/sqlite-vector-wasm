@@ -127,28 +127,27 @@ Preparation SHALL derive channel, forecast and comparable rollback through the e
 
 ### Requirement: Clean revision-bound candidate qualification
 
-Preparation SHALL evaluate the clean committed candidate containing its exact Vector source/notice snapshot and schema-2 descriptor with complete mandatory repository, build, compatibility, packaging, integrity and real-browser acceptance controls. Qualification SHALL explicitly consume that Vector lock and calculated scoped package identity; returned engine, sources, revision and payload SHALL agree. Float32, native binary/Hamming, retained SQLite APIs/Workers/FTS5/baseline and all default OPFS restart gates remain mandatory. A fixture, partial matrix, different-engine success or historical run SHALL NOT qualify a candidate.
+Preparation SHALL check coherent clean committed Vector source/notice/document inputs and schema-2 descriptor before opening a qualification-pending PR. Complete mandatory repository, build, compatibility, packaging, integrity and real-browser acceptance controls SHALL then run in that PR through A-acceptance, before integration eligibility. Qualification SHALL explicitly consume that Vector lock and calculated scoped package identity; returned engine, sources, revision and payload SHALL agree. Float32, native binary/Hamming, retained SQLite APIs/Workers/FTS5/baseline and all default OPFS restart gates remain mandatory. A fixture, partial matrix, different-engine success or historical run SHALL NOT qualify a candidate.
 
 #### Scenario: Complete candidate qualification
 - **WHEN** all required controls pass on the clean candidate revision and its exact forecast payload
-- **THEN** preparation records their complete results and that revision/payload as eligible for PR presentation
+- **THEN** the PR producer records their complete results for that exact revision/payload; preparation alone never asserts qualification
 
 #### Scenario: Dirty or different revision
 - **WHEN** tracked inputs change during qualification or evidence identifies a different candidate commit or archive
-- **THEN** preparation fails without presenting that evidence as applicable
+- **THEN** qualification fails without presenting that evidence as applicable
 
 #### Scenario: Required control unavailable or failed
 - **WHEN** a mandatory test, browser prerequisite, persistence case or integrity check fails or cannot execute
-- **THEN** preparation is unsuccessful and creates no eligible candidate PR
+- **THEN** the existing PR remains ineligible for integration; a pending PR is not a successful qualification
 
 #### Scenario: Another engine succeeds for the selected candidate
 - **WHEN** qualification returns a passing sqlite-vec bundle, another source lock/version, or otherwise mismatched engine evidence for a Vector candidate
-- **THEN** preparation fails before remote branch/PR writes rather than treating the passing result as engine-independent
+- **THEN** PR qualification fails rather than treating the passing result as engine-independent or permitting integration
 
 #### Scenario: Nonpublishing real preparation rehearsal
-- **WHEN** preparation is exercised with its exact recorded Vector pair in a fresh isolated candidate checkout and fresh production/tool state
-- **THEN** the complete commit/notice/descriptor/production/browser/evidence path can succeed without a remote write adapter, actual candidate PR, tag or publication, with any fixture state explicitly identified
-
+- **WHEN** preparation is exercised with its exact recorded Vector pair in a fresh isolated candidate checkout and fresh preparation state
+- **THEN** the complete source/notice/document/commit/descriptor path can succeed while explicitly leaving product/browser qualification pending without a remote write adapter, actual candidate PR, tag or publication, with any fixture state explicitly identified
 
 ### Requirement: Release descriptor handoff
 
@@ -164,11 +163,11 @@ The candidate SHALL introduce or update `inputs/release.json` in A-release's sch
 
 ### Requirement: Qualified temporary candidate PR
 
-After mandatory product qualification and pre-PR document preparation controls pass, the system SHALL create or update a temporary candidate PR targeting `main` carrying the evaluated Vector commit. Run/PR presentation SHALL expose exact engine/version selection, unreserved forecast, preparation reference and accessible qualification evidence for human review and subsequent candidate-state consumption. It SHALL NOT silently replace another candidate, create permanent distribution branches or use a refusal-history registry. Supplying the Vector handoff SHALL NOT imply that an unadapted Watch consumer already understands it. Documentation preview/check readiness SHALL be associated with the exact qualified head/archive before the candidate is eligible for human integration; opening the PR to trigger Site SHALL NOT itself assert that readiness.
+After source/notice/document preparation and mandatory repository coherence controls pass, the system SHALL create or update a temporary candidate PR targeting `main` carrying the exact prepared Vector commit. Run/PR presentation SHALL expose exact engine/version selection, unreserved forecast, preparation reference and links to pending PR qualification and preview for human review and subsequent candidate-state consumption. It SHALL NOT silently replace another candidate, create permanent distribution branches or use a refusal-history registry. Supplying the Vector handoff SHALL NOT imply that an unadapted Watch consumer already understands it. Documentation preview/check readiness SHALL be associated with the exact qualified head/archive before the candidate is eligible for human integration; opening the PR to trigger Site SHALL NOT itself assert that readiness.
 
 #### Scenario: Successful PR presentation
-- **WHEN** qualification passes and the candidate branch can be pushed
-- **THEN** the PR presents the evaluated head, selected pair, forecast and evidence while leaving integration to the maintainer
+- **WHEN** coherent preparation passes and the candidate branch can be pushed
+- **THEN** the PR presents the prepared head, selected pair, unreserved forecast and pending qualification/preview links while leaving integration to the maintainer
 
 #### Scenario: Repeated preparation
 - **WHEN** another preparation selects the same pair
@@ -179,16 +178,16 @@ After mandatory product qualification and pre-PR document preparation controls p
 - **THEN** preparation reports the partial branch state and failure without claiming a completed candidate or force-replacing another branch
 
 #### Scenario: Preview is produced after PR creation
-- **WHEN** product qualification has passed and the same-repository candidate PR is opened
+- **WHEN** the same-repository candidate PR is opened and its product qualification subsequently passes
 - **THEN** Site can build the unpublished documentation preview from its exact qualified handoff, and the PR remains ineligible for integration until applicable required preview/doc checks pass
 
 ### Requirement: Retained candidate provenance and diagnostics
 
-Preparation SHALL retain available reports, logs, candidate provenance and forecast payload as uncommitted artifacts. Successful evidence SHALL relate actual engine identity, exact selections/source origins/digests, candidate commit, preparation/run, build tools/options/environment, channel/forecast, aggregated comment and output digests. Notice evidence SHALL distinguish refreshed and retained groups; refreshed records SHALL identify immutable origins, raw/recorded digests, any permitted normalization and outcome. Retained records SHALL report validation and unavailable provenance honestly, without claiming renewed acquisition. Failures SHALL preserve evaluated identities and completed/failed/unexecuted diagnostics without manufacturing success.
+Preparation SHALL retain available reports, logs, candidate provenance as uncommitted artifacts; exact qualified payload/build/browser reports belong to the PR producer. Successful evidence SHALL relate actual engine identity, exact selections/source origins/digests, candidate commit, preparation/run, channel/forecast and aggregated comment; subsequent qualified output digests/tools/options/environment SHALL be linked through the PR producer. Notice evidence SHALL distinguish refreshed and retained groups; refreshed records SHALL identify immutable origins, raw/recorded digests, any permitted normalization and outcome. Retained records SHALL report validation and unavailable provenance honestly, without claiming renewed acquisition. Failures SHALL preserve evaluated identities and completed/failed/unexecuted diagnostics without manufacturing success.
 
 #### Scenario: Traceable candidate
 - **WHEN** the maintainer inspects a successful candidate and its linked run artifacts
-- **THEN** the selected inputs, code, build and payload identities are linked to the exact aggregated dispatch comment and preparation execution
+- **THEN** the selected inputs/code and separately qualified build/payload identities are linked to the exact aggregated dispatch comment and preparation execution
 
 #### Scenario: Failed preparation
 - **WHEN** preparation terminates before all controls or PR operations succeed
@@ -201,9 +200,10 @@ Preparation SHALL retain available reports, logs, candidate provenance and forec
 #### Scenario: Retained legacy notice provenance
 - **WHEN** a notice group remains unchanged, including same-pair reconstruction, and its existing valid record lacks a raw digest or immutable Git commit
 - **THEN** evidence identifies the retained record and checked recorded-byte digest, explicitly marks unavailable raw or immutable-source information as not established, preserves the record without a new notice download, and does not claim fresh source verification
+
 ### Requirement: Human integration and publication boundary
 
-Preparation SHALL stop at the qualified candidate PR. It SHALL NOT merge, enable automatic merge, create release tags or publish GitHub/npm distributions. Human integration and all mandatory gates remain prerequisites; passing candidate evidence SHALL NOT waive A-release's definitive recalculation and authoritative-revision/exact-payload qualification. Bootstrap SHALL NOT bypass this boundary.
+Preparation SHALL stop at the qualification-pending candidate PR. It SHALL NOT merge, enable automatic merge, create release tags or publish GitHub/npm distributions. Human integration and all mandatory gates remain prerequisites; passing candidate evidence SHALL NOT waive A-release's definitive recalculation and authoritative-revision/exact-payload qualification. Bootstrap SHALL NOT bypass this boundary.
 
 #### Scenario: Checks pass before merge
 - **WHEN** a candidate passes preparation and PR checks
@@ -215,7 +215,7 @@ Preparation SHALL stop at the qualified candidate PR. It SHALL NOT merge, enable
 
 #### Scenario: Incompatible selected sources
 - **WHEN** mandatory compatibility controls fail
-- **THEN** preparation stops without automatic source repair, fallback pair selection or human waiver of the failed gates
+- **THEN** the candidate remains ineligible without automatic source repair, fallback pair selection or human waiver of the failed gates
 
 ### Requirement: Joint release documentation preparation
 
@@ -223,7 +223,7 @@ Updates SHALL compose A-package consumer documents and A-site_docs public source
 
 #### Scenario: Prepare one reviewable candidate
 - **WHEN** manual exact-version preparation succeeds
-- **THEN** the committed candidate includes applicable public/package documentation sources for the selected composition, complete product qualification binds that head/archive, and the PR exposes its unpublished documentation preview and required check state for human review
+- **THEN** the committed candidate includes applicable public/package documentation sources for the selected composition, subsequent in-PR complete product qualification binds that head/archive, and the PR exposes its unpublished documentation preview and required check state for human review after its required checks complete
 
 #### Scenario: Documentation or evidence fails
 - **WHEN** document preparation, required example/preview check or head/archive association is missing, stale, inconsistent or fails

@@ -13,7 +13,11 @@ export function candidateServices({ repository, token, cwd, run = command, reque
       headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json',
         'User-Agent': 'sqlite-vector-wasm-candidate' }, body: body === undefined ? undefined : JSON.stringify(body) });
     value = await response.json();
-    } catch { throw Error(`Candidate GitHub ${method} ${path} transport failed`); }
+    } catch {
+      const write = method !== 'GET';
+      const error = new Error(`Candidate GitHub ${method} ${path} ${write ? 'completion unknown; inspect existing branch/PR before retry' : 'identity read unavailable'}`);
+      error.completionUnknown = write; throw error;
+    }
     // Never retain transport bodies, headers or credentials in diagnostic artifacts.
     assert.ok(response.ok, `Candidate GitHub ${method} ${path} failed (${response.status})`);
     return value;
@@ -38,6 +42,8 @@ export function candidateServices({ repository, token, cwd, run = command, reque
       assert.match(branch, /^candidate\/run-[1-9][0-9]*-[1-9][0-9]*$/); assert.match(commit, commitPattern);
       const pr = await call('POST', '/pulls', { base: 'main', head: branch, title, body, draft: false });
       assert.equal(pr.base?.ref, 'main'); assert.equal(pr.head?.sha, commit, 'Candidate PR head mismatch');
+      assert.ok(Number.isSafeInteger(pr.number) && pr.number > 0, 'Invalid created PR identity');
+      assert.equal(pr.html_url, `https://github.com/${repository}/pull/${pr.number}`, 'Created PR URL mismatch');
       return { number: pr.number, url: pr.html_url, head: pr.head.sha };
     },
   };

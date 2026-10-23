@@ -8,11 +8,12 @@ import { documentationSources, renderPublicDocument } from '../site/documentatio
 import { runArtifact, uniqueRecord } from './artifacts.mjs';
 import { prepareDocs } from '../site/docs.mjs';
 
-const successfulRun = (run, repository, path, event) => {
+const successfulRun = (run, repository, path, event, { requireSuccess = true } = {}) => {
   assert.equal(run.repository?.full_name, repository, 'Unrelated evidence repository');
   assert.equal(run.path?.split('@')[0], path, 'Unrelated evidence workflow');
   assert.equal(run.event, event, 'Unrelated evidence event');
-  assert.equal(run.status, 'completed'); assert.equal(run.conclusion, 'success', 'Unsuccessful evidence run');
+  assert.equal(run.status, 'completed');
+  if (requireSuccess) assert.equal(run.conclusion, 'success', 'Unsuccessful evidence run');
   assert.ok(Number.isSafeInteger(run.run_attempt) && run.run_attempt > 0);
 };
 const apiJSON = async (get, url) => {
@@ -27,7 +28,9 @@ export async function assertObservedDocuments({ live, example, repository, pullR
   const results = live.results?.filter(r => r.preview?.commit === head);
   assert.equal(results?.length, 1, 'Missing exact preview observation');
   const observed = results[0];
-  assert.equal(observed.url, `https://${repository.split('/')[0]}.github.io/${repository.split('/')[1]}/preview/`);
+  const location = new URL(observed.url);
+  assert.equal(location.protocol, 'http:'); assert.equal(location.hostname, '127.0.0.1');
+  assert.equal(location.pathname, '/sqlite-vector-wasm/preview/', 'Incorrect assembled preview prefix');
   assert.deepEqual(observed.viewports, [1280, 390]); assert.ok(observed.browser);
   assert.equal(observed.destinations, 3); assert.equal(observed.directVisits, 6); assert.equal(observed.clientTransitions, 6);
   assert.deepEqual(observed.documentation, await Promise.all(documentationSources.map(async source => ({ source,
@@ -53,49 +56,61 @@ export async function reviewedDocumentation({ repository, pr, selected, readAt, 
   const preparation = await apiJSON(get, `${api}/actions/runs/${selected.preparation.runId}/attempts/${attempt}`);
   successfulRun(preparation, repository, '.github/workflows/updates.yml', 'workflow_dispatch');
   assert.equal(preparation.head_branch, 'main'); assert.equal(preparation.run_attempt, attempt);
-  const prepared = await artifact({ repository, run: preparation, name: `updates-${preparation.id}-${attempt}`, get, directory });
-  const candidate = await uniqueRecord(prepared, 'candidate.json', c => c.commit === head);
-  assert.equal(candidate.status, 'candidate-ready', 'Preparation did not create this candidate PR');
-  assert.equal(candidate.baseCommit, preparation.head_sha, 'Preparation base mismatch');
-  assert.equal(candidate.pullRequest?.number, pr.number); assert.equal(candidate.pullRequest.head, head);
-  assert.deepEqual(candidate.selection, selected.selection); assert.deepEqual(candidate.preparation, selected.preparation);
-  assert.deepEqual(candidate.documentSources, sources, 'Reviewed source snapshot mismatch');
-  assertDocumentation(candidate.documentation?.example, { commit: head, selection: selected.selection,
-    archive: candidate.archive, sourceHashes: sources, identity: candidate.identity });
-  const accepted = await uniqueRecord(prepared, 'acceptance.json', r => r.source?.commit === head);
-  assertApplicable(accepted, head, candidate.archive);
 
   let run;
   if (siteRunId) run = await apiJSON(get, `${api}/actions/runs/${siteRunId}`);
   else {
     const listing = await apiJSON(get, `${api}/actions/runs?head_sha=${head}&event=pull_request&per_page=100`);
     assert.ok(Array.isArray(listing.workflow_runs));
-    const matches = listing.workflow_runs.filter(r => r.head_sha === head && r.path?.split('@')[0] === '.github/workflows/site.yml');
+    const matches = listing.workflow_runs.filter(r => r.head_sha === head && ['.github/workflows/site.yml','.github/workflows/acceptance.yml'].includes(r.path?.split('@')[0]));
     assert.ok(matches.length, 'Missing exact-head documentation preview');
     run = matches.sort((a,b) => b.id - a.id)[0];
   }
-  successfulRun(run, repository, '.github/workflows/site.yml', 'pull_request');
+  // Required named jobs and their identity-bound local results establish Site
+  // readiness, not an obsolete public observer's aggregate workflow verdict.
+  const siteWorkflow = run.path?.split('@')[0];
+  assert.ok(['.github/workflows/site.yml','.github/workflows/acceptance.yml'].includes(siteWorkflow), 'Unrelated Site workflow');
+  successfulRun(run, repository, siteWorkflow, 'pull_request', {requireSuccess:siteWorkflow === '.github/workflows/acceptance.yml'});
   assert.equal(run.head_sha, head, 'Stale documentation preview');
   const jobs = await apiJSON(get, `${api}/actions/runs/${run.id}/jobs?per_page=100`);
   assert.equal(jobs.total_count, jobs.jobs?.length, 'Truncated documentation jobs');
-  for (const name of ['build','deploy','observe']) {
-    const matching = jobs.jobs.filter(j => j.name === name);
+  for (const name of ['build','deploy']) {
+    const matching = jobs.jobs.filter(j => j.name === (siteWorkflow === '.github/workflows/acceptance.yml' ? `site / ${name}` : name));
     assert.equal(matching.length, 1); assert.equal(matching[0].status, 'completed');
     assert.equal(matching[0].conclusion, 'success', `Required Site ${name} failed or missing`);
   }
+  const inPR = siteWorkflow === '.github/workflows/acceptance.yml';
+  const producer = inPR ? run : preparation;
+  if (inPR) {
+    for (const name of ['composition','acceptance']) {
+      const matching = jobs.jobs.filter(j => j.name === name);
+      assert.equal(matching.length, 1); assert.equal(matching[0].status, 'completed'); assert.equal(matching[0].conclusion, 'success', `Required candidate ${name} failed or missing`);
+    }
+  }
+  const prepared = await artifact({ repository, run: producer, name: inPR ? `candidate-${run.id}-${run.run_attempt}` : `updates-${preparation.id}-${attempt}`, get, directory });
+  const candidate = await uniqueRecord(prepared, 'candidate.json', c => c.commit === head);
+  assert.equal(candidate.status, inPR ? 'qualified-in-pr' : 'candidate-ready', 'Candidate qualification did not complete');
+  if (inPR) assert.deepEqual(candidate.qualification, {runId:run.id,attempt:run.run_attempt});
+  else assert.equal(candidate.baseCommit, preparation.head_sha, 'Preparation base mismatch');
+  assert.equal(candidate.pullRequest?.number, pr.number); assert.equal(candidate.pullRequest.head, head);
+  assert.deepEqual(candidate.selection, selected.selection); assert.deepEqual(candidate.preparation, selected.preparation);
+  assert.deepEqual(candidate.documentSources, sources, 'Reviewed source snapshot mismatch');
+  if (!inPR) assertDocumentation(candidate.documentation?.example, { commit: head, selection: selected.selection,
+    archive: candidate.archive, sourceHashes: sources, identity: candidate.identity });
+  const accepted = await uniqueRecord(prepared, 'acceptance.json', r => r.source?.commit === head);
+  assertApplicable(accepted, head, candidate.archive);
   const checks = await artifact({ repository, run, name: `site-checks-${run.id}`, get, directory });
-  const liveArtifact = await artifact({ repository, run, name: `site-live-${run.id}`, get, directory });
   const input = await uniqueRecord(checks, 'handoff.json', h => h.artifactId === prepared.id);
-  assert.equal(input.runId, preparation.id); assert.equal(input.commit, head); assert.equal(input.artifactSha256, prepared.sha256);
+  assert.equal(input.runId, producer.id); assert.equal(input.commit, head); assert.equal(input.artifactSha256, prepared.sha256);
   const example = await uniqueRecord(checks, 'result.json', r => r.context?.mode === 'candidate');
   assertDocumentation(example, { commit: head, selection: selected.selection, archive: candidate.archive, sourceHashes: sources, identity: candidate.identity });
-  const live = await uniqueRecord(liveArtifact, 'live-pages.json');
+  const live = await uniqueRecord(checks, 'assembled.json');
   assert.equal(live.publication?.preview?.branch, pr.head.ref, 'Observed preview branch mismatch');
   await assertObservedDocuments({ live, example, repository, pullRequest: pr.number, head, readAt });
   return { candidateCommit: head, forecast: candidate.identity.version, archive: candidate.archive, sourceHashes: sources, rendererHashes: renderers,
-    preparation: { runId: preparation.id, attempt, artifactId: prepared.id, artifactSha256: prepared.sha256 },
-    site: { runId: run.id, attempt: run.run_attempt, checksArtifactId: checks.id, checksSha256: checks.sha256,
-      liveArtifactId: liveArtifact.id, liveSha256: liveArtifact.sha256 }, example };
+    preparation: { runId: preparation.id, attempt },
+    qualification: { runId: producer.id, attempt: producer.run_attempt, artifactId: prepared.id, artifactSha256: prepared.sha256 },
+    site: { runId: run.id, attempt: run.run_attempt, checksArtifactId: checks.id, checksSha256: checks.sha256 }, example };
 }
 
 export async function assertReviewedSources(context, repository) {

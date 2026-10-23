@@ -7,7 +7,8 @@ import {sourceCommit,documentHash as hash} from './documentation.mjs';
 import {httpReader,pages,download,publicationIdentity,repositoryName} from '../release/state.mjs';
 import {candidateDescriptorChanged,descriptor} from '../release/context.mjs';
 import {githubServices} from '../release/services.mjs';
-import {runArtifact,uniqueRecord} from '../release/artifacts.mjs';
+import {assertDelivered} from '../release/delivery.mjs';
+import {checkInitialCompletion} from '../release/run.mjs';
 import {mainPlaceholder} from './placeholder.mjs';
 import {mainDemo} from './current-demo.mjs';
 import {sourceAt} from './source-at.mjs';
@@ -26,36 +27,34 @@ async function verifyPublished({repository,release,publication,get}) {
  publicationUrl:records[0].browser_download_url,publicationSha256:hash(record),archiveUrl:archives[0].browser_download_url,archiveSha256:publication.archive.sha256};
 }
 
-async function publicationCompletion({repository,publication,release,get,trigger,directory,artifact=runArtifact,services=githubServices({repository,get})}) {
+async function publicationCompletion({repository,publication,release,get,trigger,services=githubServices({repository,get})}) {
  const number=publication.invocation?.pullRequest;assert.ok(Number.isSafeInteger(number)&&number>0,"Missing integrated publication PR");
  const pr=await json(get,`${api(repository)}/pulls/${number}`);assert.ok(pr.merged&&pr.state==="closed"&&pr.merged_by?.type==="User");
  assert.equal(pr.base?.ref,"main");assert.equal(pr.base.repo?.full_name,repository);assert.equal(pr.head?.repo?.full_name,repository);assert.equal(pr.merge_commit_sha,publication.commit);
- let runs;if(trigger)runs=[await json(get,`${api(repository)}/actions/runs/${trigger.id}`)];
- else{const found=[];for(const sha of new Set([pr.head.sha,publication.commit])){const r=await json(get,`${api(repository)}/actions/runs?head_sha=${sha}&event=pull_request&per_page=100`);assert.equal(r.total_count,r.workflow_runs?.length,"Truncated publication run inventory");found.push(...r.workflow_runs);}runs=[...new Map(found.map(r=>[r.id,r])).values()];}
- const eligible=runs.filter(r=>r.path?.split("@")[0]===".github/workflows/release.yml"&&r.repository?.full_name===repository&&r.event==="pull_request"&&[pr.head.sha,publication.commit].includes(r.head_sha)&&r.status==="completed");
- if(trigger)assert.equal(eligible.length,1,"Unrelated release completion");
- const matches=[];
- for(const run of eligible){const list=await json(get,`${api(repository)}/actions/runs/${run.id}/artifacts?per_page=100`);assert.equal(list.total_count,list.artifacts?.length);
-  for(const entry of list.artifacts.filter(a=>new RegExp(`^release-outcome-${run.id}-[1-9][0-9]*$`).test(a.name)&&!a.expired&&(!trigger||a.name===`release-outcome-${trigger.id}-${trigger.run_attempt}`))){
-   const attempt=Number(entry.name.split("-").at(-1)),source=await json(get,`${api(repository)}/actions/runs/${run.id}/attempts/${attempt}`);
-   assert.equal(source.id,run.id);assert.equal(source.head_sha,run.head_sha);assert.equal(source.run_attempt,attempt);assert.equal(source.repository?.full_name,repository);
-   assert.equal(source.path?.split("@")[0],".github/workflows/release.yml");assert.equal(source.event,"pull_request");assert.equal(source.status,"completed");
-   const input=await artifact({repository,run:source,name:entry.name,get,directory}),outcome=await uniqueRecord(input,"outcome.json");
-   const evidence=await uniqueRecord(input,"publication.json",e=>e.commit===publication.commit&&e.version===publication.version);assert.deepEqual(evidence,publication,"Publication handoff differs from published provenance");
-   if(outcome.identity?.version!==publication.version||outcome.identity?.tag!==publication.tag)continue;
-   assert.ok(["complete","published-verification-pending"].includes(outcome.status),"Incomplete release publication handoff");
-   assert.equal(source.conclusion,"success","Failed publication workflow");
-   const operations=["tag","draft","archive","provenance","attestation","npm","github","github-identity","npm-identity"];
-   assert.deepEqual(outcome.outcomes?.map(o=>o.operation),operations,"Incomplete publication operations");
-   for(const operation of outcome.outcomes)assert.equal(operation.status,
-    outcome.status==="published-verification-pending"&&operation.operation==="npm-identity"?"pending":"succeeded","Incomplete publication operation");
-   assert.ok(publication.documentation&&publication.invocation?.pullRequest,"Missing reviewed publication documentation");
-   if(outcome.status==="complete")assert.deepEqual(outcome.publication,publication,"Completion provenance mismatch");
-   await services.verifyGitHub(release,publication);
-   matches.push({runId:run.id,attempt,artifactId:input.id,artifactSha256:input.sha256,status:"complete"});
-  }
+ if(trigger){assert.equal(trigger.repository?.full_name,repository);assert.equal(trigger.path?.split("@")[0],".github/workflows/release.yml");
+  assert.equal(trigger.event,"pull_request");assert.equal(trigger.status,"completed");
+  assert.ok([pr.head.sha,publication.commit].includes(trigger.head_sha),"Unrelated publication completion");}
+ if(publication.publicationMode !== undefined){assert.equal(publication.publicationMode,"initial-manual-npm","Unsupported publication mode");assert.equal(publication.deliveryReceipt,undefined,"Conflicting publication modes");}
+ if(publication.deliveryReceipt !== undefined){
+  assert.equal(publication.repository,repository,"Publication repository mismatch");
+  assert.ok(publication.documentation?.reviewed,"Missing reviewed publication documentation");
+  assert.equal(publication.deliveryReceipt,"delivery.json","Unsupported delivery receipt declaration");
+  const record=release.assets.filter(a=>a.name==="publication.json"),receipts=release.assets.filter(a=>a.name==="delivery.json");
+  assert.equal(record.length,1,"Missing or ambiguous publication manifest");assert.equal(receipts.length,1,"Missing or ambiguous delivery receipt");
+  const publicationBytes=await download(record[0].url,get),receiptBytes=await download(receipts[0].url,get),receipt=JSON.parse(receiptBytes);
+  assertDelivered(receipt,release,publication,publicationBytes);
+  return {status:"complete",completion:"durable-release-receipt",releaseId:release.id,receiptSha256:hash(receiptBytes)};
  }
- assert.ok(matches.length,"No complete matching publication handoff");return matches.sort((a,b)=>b.runId-a.runId||b.attempt-a.attempt)[0];
+ if(publication.publicationMode === "initial-manual-npm" || publication.initial){
+  const complete=await checkInitialCompletion({evidence:publication,get,verifyGitHub:async()=>services.verifyGitHub(release,publication)});
+  assert.equal(complete.status,"complete","Initial npm publication remains pending");
+  return {status:"complete",completion:"bounded-initial-read-only",releaseId:release.id};
+ }
+ // Pre-receipt compatibility only: inspect existing destinations without creating
+ // a new receipt or depending on a historical Actions artifact.
+ await services.verifyGitHub(release,publication);
+ const npm=await services.verifyNpm(publication);assert.equal(npm.status,"verified","Historical npm identity cannot be established");
+ return {status:"complete",completion:"historical-destination-inspection",releaseId:release.id};
 }
 
 async function eligibleSource({repository,commit,readAt,get,trigger,directory,completion=publicationCompletion,verify=verifyPublished}) {
@@ -74,12 +73,17 @@ async function eligibleSource({repository,commit,readAt,get,trigger,directory,co
    publicationIdentity(evidence);assert.deepEqual(evidence.invocation.preparation,selected.preparation);assert.deepEqual(evidence.upstreams,selected.selection);
    assert.equal(evidence.sourceLockSha256,hash(Buffer.from(lockText)));assert.deepEqual(evidence.sourceLock,lock);matches.push({publication:evidence,release:item});
   }
+  if(matches.length===0)throw Object.assign(new Error("Candidate publication is pending; retain the previous eligible source"),{publicationPending:true});
   assert.equal(matches.length,1,"Candidate has no unique matching publication");({publication:published,release}=matches[0]);
   const compare=await json(get,`${api(repository)}/compare/${published.commit}...${commit}`);
   assert.ok(["ahead","identical"].includes(compare.status)&&compare.merge_base_commit?.sha===published.commit,"Unrelated publication revision");
   promotion=await completion({repository,publication:published,release,get,trigger,directory});
  }else{
-  assert.ok(profile.version&&profile.mode!=="candidate","Unpublished documentation cannot be stable");
+  if(profile.mode==="candidate"){
+   assert.deepEqual(profile,candidateProfile,"Unknown unpublished documentation profile");
+   throw Object.assign(new Error("Candidate documentation awaits a matching publication descriptor"),{publicationPending:true});
+  }
+  assert.ok(profile.version,"Unpublished documentation cannot be stable");
   release=await json(get,`${api(repository)}/releases/${profile.releaseId}`);const assets=release.assets.filter(a=>a.name==="publication.json");assert.equal(assets.length,1);
   const bytes=await download(assets[0].url,get);assert.equal(hash(bytes),profile.publicationSha256,"Pinned publication changed");published=JSON.parse(bytes);
   assert.equal(published.version,profile.version);assert.equal(published.commit,profile.commit);assert.equal(published.archive.sha256,profile.archiveSha256);
@@ -104,15 +108,20 @@ async function eligibleSource({repository,commit,readAt,get,trigger,directory,co
 async function stableSource({repository,mainCommit,readAt,get,trigger,directory,resolveSource=eligibleSource}) {
  try { return await resolveSource({repository,commit:mainCommit,readAt,get,trigger,directory}); }
  catch(error) {
-  if(trigger)throw error;
-  const previous=await json(get,`https://${repository.split("/")[0]}.github.io/${repository.split("/")[1]}/site-publication.json`);
-  assert.equal(previous.repository,repository);assert.equal(previous.stablePresent,true,"No previous eligible stable source");
-  const commit=previous.stableDocumentation?.sourceCommit??previous.mainCommit;
-  assert.match(commit??"",/^[a-f0-9]{40}$/);assert.notEqual(commit,mainCommit,"Previous source is also unpublished");
-  const compare=await json(get,`${api(repository)}/compare/${commit}...${mainCommit}`);
-  assert.ok(["ahead","identical"].includes(compare.status)&&compare.merge_base_commit?.sha===commit,"Previous source is unrelated to main");
-  const source=await resolveSource({repository,commit,readAt,get,directory});assert.ok(source,"Previous stable site absent");
-  return {...source,kind:"previous-eligible-source",currentDiagnostic:error.message};
+  if(trigger||!error.publicationPending)throw error;
+  const history=await json(get,`${api(repository)}/commits?sha=${mainCommit}&path=inputs/release.json&per_page=100`);
+  assert.ok(Array.isArray(history)&&history.length<=100,"Invalid descriptor history");
+  const seen=new Set([mainCommit]);
+  for(const change of history){
+   const commit=change.parents?.[0]?.sha;if(!commit||seen.has(commit))continue;seen.add(commit);assert.match(commit,/^[a-f0-9]{40}$/);
+   const compare=await json(get,`${api(repository)}/compare/${commit}...${mainCommit}`);
+   assert.ok(compare.status==="ahead"&&compare.merge_base_commit?.sha===commit,"Previous source is unrelated to main");
+   try {
+    const source=await resolveSource({repository,commit,readAt,get,directory});
+    if(source)return {...source,kind:"previous-eligible-source",currentDiagnostic:error.message};
+   }catch(previous){if(!previous.publicationPending)throw previous;}
+  }
+  throw new Error("No previous eligible source in the bounded descriptor history; Pages unchanged; inspect publication and selected sources manually",{cause:error});
  }
 }
 
@@ -127,8 +136,11 @@ async function siteSelection({repository,eventName,event,ref,sha,actor,readAt,ge
   const r=event.workflow_run;assert.equal(event.repository?.full_name,repository);
   assert.ok(r&&r.repository?.full_name===repository&&r.path?.split("@")[0]===".github/workflows/release.yml"&&r.event==="pull_request"&&r.status==="completed","Unrelated release completion event");
   trigger=await json(get,`${api(repository)}/actions/runs/${r.id}`);assert.equal(trigger.head_sha,r.head_sha);assert.equal(trigger.run_attempt,r.run_attempt);
-  const list=await json(get,`${api(repository)}/actions/runs/${r.id}/artifacts?per_page=100`);assert.equal(list.total_count,list.artifacts.length);
-  if(!list.artifacts.some(a=>a.name===`release-outcome-${r.id}-${r.run_attempt}`&&!a.expired))return {relevant:false,publish:false,repository,mainCommit,reason:"No product publication handoff"};
+  assert.equal(trigger.id,r.id);assert.equal(trigger.repository?.full_name,repository);assert.equal(trigger.path?.split("@")[0],".github/workflows/release.yml");
+  assert.equal(trigger.event,"pull_request");assert.equal(trigger.status,"completed");
+  const list=await json(get,`${api(repository)}/actions/runs/${r.id}/attempts/${r.run_attempt}/jobs?per_page=100`);assert.equal(list.total_count,list.jobs?.length,"Truncated publication job inventory");
+  const publishers=list.jobs.filter(j=>j.name==="publish");assert.ok(publishers.length<=1,"Ambiguous publisher");
+  if(publishers.length!==1||publishers[0].status!=="completed"||publishers[0].conclusion!=="success")return {relevant:false,publish:false,repository,mainCommit,reason:"No completed product publisher"};
  }
  let preview=null,previewSelection=null,input=null;
  if(pull){
@@ -138,10 +150,10 @@ async function siteSelection({repository,eventName,event,ref,sha,actor,readAt,ge
   const descriptorRaw=await readAt(preview.commit,"inputs/release.json",true);
   const value=descriptorRaw===null?null:JSON.parse(descriptorRaw);
   const nominal=value?.schemaVersion===2&&new RegExp('^candidate/run-'+value.preparation?.runId+'-[1-9][0-9]*$').test(pr.head.ref)&&await candidateDescriptorChanged({repository,pullRequest:pr,get});
-  if(nominal){assert.deepEqual(profile,candidateProfile);descriptor(value,JSON.parse(await readAt(preview.commit,"inputs/sqlite-vector.sources.lock.json")));previewSelection=profile;input="updates";}
+  if(nominal){assert.deepEqual(profile,candidateProfile);descriptor(value,JSON.parse(await readAt(preview.commit,"inputs/sqlite-vector.sources.lock.json")));previewSelection=profile;input="qualification";}
   else{
    try{const ready=await resolveSource({repository,commit:preview.commit,readAt,get,directory});previewSelection=ready?.selection;}
-   catch(error){assert.equal(profile.mode,"candidate","Unpublished preview must declare the candidate profile");assert.deepEqual(profile,candidateProfile);previewSelection=profile;input="exercise";}
+   catch(error){assert.equal(profile.mode,"candidate","Unpublished preview must declare the candidate profile");assert.deepEqual(profile,candidateProfile);previewSelection=profile;input="qualification";}
   }
  }
  const stablePlaceholder=(!pull||internal)?await mainPlaceholder(readAt,mainCommit):null;
