@@ -179,7 +179,7 @@ jobs:
           echo '\n[Open site](https://at-rama.github.io/sqlite-vector-wasm/) · [Open shared preview](https://at-rama.github.io/sqlite-vector-wasm/preview/)' >> "$GITHUB_STEP_SUMMARY"
       - name: Preserve shell exercise and publication evidence
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: site-checks-${{ github.run_id }}
           path: |
@@ -203,9 +203,10 @@ jobs:
           include-hidden-files: true
       - name: Upload the validated complete site for Pages
         if: steps.assemble.outcome == 'success'
-        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: candidate/.work/pages
+          include-hidden-files: true
 
   deploy:
     if: needs.build.outputs.publish == 'true'
@@ -232,15 +233,15 @@ jobs:
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: '24.19.0'
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: site-checks-${{ github.run_id }}
           path: evidence
-      - uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
+      - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
       - name: Reject obsolete inputs immediately before publication
         env:
           GH_TOKEN: ${{ github.token }}
         run: node tools/site/publication.mjs guard evidence/pages/site-publication.json
       - name: Deploy complete Pages artifact
         id: deployment
-        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
