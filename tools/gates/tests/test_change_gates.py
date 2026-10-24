@@ -16,6 +16,8 @@ class ChangeGates(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.repo = Path(self.temp.name)
         self.git('init', '-q')
+        self.git('config', 'maintenance.auto', 'false')
+        self.git('config', 'gc.auto', '0')
         self.git('config', 'user.name', 'Gate test')
         self.git('config', 'user.email', 'gate-test@example.invalid')
         self.write('.42p/engineering/2026-10-06_example_allocation_edit-0.1.md',
