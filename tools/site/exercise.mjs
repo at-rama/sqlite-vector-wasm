@@ -4,6 +4,7 @@ import {checkDemo} from './demo-check.mjs';
 import {prepareData} from './demo-data.mjs';
 import { example } from './example.mjs';
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
 import { mkdtemp, mkdir, writeFile, rm, readFile, cp, symlink } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { join } from 'node:path';
@@ -26,6 +27,7 @@ export async function exercise() {
     return result;
   }
   try {
+    results.push(...await exerciseSitemap());
     results.push(...await exerciseRelativeImages());
     results.push(...await exerciseStablePlaceholder());
     const docs = join(temporary, 'docs');
@@ -140,6 +142,78 @@ This is an integration fixture, not the emoji demo.
     await observe('shell-and-demo', undefined, { runningDemo: true, screenshot: join(repository, '.work/site/mobile.png') });
     await writeFile(join(repository, '.work/site/exercise.json'), JSON.stringify(results, null, 2) + '\n');
     console.log(JSON.stringify(results, null, 2));
+  } finally {
+    await rm(temporary, { recursive: true, force: true });
+  }
+}
+
+
+// Use the real config/compiler and parse the emitted XML independently of VitePress.
+// This fixture needs neither a demo runtime nor a documentation publication.
+export async function exerciseSitemap() {
+  const temporary = await mkdtemp(join(repository, '.work/site-sitemap-'));
+  const stableRoot = join(temporary, 'stable'), candidateRoot = join(temporary, 'candidate');
+  const output = join(temporary, 'pages');
+  const pages = ['index.html', 'usage/index.html', 'demo/index.html', 'extra.html'];
+  const expected = ['', 'usage/', 'demo/', 'extra.html']
+    .map(path => 'https://at-rama.github.io/sqlite-vector-wasm/' + path).sort();
+  const preview = { branch: 'feature/sitemap', commit: 'b'.repeat(40) };
+  const context = { mode: 'preview', repository: 'at-rama/sqlite-vector-wasm',
+    mainCommit: 'a'.repeat(40), pullRequest: 1, preview };
+  async function checkSitemap(directory) {
+    const xml = await readFile(join(directory, 'sitemap.xml'), 'utf8');
+    const urls = JSON.parse(execFileSync('python3', ['-c', `
+import json, sys, xml.etree.ElementTree as ET
+root = ET.fromstring(sys.stdin.read())
+ns = '{http://www.sitemaps.org/schemas/sitemap/0.9}'
+assert root.tag == ns + 'urlset', 'Expected sitemap urlset'
+print(json.dumps([url.find(ns + 'loc').text for url in root.findall(ns + 'url')]))
+`], { input: xml, encoding: 'utf8' }));
+    assert.deepEqual(urls.sort(), expected, 'Sitemap must list only stable public pages');
+    for (const url of urls) {
+      const route = new URL(url).pathname.slice('/sqlite-vector-wasm/'.length);
+      await readFile(join(directory, route.endsWith('/') || !route ? route + 'index.html' : route));
+    }
+    return xml;
+  }
+  const absent = path => assert.rejects(readFile(path), { code: 'ENOENT' });
+  try {
+    for (const root of [stableRoot, candidateRoot]) {
+      await mkdir(join(root, 'site/.vitepress'), { recursive: true });
+      await cp(join(repository, 'site/.vitepress/config.mts'), join(root, 'site/.vitepress/config.mts'));
+      for (const page of pages) {
+        const markdown = page.replace(/\.html$/, '.md');
+        await mkdir(join(root, 'site', markdown, '..'), { recursive: true });
+        await writeFile(join(root, 'site', markdown), '# Sitemap fixture\n\nPublic compiler fixture.\n');
+      }
+      await mkdir(join(root, '.work/site'), { recursive: true });
+      await symlink(join(repository, '.work/site/node_modules'), join(root, '.work/site/node_modules'));
+      await mkdir(join(root, 'tools/site'), { recursive: true });
+      for (const path of ['tools/site.sh', 'tools/site/package-lock.json']) {
+        await cp(join(repository, path), join(root, path));
+      }
+    }
+    const stable = await build({ root: stableRoot, docs: false });
+    const xml = await checkSitemap(stable.output);
+    const candidate = await build({ root: candidateRoot, preview, docs: false });
+    await absent(join(candidate.output, 'sitemap.xml'));
+    for (const page of pages) {
+      const noindex = /<meta\b(?=[^>]*\bname="robots")(?=[^>]*\bcontent="noindex")[^>]*>/;
+      assert.doesNotMatch(await readFile(join(stable.output, page), 'utf8'), noindex);
+      assert.match(await readFile(join(candidate.output, page), 'utf8'), noindex);
+    }
+    await assemble({ stableRoot, candidateRoot, output, context });
+    assert.equal(await checkSitemap(output), xml, 'Assembly must preserve stable sitemap bytes');
+    await absent(join(output, 'preview/sitemap.xml'));
+    await assemble({ stableRoot, output, context: { ...context, mode: 'stable', preview: null } });
+    assert.equal(await checkSitemap(output), xml);
+    await absent(join(output, 'preview/sitemap.xml'));
+    await assemble({ stableRoot: join(temporary, 'absent'), candidateRoot, output, context });
+    await absent(join(output, 'sitemap.xml'));
+    await absent(join(output, 'preview/sitemap.xml'));
+    return [{ name: 'production-sitemap', urls: expected, xml: 'parsed',
+      automaticPage: 'extra.html', previewSitemap: 'absent', previewNoindex: 'retained',
+      assembly: ['stable-and-preview', 'stable-only', 'preview-only'] }];
   } finally {
     await rm(temporary, { recursive: true, force: true });
   }

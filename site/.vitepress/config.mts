@@ -10,6 +10,9 @@ export default defineConfig({
   title: 'sqlite-vector-wasm',
   lang: 'en',
   base: configuration.base,
+  sitemap: preview ? undefined : {
+    hostname: `https://at-rama.github.io${configuration.base}`,
+  },
   head: preview ? [['meta', { name: 'robots', content: 'noindex' }]] : [],
   transformPageData(pageData) {
     if (preview) pageData.frontmatter.footer = true;
