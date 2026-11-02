@@ -1,0 +1,15 @@
+{
+  "name": "sqlite-vector-wasm-vite-example",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "node check.mjs"
+  },
+  "engines": { "node": ">=22" },
+  "dependencies": { "@at-rama/sqlite-vector-wasm": "0.3.2" },
+  "devDependencies": { "vite": "6.4.5", "playwright": "1.56.1" }
+}
