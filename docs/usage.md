@@ -8,7 +8,7 @@ Use SQLite's browser JavaScript/WASM APIs with SQLite-Vector built in. This guid
 npm install @at-rama/sqlite-vector-wasm
 ```
 
-From your project's root, copy **all eleven runtime files** into one public asset directory. For example, with a POSIX shell:
+For static asset hosting, copy **all eleven runtime files** from your project's root into one public asset directory. For example, with a POSIX shell:
 
 ```sh
 mkdir -p public/sqlite
@@ -82,7 +82,7 @@ For new applications, run the initialization and SQL examples above inside your 
 
 For a classic script, load `/sqlite/sqlite3.js` and await `globalThis.sqlite3InitModule()`. In a classic Worker, first call `importScripts('/sqlite/sqlite3.js')`, then await the same initializer. Use a module Worker for `.mjs` loaders and a classic Worker for `sqlite3.js`.
 
-The supplied `sqlite3-bundler-friendly.mjs` and corresponding Worker1/promiser variants remain available through explicit package subpaths. The package root is not a JavaScript loader. A bundler must preserve the upstream WASM and Worker asset URLs and copy their companion files; compatibility with every bundler is not guaranteed. Keep companions from the same distribution together rather than mixing runtime versions.
+The supplied `sqlite3-bundler-friendly.mjs` and corresponding Worker1/promiser variants remain available through explicit package subpaths. The package root is not a JavaScript loader. A bundler must emit the companion files and preserve or rewrite their WASM and Worker asset URLs; compatibility with every bundler is not guaranteed. The [Vite recipe](https://at-rama.github.io/sqlite-vector-wasm/usage/#vite-production-build) gives one tested configuration. Keep companions from the same distribution together rather than mixing runtime versions.
 
 ### Worker1 compatibility
 
@@ -103,6 +103,40 @@ await promiser({ type: 'close', dbId });
 ```
 
 Worker companions must resolve from the same asset directory; when a Worker entry is hosted elsewhere, the upstream `sqlite3.dir=/sqlite` URL parameter can locate the assets. The Worker1 documentation describes its message and promiser APIs.
+
+## Vite production build
+
+For a Vite application, import the explicit bundler-friendly subpath inside your dedicated module Worker:
+
+```js
+import initialize from '@at-rama/sqlite-vector-wasm/sqlite3-bundler-friendly.mjs';
+
+const sqlite3 = await initialize();
+// Use SQLite's APIs here, inside the Worker.
+```
+
+Create that Worker from the application module using a static URL that Vite can analyze:
+
+```js
+const worker = new Worker(new URL('./worker.js', import.meta.url), { type: 'module' });
+```
+
+Set the Worker output format in `vite.config.js`:
+
+```js
+import { defineConfig } from 'vite';
+
+export default defineConfig({
+  base: '/vite-example/',
+  worker: { format: 'es' },
+});
+```
+
+Set `base` to your application's deployment prefix. In this configuration, Vite bundles and minifies the loader into the Worker and emits the WASM and OPFS proxy with rewritten asset URLs. The recipe needs no manual runtime copy, `@vite-ignore`, `locateFile` override or WASM plugin. Keep the import and `new URL(...)` expressions static as shown; the package root is not a loader.
+
+The [complete runnable example](https://github.com/at-rama/sqlite-vector-wasm/tree/main/examples/vite) includes the page, message handling, SQL query, locked dependencies and an opt-in browser check of the production build. It opens an in-memory database; use the [persistence guidance](https://at-rama.github.io/sqlite-vector-wasm/usage/#browser-persistence) when adding OPFS. The example config supplies isolation headers for Vite's development and preview servers. A deployed static host must supply the required headers itself; a build does not configure that host.
+
+The recorded combination is sqlite-vector-wasm **0.3.2**, Vite **6.4.5** and Chromium **141.0.7390.37**. This is a tested configuration, not a guarantee for other bundlers, versions, browsers or hosting policies. The example's README gives its exact reproduction commands and validation scope. The existing site demo serves unchanged published assets and exercises a different loading path.
 
 ## Browser persistence
 
