@@ -2,9 +2,9 @@
   "schemaVersion": 2,
   "sqlite": "3.54.1",
   "sqliteVector": "1.1.2",
-  "releaseComment": "Refined the README and Usage guide for clearer, more durable documentation, with improved navigation, installation guidance and accurate package footprint information. SQLite 3.54.1 and SQLite-Vector 1.1.2 remain unchanged.",
+  "releaseComment": "Added a tested Vite production-build recipe with a reproducible dedicated-Worker example, and updated runtime footprint documentation using a consistent JavaScript compaction and gzip protocol. SQLite 3.54.1 and SQLite-Vector 1.1.2 remain unchanged.",
   "preparation": {
-    "runId": 39746952775,
-    "url": "https://github.com/at-rama/sqlite-vector-wasm/actions/runs/39746952775"
+    "runId": 41396503188,
+    "url": "https://github.com/at-rama/sqlite-vector-wasm/actions/runs/41396503188"
   }
 }
