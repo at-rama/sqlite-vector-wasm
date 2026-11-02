@@ -2,6 +2,18 @@
 
 The public site uses VitePress 1.6.4 with its standard theme, English navigation and the GitHub Pages prefix `/sqlite-vector-wasm/`. Site tooling is private to this repository and does not compile or publish the browser runtime.
 
+## Sitemap
+
+Production builds generate [sitemap.xml](https://at-rama.github.io/sqlite-vector-wasm/sitemap.xml) natively from the public VitePress pages, including newly added pages automatically. Preview builds produce no sitemap and retain robots `noindex`. Pages assembly preserves the independently built production sitemap without adding preview URLs.
+
+After installing the locked site tooling, run the focused compiler/XML/assembly check with Node.js and Python 3:
+
+```sh
+node --input-type=module -e "import {exerciseSitemap} from './tools/site/exercise.mjs'; console.log(JSON.stringify(await exerciseSitemap(), null, 2));"
+```
+
+This check also runs within the existing `sh tools/site.sh exercise` command and records its observations in `exercise.json`. It checks discovery artifacts; it does not establish search-engine indexing or hosted deployment.
+
 ## Local construction
 
 Use Node.js 24.19.0 (the CI version) and npm. From the repository root:
