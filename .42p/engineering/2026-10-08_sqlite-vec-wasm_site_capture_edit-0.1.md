@@ -30,6 +30,12 @@ Generate the production sitemap through VitePress's native sitemap support, usin
 
 Keep the change bounded to this discovery feature and its verification/documentation. Existing contents, metadata, navigation, dependencies, deployment workflow, runtime selection and other site behavior remain unchanged. Sitemap generation does not establish search-engine indexing or authorize publication.
 
+### C-audience — Stable site audience measurement
+
+Source: S-site-goatcounter.
+
+Add the supplied asynchronous GoatCounter script to public stable site pages, using `https://at-rama.goatcounter.com/count` and `//gc.zgo.at/count.js`. Scope measurement to document loads. Exclude preview pages and retain their robots `noindex`.
+
 ### C-readme — One public presentation source
 
 Source: S-site-design, “Présentation” and “Intégration au projet”; S-site-usage, distinct documentation sources and preserved demo identity.
@@ -158,3 +164,5 @@ Framework, repository file organization, build/deployment pipeline, interface li
 **S-site-mission** — User instruction of 2026-10-08, “Mission Work — Réconcilier le design 42p et intégrer A-Site”, in the same conversation, especially Objectif and steps 2–4. It institutes the two-Capture/global-Allocation migration, exactly one new `A-site` unit, preservation of Distribution boundaries, deletion of the live SPEC and deferred site realization. It supersedes only the consolidation's integration representation and proposed-unit status, not its site behavior. It authorizes this design/canon PR, not implementation or publication. This Capture and assistant receipts are never independent corroboration.
 
 **S-site-sitemap** — Primary maintainer decision in this project conversation on 2026-11-02: after the read-only exploration recommended a native production-only sitemap, output/assembly checks and a short `docs/site.md` addition, with no other SEO or site changes, the maintainer explicitly answered “Je valide. Applique”. This adopts only that bounded addition to A-site_shell and authorizes its realization through the existing repository lifecycle. No public conversation permalink is available. It neither adopts other SEO changes nor authorizes merge or distribution publication.
+
+**S-site-goatcounter** — Maintainer instruction on 2026-11-05. The maintainer supplied the GoatCounter snippet and asked for the minimal addition. After the exploration specified stable-only insertion, document-load measurement and realization through A-site_shell, the maintainer replied “Applique”. The conversation is the decision source.
