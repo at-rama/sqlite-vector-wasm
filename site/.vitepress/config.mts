@@ -13,7 +13,13 @@ export default defineConfig({
   sitemap: preview ? undefined : {
     hostname: `https://at-rama.github.io${configuration.base}`,
   },
-  head: preview ? [['meta', { name: 'robots', content: 'noindex' }]] : [],
+  head: preview
+    ? [['meta', { name: 'robots', content: 'noindex' }]]
+    : [['script', {
+        'data-goatcounter': 'https://at-rama.goatcounter.com/count',
+        async: '',
+        src: '//gc.zgo.at/count.js',
+      }]],
   transformPageData(pageData) {
     if (preview) pageData.frontmatter.footer = true;
   },
