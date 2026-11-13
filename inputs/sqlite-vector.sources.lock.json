@@ -11,18 +11,18 @@
     "digestUrl": "https://sqlite.org/download.html"
   },
   "sqliteVector": {
-    "version": "1.1.2",
-    "releaseId": 387102049,
-    "tag": "1.1.2",
-    "commit": "0c2223ada9dce1fa33248c8835a15f51d9a0f655",
-    "archiveUrl": "https://codeload.github.com/sqliteai/sqlite-vector/tar.gz/0c2223ada9dce1fa33248c8835a15f51d9a0f655",
-    "releaseUrl": "https://github.com/sqliteai/sqlite-vector/releases/tag/1.1.2",
-    "digestUrl": "https://api.github.com/repos/sqliteai/sqlite-vector/releases/387102049",
-    "tagUrl": "https://api.github.com/repos/sqliteai/sqlite-vector/git/ref/tags/1.1.2",
-    "commitUrl": "https://api.github.com/repos/sqliteai/sqlite-vector/git/commits/0c2223ada9dce1fa33248c8835a15f51d9a0f655",
+    "version": "1.2.0",
+    "releaseId": 430427885,
+    "tag": "1.2.0",
+    "commit": "00c2ccece3687380c4ceff14b15d033573ee5c89",
+    "archiveUrl": "https://codeload.github.com/sqliteai/sqlite-vector/tar.gz/00c2ccece3687380c4ceff14b15d033573ee5c89",
+    "releaseUrl": "https://github.com/sqliteai/sqlite-vector/releases/tag/1.2.0",
+    "digestUrl": "https://api.github.com/repos/sqliteai/sqlite-vector/releases/430427885",
+    "tagUrl": "https://api.github.com/repos/sqliteai/sqlite-vector/git/ref/tags/1.2.0",
+    "commitUrl": "https://api.github.com/repos/sqliteai/sqlite-vector/git/commits/00c2ccece3687380c4ceff14b15d033573ee5c89",
     "digest": {
       "algorithm": "sha256",
-      "value": "b44a759233bdc9a502bf2407972608d13dd6e60a31b4b03c2d4ae4b6b04f03c7"
+      "value": "e3d47c90f5ebaa285d1f2bc85b534136dc9440943f2101163c6546bb95307b0e"
     }
   }
 }

@@ -83,14 +83,19 @@
     {
       "name": "sqlite-vector-APACHE.txt",
       "project": "sqliteVector",
-      "version": "1.1.2",
-      "origin": "https://github.com/sqliteai/sqlite-vector/blob/0c2223ada9dce1fa33248c8835a15f51d9a0f655/LICENSE.md",
+      "version": "1.2.0",
+      "origin": "https://github.com/sqliteai/sqlite-vector/blob/00c2ccece3687380c4ceff14b15d033573ee5c89/LICENSE.md",
       "sha256": "421717de661f6707b9829bd7d459994af9fc5c7b400335da822a817ffd8a42a1",
       "source": {
-        "kind": "git",
-        "commit": "0c2223ada9dce1fa33248c8835a15f51d9a0f655",
+        "kind": "archive",
+        "archiveUrl": "https://codeload.github.com/sqliteai/sqlite-vector/tar.gz/00c2ccece3687380c4ceff14b15d033573ee5c89",
+        "archiveDigest": {
+          "algorithm": "sha256",
+          "value": "e3d47c90f5ebaa285d1f2bc85b534136dc9440943f2101163c6546bb95307b0e"
+        },
         "path": "LICENSE.md",
-        "sha256": "421717de661f6707b9829bd7d459994af9fc5c7b400335da822a817ffd8a42a1"
+        "sha256": "421717de661f6707b9829bd7d459994af9fc5c7b400335da822a817ffd8a42a1",
+        "commit": "00c2ccece3687380c4ceff14b15d033573ee5c89"
       }
     },
     {
