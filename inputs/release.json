@@ -1,10 +1,10 @@
 {
   "schemaVersion": 2,
   "sqlite": "3.54.1",
-  "sqliteVector": "1.1.2",
-  "releaseComment": "Added a tested Vite production-build recipe with a reproducible dedicated-Worker example, and updated runtime footprint documentation using a consistent JavaScript compaction and gzip protocol. SQLite 3.54.1 and SQLite-Vector 1.1.2 remain unchanged.",
+  "sqliteVector": "1.2.0",
+  "releaseComment": "SQLite-Vector 1.2.0 fixes memory-safety issues and incorrect scan results after failed quantization, and enforces requested dimensions for BLOB inputs. The API is unchanged, and existing vector indexes do not need to be rebuilt.",
   "preparation": {
-    "runId": 41396503188,
-    "url": "https://github.com/at-rama/sqlite-vector-wasm/actions/runs/41396503188"
+    "runId": 43501263377,
+    "url": "https://github.com/at-rama/sqlite-vector-wasm/actions/runs/43501263377"
   }
 }
