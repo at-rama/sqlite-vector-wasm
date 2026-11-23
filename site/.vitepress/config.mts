@@ -15,11 +15,17 @@ export default defineConfig({
   },
   head: preview
     ? [['meta', { name: 'robots', content: 'noindex' }]]
-    : [['script', {
+    : [
+      ['meta', {
+        name: 'google-site-verification',
+        content: 'w7WR26Va0FrdEUOchq87JIUhUP0aAnCekwrZyQg3EUI',
+      }],
+      ['script', {
         'data-goatcounter': 'https://at-rama.goatcounter.com/count',
         async: '',
         src: '//gc.zgo.at/count.js',
-      }]],
+      }],
+    ],
   transformPageData(pageData) {
     if (preview) pageData.frontmatter.footer = true;
   },
